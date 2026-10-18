@@ -6,6 +6,40 @@ Sistema web para una lavandería de una sola sucursal con autoservicio y servici
 
 ---
 
+## Índice
+
+- [1. Requerimientos y decisiones](#1-requerimientos-y-decisiones)
+- [2. Arquitectura](#2-arquitectura)
+  - [Stack](#stack)
+  - [Interfaces](#interfaces)
+- [3. Modelo de datos](#3-modelo-de-datos)
+  - [Apps de Django](#apps-de-django)
+  - [Entidades](#entidades)
+  - [Reglas del modelo](#reglas-del-modelo)
+- [4. Funcionalidades](#4-funcionalidades)
+  - [Roles y permisos](#roles-y-permisos)
+  - [Ticket para el cliente](#ticket-para-el-cliente)
+  - [Endpoints principales (REST)](#endpoints-principales-rest)
+- [5. Control de lavadoras y secadoras](#5-control-de-lavadoras-y-secadoras)
+  - [Equipos](#equipos)
+  - [La cajita de relés (instalación de Aitare)](#la-cajita-de-relés-instalación-de-aitare)
+  - [Plan: programa propio en la cajita](#plan-programa-propio-en-la-cajita)
+  - [Configuración de las máquinas](#configuración-de-las-máquinas)
+  - [Opciones evaluadas](#opciones-evaluadas)
+- [6. Seguridad](#6-seguridad)
+- [7. Plan de trabajo](#7-plan-de-trabajo)
+  - [Fase 0 – Preparación](#fase-0--preparación)
+  - [Fase 1 – MVP operativo](#fase-1--mvp-operativo)
+  - [Fase 2 – Control de máquinas e integraciones](#fase-2--control-de-máquinas-e-integraciones)
+  - [Fase 3 – Crecimiento](#fase-3--crecimiento)
+- [8. Estructura del repositorio](#8-estructura-del-repositorio)
+- [9. Pendientes](#9-pendientes)
+- [Anexo: diseños para fases futuras](#anexo-diseños-para-fases-futuras)
+  - [Autorización remota del administrador](#autorización-remota-del-administrador)
+- [Referencias](#referencias)
+
+---
+
 ## 1. Requerimientos y decisiones
 
 | Área                        | Decisión                                                                                                                                                                                    |
@@ -368,7 +402,7 @@ erDiagram
 **Ventas y ciclos**
 - **Cada carga vendida** de un servicio con `usa_maquina = true` genera un `CicloUso` (3 cargas → 3 ciclos). Así se **cuadran las ventas contra los usos reales** y se detectan ciclos no cobrados.
 - **Autoservicio:** se cobra completo, el empleado activa la máquina y el ciclo se inicia de inmediato.
-- **Encargo:** los ciclos quedan *pendientes de asignar* y el empleado los activa al procesar la ropa; el `Encargo` avanza de estado con ellos. Se puede pagar en varios `Pago`. Un encargo con saldo solo lo entrega quien tenga `encargos.entregar_con_saldo`.
+- **Encargo:** los ciclos quedan *pendientes de asignar* y el empleado los activa al procesar la ropa; él `Encargo` avanza de estado con ellos. Se puede pagar en varios `Pago`. Un encargo con saldo solo lo entrega quien tenga `encargos.entregar_con_saldo`.
 - **Estados del ciclo:** `solicitado` → `credito_enviado` (la cajita confirmó el crédito; falta presionar Start) → `en_curso` (por el medidor de consumo, el empleado o por tiempo) → `terminado`. Si la cajita no confirma pasa a `fallido`. `manual = true` cuando se arrancó en modo PUSH.
 - **DetalleVenta:** un servicio **o** un producto. `precio_unitario` se copia de `PrecioServicio` según la modalidad y se conserva aunque el precio cambie.
 
@@ -386,7 +420,7 @@ erDiagram
 
 **Usuarios y máquinas**
 - **Usuario:** una cuenta por persona; al irse se desactiva (no se borra). `rol` = `Group` de Django; `permisos_extra` = `user_permissions`.
-- **Controlador / Maquina:** una cajita controla las 6 máquinas, un relé por máquina (`canal_rele`). Los pulsos de cada máquina deben coincidir con su configuración de pago (ver §5).
+- **Controlador / Máquina:** una cajita controla las 6 máquinas, un relé por máquina (`canal_rele`). Los pulsos de cada máquina deben coincidir con su configuración de pago (ver §5).
 
 ---
 
@@ -525,7 +559,7 @@ Se conservan la placa, los relés y los 6 cables; solo se cambia el programa (ES
 **Cómo se comunica:**
 - `RelayBoardDriver` (implementa `MachineDriver`) publica en `lavanderia/<controlador>/cmd`: `{"id": 812, "canal": 3, "pulsos": 4, "ancho_ms": 50, "pausa_ms": 150}`.
 - La cajita envía los pulsos por el relé y responde en `lavanderia/<controlador>/ack`: `{"id": 812, "ok": true}`. Publica *en línea / fuera de línea* con el mensaje de "última voluntad" de MQTT.
-- **Sin pulsos duplicados:** el `id` es el del `CicloUso`; la cajita recuerda los últimos y no repite si llega un reintento.
+- **Sin pulsos duplicados:** él `id` es el del `CicloUso`; la cajita recuerda los últimos y no repite si llega un reintento.
 - La **escucha MQTT** (proceso aparte) recibe confirmaciones, estado y consumo, y actualiza `CicloUso`, `Maquina` y `Controlador`. Se guarda la respuesta cruda en `respuesta_driver`.
 - Cada cajita tiene su propio usuario MQTT y solo accede a sus temas.
 
@@ -604,14 +638,14 @@ Sobre LG: la [página de LG México](https://www.lg.com/mx/business/lavanderia-c
 
 ## 7. Plan de trabajo
 
-### Fase 0 – Preparación (1 semana)
+### Fase 0 – Preparación
 - **Cajita:** capturas de la configuración de pulsos de cada equipo en ControlEquipos; foto de la conexión de un relé; adaptador USB-serie (CH340 o CP2102); respaldo del programa de Aitare; prueba con **una lavadora** en modo PAY; confirmar WiFi de 2.4 GHz.
 - **Máquinas:** manual de la secadora; cambiar la contraseña `3000`; probar un medidor de consumo en una lavadora (opcional).
 - **LG:** enviar la consulta de información (`contacto_lg.md`) y revisar el portal de desarrolladores con sesión iniciada.
 - **Caja:** driver de la POS-8360 y ticket de prueba de 80 mm; cuenta de desarrollador de Mercado Pago (API de Point).
 - **Proyecto:** repositorio, estructura `backend/` + `frontend/`, docker compose, CI básico.
 
-### Fase 1 – MVP operativo (4–6 semanas)
+### Fase 1 – MVP operativo
 - Autenticación, usuarios, roles y permisos individuales.
 - Admin con Unfold: marca, menú, configuración (catálogo, precios, descuentos, consumo por carga, máquinas, usuarios y permisos) y consultas de solo lectura.
 - Clientes (alta rápida por teléfono).
@@ -625,7 +659,7 @@ Sobre LG: la [página de LG México](https://www.lg.com/mx/business/lavanderia-c
 - Reportes en el dashboard de Unfold.
 - Despliegue en una VM con respaldos.
 
-### Fase 2 – Control de máquinas e integraciones (3–4 semanas)
+### Fase 2 – Control de máquinas e integraciones
 - Broker MQTT, escucha MQTT, `RelayBoardDriver` y programa de la cajita; alta de relés y pulsos de las 6 máquinas; pulso de prueba.
 - Medición de consumo en las 6 máquinas (opcional).
 - Estado de las máquinas en tiempo real; conciliación ventas ↔ ciclos y alertas de ciclos sin cobro.
