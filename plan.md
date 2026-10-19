@@ -266,7 +266,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** la estructura existe y `mvp.md` sigue mostrando bien las imágenes (actualizar rutas).
 
 ### 1.2 Proyecto Django
-- [x] **Qué se hace:** crear el proyecto Django en `backend/` con la carpeta `config/` y los *settings* separados en `base.py`, `dev.py` y `prod.py`. Toda la configuración se lee de variables de entorno (`django-environ`).
+- [x] **Qué se hace:** crear el proyecto Django en `backend/` con la carpeta `config/` y los *settings* separados en `base.py`, `dev.py` y `test.py`. Toda la configuración se lee de variables de entorno (`django-environ`).
 - **Para qué:** usar la misma base en desarrollo y producción, cambiando solo el `.env`.
 - **Listo cuando:** `python manage.py check` no da errores.
 
@@ -305,7 +305,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - El modelo `Branch` (sucursal) se creó en el paso 1.4 (y no en el 3.1) porque el usuario necesita apuntar a una sucursal desde la primera migración.
 - Unfold no trae traducción al español; se agregó una propia en `backend/locale/es_MX/`.
 - La base de datos no publica su puerto en la PC (había otro PostgreSQL usando el 5432); se accede con `docker compose exec db psql -U laundry`.
-- Para empezar con lo mínimo **se quitó lo que todavía no se usa** (apps vacías, carpetas `static/` y `templates/`, Celery y Redis, la CI y un primer esqueleto de la caja en React); cada cosa se agrega en la etapa que la usa.
+- Para empezar con lo mínimo **se quitó lo que todavía no se usa** (apps vacías, carpetas `static/` y `templates/`, Celery y Redis, la CI, la configuración de producción y un primer esqueleto de la caja en React); cada cosa se agrega en la etapa que la usa.
 
 **Riesgos y pendientes:**
 - **Pendiente – traducción de Unfold incompleta:** se tradujeron 157 textos de la interfaz principal; los de complementos no usados (importar/exportar, historial, editor de texto) siguen en inglés.
@@ -664,7 +664,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** se entra por SSH y el dominio apunta a la VM.
 
 ### 13.2 Producción con Docker
-- [ ] **Qué se hace:** `docker-compose.prod.yml` con Caddy (HTTPS automático), API, worker, beat, PostgreSQL, Redis y el frontend compilado. Variables en `.env` del servidor.
+- [ ] **Qué se hace:** settings de producción (`config/settings/prod.py`: HTTPS, cookies seguras, documentación de la API solo para admins), servidor `gunicorn` (`requirements/prod.txt`), cómo se sirven los archivos estáticos (WhiteNoise o Nginx, por decidir), y `docker-compose.prod.yml` con Caddy (HTTPS automático), API, worker, beat, PostgreSQL, Redis y el frontend compilado. Variables en `.env` del servidor. Pasar `manage.py check --deploy`.
 - **Listo cuando:** `https://<dominio>/` abre la caja y `/admin/` el panel, con candado HTTPS.
 
 ### 13.3 Respaldos

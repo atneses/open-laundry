@@ -700,7 +700,7 @@ Sobre LG: la [página de LG México](https://www.lg.com/mx/business/lavanderia-c
 ```
 Laundry/
 ├── backend/
-│   ├── config/            # settings (base, dev, prod, UNFOLD), urls, celery.py
+│   ├── config/            # settings (base, dev, test, prod), urls, celery.py
 │   ├── templates/admin/   # plantillas del dashboard de Unfold
 │   ├── core/  customers/  inventory/  sales/  machines/
 │   ├── requirements/      # o pyproject.toml

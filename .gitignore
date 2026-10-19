@@ -11,7 +11,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
-backend/staticfiles/
 backend/media/
 
 # Firmware backups (never committed)
