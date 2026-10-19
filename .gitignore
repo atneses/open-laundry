@@ -1,3 +1,18 @@
+# IDE / environments
 .idea
 .venv
+.env
+
+# Aitare installation (private business data)
 Aitaire/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+backend/staticfiles/
+backend/media/
+
+# Firmware backups (never committed)
+firmware/*.bin
