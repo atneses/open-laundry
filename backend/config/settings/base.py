@@ -10,6 +10,7 @@ from pathlib import Path
 import environ
 from django.templatetags.static import static
 from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -112,8 +113,8 @@ SIMPLE_JWT = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "API Lavandería",
-    "DESCRIPTION": "API del sistema de gestión de la lavandería (caja, encargos, máquinas).",
+    "TITLE": "Laundry API",
+    "DESCRIPTION": "API of the laundry management system (cashier, drop-off orders, machines).",
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
@@ -121,9 +122,9 @@ SPECTACULAR_SETTINGS = {
 
 # --- Django Admin con Unfold ---
 UNFOLD = {
-    "SITE_TITLE": "Lavandería",
-    "SITE_HEADER": "Lavandería",
-    "SITE_SUBHEADER": "Administración",
+    "SITE_TITLE": _("Laundry"),
+    "SITE_HEADER": _("Laundry"),
+    "SITE_SUBHEADER": _("Administration"),
     # Provisional branding until the laundry provides its logo and colors.
     "SITE_SYMBOL": "local_laundry_service",
     "SITE_FAVICONS": [
@@ -159,26 +160,40 @@ UNFOLD = {
         "show_all_applications": False,
         "navigation": [
             {
-                "title": "Usuarios y permisos",
+                "title": _("Users and permissions"),
                 "separator": False,
                 "items": [
                     {
-                        "title": "Usuarios",
+                        "title": _("Users"),
                         "icon": "person",
                         "link": reverse_lazy("admin:core_user_changelist"),
-                        "permission": lambda request: request.user.has_perm("core.view_user"),
+                        "permission": lambda request: request.user.has_perm("core.manage_users"),
                     },
                     {
-                        "title": "Grupos",
+                        "title": _("Roles"),
                         "icon": "groups",
                         "link": reverse_lazy("admin:auth_group_changelist"),
-                        "permission": lambda request: request.user.has_perm("auth.view_group"),
+                        "permission": lambda request: request.user.has_perm("core.manage_users"),
                     },
                     {
-                        "title": "Sucursales",
+                        "title": _("Branches"),
                         "icon": "store",
                         "link": reverse_lazy("admin:core_branch_changelist"),
                         "permission": lambda request: request.user.has_perm("core.view_branch"),
+                    },
+                ],
+            },
+            {
+                "title": _("Logs"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Permissions"),
+                        "icon": "history",
+                        "link": reverse_lazy("admin:core_permissionlog_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "core.view_permissionlog"
+                        ),
                     },
                 ],
             },
