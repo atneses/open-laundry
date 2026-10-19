@@ -11,7 +11,8 @@ Lee esto antes de trabajar en el proyecto. Para el **qué** y el **porqué** del
 ## Idioma
 
 - **Todo el código en inglés:** apps, modelos, campos, funciones, variables, nombres de pruebas, comentarios, docstrings, nombres de pasos de CI (cuando exista) y comentarios de configuración.
-- **Lo que ve el usuario, en español (México):** `verbose_name` de modelos y campos, etiquetas del admin, textos de la caja (React), mensajes de error mostrados al usuario y traducciones en `backend/locale/es_MX/`.
+- **Lo que ve el usuario también se escribe en inglés en el código**, marcado para traducción con `gettext_lazy as _` (`verbose_name`, `choices`, títulos del admin y del menú, mensajes de error, nombres de permisos). La interfaz se muestra en **español (México)** mediante las traducciones de `backend/locale/es_MX/`.
+  - Los nombres de permisos (`Meta.permissions`) se guardan como texto en la base de datos y el admin no los traduce solo; tenerlo en cuenta al agregar sus traducciones.
 - **Documentación para el negocio en español:** `mvp.md`, `plan.md`, `README.md`.
 - Las equivalencias concepto → nombre en código están en `mvp.md` §3, *Nombres en el código*.
 
@@ -48,7 +49,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 - **Vistas y API:** vistas delgadas; validación en serializers / formularios; lógica de negocio en servicios o métodos del modelo. Preferir las vistas genéricas y `ViewSet` de DRF.
 - **Fechas y horas:** siempre con zona horaria (`django.utils.timezone.now()`, nunca `datetime.now()`).
 - **Seguridad:** nunca construir SQL concatenando texto; no desactivar CSRF; secretos solo desde variables de entorno.
-- **Textos de la interfaz:** marcados para traducción (`gettext_lazy as _`) cuando no sean `verbose_name` directos.
+- **Textos de la interfaz:** en inglés y siempre marcados para traducción (`gettext_lazy as _`), incluidos los `verbose_name`.
 - **Settings:** acceder con `from django.conf import settings`, nunca importando el módulo de settings.
 - Pasar `python manage.py check` (y `check --deploy` con los settings de producción antes de desplegar).
 
@@ -56,7 +57,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 
 - **Apps:** `core` (sucursal, usuarios, permisos), `customers`, `inventory`, `sales` (catálogo, ventas, pagos, encargos, descuentos, caja), `machines` (cajita, máquinas, ciclos). **Cada app se crea en la etapa que la necesita**; no crear otras apps sin acordarlo.
 - **Modelos:**
-  - Nombres en inglés y `verbose_name` / `verbose_name_plural` en español en cada modelo y campo.
+  - Nombres en inglés y `verbose_name` / `verbose_name_plural` en inglés con `_()` en cada modelo y campo.
   - Todo lo que pertenece a un local lleva `branch` (FK a `core.Branch`).
   - Montos con `DecimalField` (nunca `float`).
   - Los registros con historial (ventas, pagos, cortes, bitácoras) **no se borran**: se cancelan o desactivan.
@@ -64,16 +65,18 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 - **Permisos:**
   - Cada acción se protege con los códigos de permiso de `mvp.md` §4 (p. ej. `sales.charge`, `sales.deliver_with_balance`).
   - **La validación siempre en el backend** (clase de permiso en cada endpoint de DRF); el frontend solo oculta botones.
-  - `core.manage_users` no se puede delegar a empleados.
+  - Quien tiene `core.manage_users` decide todos los permisos: puede darlo a un rol o como permiso extra.
+  - Los permisos se definen en el `Meta.permissions` del modelo de su app. Los roles (*Admin*, *Empleado*) se crean con una migración de datos y después el admin los edita; `migrate` nunca deshace esos cambios. Cada etapa que define permisos agrega una migración de datos que llama a `core.roles.grant_permissions` (Admin: todos los de la app; Empleado: los marcados en la tabla de `mvp.md` §4), que solo agrega permisos.
 - **API:**
   - Por defecto todo endpoint exige autenticación (JWT). Hacer público un endpoint solo si se justifica (como `/api/health/`).
   - Rutas en inglés y en plural con guiones (`/api/cash-sessions/`).
   - Documentar con `drf-spectacular` (tipos de respuesta correctos) para que el frontend pueda generar sus tipos.
 - **Lógica de negocio** (cálculo de totales, corte de caja, generación de ciclos, consumo de insumos) en funciones o servicios del modelo/app, no en las vistas, para poder probarla sin HTTP.
 - **Admin (Unfold):** ventas, pagos, cortes y bitácoras de **solo lectura**. Usar las clases de `unfold.admin` (`ModelAdmin`, etc.).
+  - Para los registros con historial, heredar de `core.admin_base.ReadOnlyModelAdmin`, que no permite agregar, editar ni borrar.
 - **Menú del admin:** cada modelo nuevo se agrega al menú lateral en `UNFOLD["SIDEBAR"]` (`config/settings/base.py`), dentro de su área de `mvp.md` §2 (creando el área si no existe), con un ícono de Material Symbols y `"permission"` que revise el permiso de vista del modelo (p. ej. `request.user.has_perm("core.view_user")`).
 - **Configuración:** valores sensibles o por entorno solo desde variables de entorno (`.env`, que no se sube a git; documentar las nuevas en `.env.example`). Settings en `config/settings/{base,dev,test,prod}.py`.
-- **Idioma de la interfaz:** no volver a agregar `LocaleMiddleware`; el sistema es solo en español. Si un texto de Unfold sale en inglés, agregar su traducción en `backend/locale/es_MX/LC_MESSAGES/django.po` y compilar con `compilemessages`.
+- **Idioma de la interfaz:** no volver a agregar `LocaleMiddleware`; el sistema se muestra solo en español. Las traducciones (de los textos propios y de los de Unfold que no traen español) van en `backend/locale/es_MX/LC_MESSAGES/django.po` y se compilan con `compilemessages`.
 
 ## Frontend (caja)
 
@@ -85,7 +88,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 - Datos del servidor con **TanStack Query**; llamadas a la API por `src/lib/api.ts` y rutas relativas `/api/...` (Vite las reenvía al backend).
 - Tipos de la API generados con `npm run api:gen` (con la API levantada) en `src/api/schema.d.ts`. **No escribir a mano tipos que ya da la API**; regenerarlos cuando cambie un endpoint.
 - Importar con el alias `@/` (p. ej. `@/components/ui/button`).
-- Textos visibles en español; nombres de componentes, variables y archivos en inglés.
+- Textos visibles en español (mediante traducciones); nombres de componentes, variables y archivos en inglés.
 
 ## Pruebas y calidad
 
@@ -142,3 +145,14 @@ Si no hay riesgos ni pendientes, escribir "Ninguno identificado" en lugar de omi
 - Las pruebas de la cajita de relés se hacen con los cables de las máquinas **desconectados** (o las máquinas en modo PUSH), para no regalar créditos.
 - Antes de reprogramar la placa, respaldar el programa de Aitare (`esptool.py read_flash`).
 - Credenciales (MQTT, Mercado Pago, LG) solo en variables de entorno.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- When graphify-out/graph.json exists, run `graphify query "<question>"` before your first grep, search or source-file read for a codebase question, and put this rule in every subagent prompt that explores code. Read raw files only for lines the graph or an earlier read already located. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.
