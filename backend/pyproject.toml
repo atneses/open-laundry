@@ -1,0 +1,23 @@
+# The project name matches the folder name so PyCharm does not label it as a
+# separate project ("backend [name]"). Dependencies live in requirements/*.txt.
+[project]
+name = "backend"
+version = "0.1.0"
+requires-python = ">=3.13"
+
+[tool.ruff]
+
+# PEP 8 allows teams to extend the limit up to 99 characters.
+line-length = 99
+target-version = "py313"
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+# E/W: pycodestyle (PEP 8) · F: pyflakes · I: import order · N: PEP 8 naming
+# B: bugbear · UP: pyupgrade · DJ: Django best practices · C4/SIM: simpler code
+select = ["E", "F", "W", "I", "N", "B", "UP", "DJ", "C4", "SIM"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py"]
+addopts = "-q"

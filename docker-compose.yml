@@ -1,0 +1,35 @@
+# Development environment: `docker compose up`
+#   Admin:      http://localhost:8000/admin/
+#   API / docs: http://localhost:8000/api/docs/
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-laundry}
+      POSTGRES_USER: ${POSTGRES_USER:-laundry}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-laundry}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # No published port: only the containers use it.
+    # To connect from the host: docker compose exec db psql -U laundry
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    env_file: .env
+    volumes:
+      - ./backend:/app
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
