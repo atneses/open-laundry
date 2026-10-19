@@ -120,20 +120,20 @@ flowchart TB
 
 ### Stack
 
-| Capa                   | Tecnología                                                                  | Nota                                                                           |
-|------------------------|-----------------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| Backend                | Django 5.2 LTS + DRF                                                        |                                                                                |
-| Auth                   | `djangorestframework-simplejwt`                                             | JWT para web y móvil; permisos con Groups/Permissions de Django.               |
-| Tareas asíncronas      | Celery + Redis                                                              | Comandos a máquinas y reintentos sin bloquear la API. Se agrega en la Etapa 9. |
-| Control de máquinas    | MQTT (Mosquitto) + programa propio en la cajita (ESPHome o firmware propio) | La cajita se conecta sola al broker; no hay que abrir puertos en el local.     |
-| Admin / back-office    | Django Admin + `django-unfold`                                              | Ver *Interfaces*.                                                              |
-| Frontend               | React + TypeScript + Vite                                                   | Solo operación diaria. UI: MUI o shadcn/ui. Datos: TanStack Query.             |
-| Tiempo real (opcional) | Django Channels o SSE                                                       | Se puede empezar con *polling* cada 10 s.                                      |
-| Mobile                 | React Native (Expo)                                                         | Fase 3; misma API.                                                             |
-| BD                     | PostgreSQL 16                                                               |                                                                                |
-| Documentación API      | `drf-spectacular` (OpenAPI)                                                 | Genera el cliente TS.                                                          |
-| Contenedores           | Docker + docker compose                                                     | `api`, `worker`, `beat`, `db`, `redis`, `web`, `mqtt`, `mqtt-listener`.        |
-| CI/CD                  | GitHub Actions                                                              | Pruebas, lint (ruff, oxlint), build de imágenes.                               |
+| Capa                   | Tecnología                                                                  | Nota                                                                       |
+|------------------------|-----------------------------------------------------------------------------|----------------------------------------------------------------------------|
+| Backend                | Django 5.2 LTS + DRF                                                        |                                                                            |
+| Auth                   | `djangorestframework-simplejwt`                                             | JWT para web y móvil; permisos con Groups/Permissions de Django.           |
+| Tareas asíncronas      | Celery + Redis                                                              | Comandos a máquinas y reintentos sin bloquear la API.                      |
+| Control de máquinas    | MQTT (Mosquitto) + programa propio en la cajita (ESPHome o firmware propio) | La cajita se conecta sola al broker; no hay que abrir puertos en el local. |
+| Admin / back-office    | Django Admin + `django-unfold`                                              | Ver *Interfaces*.                                                          |
+| Frontend               | React + TypeScript + Vite                                                   | Solo operación diaria. UI: MUI o shadcn/ui. Datos: TanStack Query.         |
+| Tiempo real (opcional) | Django Channels o SSE                                                       | Se puede empezar con *polling* cada 10 s.                                  |
+| Mobile                 | React Native (Expo)                                                         | Fase 3; misma API.                                                         |
+| BD                     | PostgreSQL 16                                                               |                                                                            |
+| Documentación API      | `drf-spectacular` (OpenAPI)                                                 | Genera el cliente TS.                                                      |
+| Contenedores           | Docker + docker compose                                                     | `api`, `worker`, `beat`, `db`, `redis`, `web`, `mqtt`, `mqtt-listener`.    |
+| CI/CD                  | GitHub Actions                                                              | Pruebas, lint (ruff, oxlint), build de imágenes.                           |
 
 **Despliegue:** al inicio, una VM (AWS EC2/Lightsail o GCP Compute Engine) con docker compose, Caddy/Nginx con HTTPS y respaldos diarios de PostgreSQL a S3/GCS. Al crecer: BD administrada (RDS / Cloud SQL), ECS Fargate / Cloud Run y Redis administrado. Configuración por variables de entorno y almacenamiento compatible con S3 (`django-storages`): nada específico de un proveedor en el código.
 

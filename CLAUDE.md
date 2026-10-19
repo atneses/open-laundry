@@ -21,10 +21,10 @@ Lee esto antes de trabajar en el proyecto. Para el **qué** y el **porqué** del
 |---------------------|------------------------------------------------------------------------------------------------------------|
 | Backend             | Python 3.13, **Django 5.2 LTS**, Django REST Framework, `djangorestframework-simplejwt`, `drf-spectacular` |
 | Admin               | Django Admin + `django-unfold` (back-office: configuración, consultas, reportes)                           |
-| Tareas              | Celery + Redis (Etapa 9, cuando se necesiten tareas en segundo plano)                                      |
+| Tareas              | Celery + Redis                                                                                             |
 | Base de datos       | PostgreSQL 16                                                                                              |
-| Frontend (caja)     | React + TypeScript + Vite, **Tailwind + shadcn/ui**, TanStack Query, React Router (Etapa 12)               |
-| Control de máquinas | MQTT (Mosquitto) + programa propio en la cajita de relés (Etapa 14)                                        |
+| Frontend (caja)     | React + TypeScript + Vite, **Tailwind + shadcn/ui**, TanStack Query, React Router                          |
+| Control de máquinas | MQTT (Mosquitto) + programa propio en la cajita de relés                                                   |
 | Entorno             | Docker + docker compose                                                                                    |
 
 Las versiones están fijadas en `backend/requirements/*.txt` (y en `frontend/package.json` cuando exista).
@@ -54,7 +54,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 
 ## Backend (Django)
 
-- **Apps:** `core` (sucursal, usuarios, permisos), `customers`, `inventory`, `sales` (catálogo, ventas, pagos, encargos, descuentos, caja), `machines` (cajita, máquinas, ciclos). No crear apps nuevas sin acordarlo.
+- **Apps:** `core` (sucursal, usuarios, permisos), `customers`, `inventory`, `sales` (catálogo, ventas, pagos, encargos, descuentos, caja), `machines` (cajita, máquinas, ciclos). **Cada app se crea en la etapa que la necesita**; no crear otras apps sin acordarlo.
 - **Modelos:**
   - Nombres en inglés y `verbose_name` / `verbose_name_plural` en español en cada modelo y campo.
   - Todo lo que pertenece a un local lleva `branch` (FK a `core.Branch`).
@@ -76,7 +76,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 
 ## Frontend (caja)
 
-> **Orden de trabajo:** primero se construyen el backend y el admin (Etapas 1 a 11 de `plan.md`). La caja en React se hace en la **Etapa 12**; no crear `frontend/` antes sin acordarlo. Estas reglas aplican desde entonces.
+> Estas reglas aplican cuando exista `frontend/` (ver `plan.md`).
 
 
 - Componentes de UI con **shadcn/ui** (`npx shadcn@latest add <componente>`); los archivos generados viven en `src/components/ui/`.
@@ -95,7 +95,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
   docker compose exec api ruff format . && docker compose exec api ruff check .
   docker compose exec api pytest
   docker compose exec api python manage.py makemigrations --check --dry-run
-  # Desde la Etapa 12:
+  # Cuando exista frontend/:
   cd frontend && npm run lint && npm run typecheck && npm test && npm run build
   ```
 - Si algo no se pudo verificar, decirlo explícitamente.
@@ -103,7 +103,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 ## Entorno de desarrollo
 
 - Todo corre en Docker: `docker compose up -d`. Comandos de Django con `docker compose exec api ...`.
-- Admin: http://localhost:8000/admin/ · Docs API: http://localhost:8000/api/docs/ (la caja, http://localhost:5173, desde la Etapa 12)
+- Admin: http://localhost:8000/admin/ · Docs API: http://localhost:8000/api/docs/
 - La base de datos **no publica su puerto** en la PC (el 5432 está ocupado): `docker compose exec db psql -U laundry`.
 
 ## Git
@@ -112,7 +112,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 - **No hacer commit, push ni merge sin que el usuario lo pida.**
 - Mensajes de commit con prefijo convencional, en inglés: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`.
 - Nunca subir: `.env`, la carpeta `Aitaire/` (datos privados del negocio), respaldos de firmware (`firmware/*.bin`).
-- No crear `frontend/` (Etapa 12), `.github/` (Etapa 13), `firmware/` ni `mosquitto/` (Etapa 14) antes de su etapa sin acordarlo.
+- No crear apps, carpetas, servicios ni dependencias antes de que una etapa del plan los necesite.
 
 ## Desarrollo incremental: primero lo mínimo indispensable
 

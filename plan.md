@@ -190,9 +190,9 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 - [ ] **Una rama por etapa o funcionalidad** (p. ej. `feature/sales`), con *pull request* hacia `main`.
   - *Para qué:* revisar cada cambio antes de mezclarlo y poder deshacerlo.
-- [ ] **Pruebas automáticas** con `pytest` + `pytest-django` en el backend y `vitest` en el frontend (Etapa 12). Cada regla de negocio importante (cobro, corte de caja, permisos, ciclos) lleva su prueba.
+- [ ] **Pruebas automáticas** con `pytest` + `pytest-django` en el backend y `vitest` en el frontend. Cada regla de negocio importante (cobro, corte de caja, permisos, ciclos) lleva su prueba.
   - *Para qué:* que un cambio nuevo no rompa algo que ya funcionaba.
-- [ ] **Revisiones antes de terminar:** lint (`ruff`; `oxlint` desde la Etapa 12), pruebas y migraciones se corren a mano (comandos en `CLAUDE.md`). La revisión automática en GitHub (CI) se agrega en la Etapa 13.
+- [ ] **Revisiones antes de terminar:** lint, pruebas y migraciones se corren a mano (comandos en `CLAUDE.md`).
 - [ ] **Migraciones de base de datos** siempre en el repositorio; nunca se edita la base a mano.
 - [ ] **Secretos** (contraseñas, claves) solo en `.env`, que no se sube a git. En el repositorio va un `.env.example` sin valores reales.
 - [ ] **Primero lo mínimo indispensable:** cada funcionalidad se construye primero en su versión mínima que cumple el "Listo cuando"; las mejoras se proponen y se anotan como pendientes (ver `CLAUDE.md`).
@@ -251,7 +251,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ### 0.10 (Opcional) Medidor de consumo de prueba
 - [ ] **Qué se hace:** comprar un Shelly Plus Plug US y conectarlo a una lavadora. Grabar desde su app el consumo durante un ciclo completo.
-- **Para qué:** ver si se distinguen el inicio, el centrifugado y el fin del ciclo (Etapa 15).
+- **Para qué:** ver si se distinguen el inicio, el centrifugado y el fin del ciclo.
 - **Listo cuando:** hay una gráfica de consumo de un ciclo completo guardada.
 
 ---
@@ -261,7 +261,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Objetivo:** tener el esqueleto del backend corriendo en una computadora de desarrollo con un solo comando.
 
 ### 1.1 Estructura del repositorio
-- [x] **Qué se hace:** crear las carpetas `backend/` y `docs/` (`frontend/` se crea en la Etapa 12; `firmware/` y `mosquitto/`, en la Etapa 14). Mover `lavadora.png`, `secadora.png` y el manual a `docs/`.
+- [x] **Qué se hace:** crear las carpetas `backend/` y `docs/`. Mover `lavadora.png`, `secadora.png` y el manual a `docs/`.
 - **Para qué:** ordenar el proyecto como se definió en `mvp.md` §8.
 - **Listo cuando:** la estructura existe y `mvp.md` sigue mostrando bien las imágenes (actualizar rutas).
 
@@ -271,9 +271,9 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** `python manage.py check` no da errores.
 
 ### 1.3 Apps de Django
-- [x] **Qué se hace:** crear las apps vacías `core`, `customers`, `inventory`, `sales` y `machines`.
+- [x] **Qué se hace:** crear la app `core`.
 - **Para qué:** separar el código por área, como en `mvp.md` §3.
-- **Listo cuando:** las apps aparecen en `INSTALLED_APPS` y el proyecto arranca.
+- **Listo cuando:** la app aparece en `INSTALLED_APPS` y el proyecto arranca.
 
 ### 1.4 Usuario personalizado (`User`)
 - [x] **Qué se hace:** crear el modelo `User` en `core`, heredando de `AbstractUser`, **antes de la primera migración**. Agregar el campo `branch` (sucursal).
@@ -281,7 +281,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** `AUTH_USER_MODEL = "core.User"` y la primera migración se aplica.
 
 ### 1.5 Docker para desarrollo
-- [x] **Qué se hace:** escribir `backend/Dockerfile` y un `docker-compose.yml` con los servicios `db` (PostgreSQL 16) y `api` (Django). Redis y Celery se agregan en la Etapa 9 y el servicio `web` (React) en la Etapa 12.
+- [x] **Qué se hace:** escribir `backend/Dockerfile` y un `docker-compose.yml` con los servicios `db` (PostgreSQL 16) y `api` (Django).
 - **Para qué:** que cualquiera levante todo el sistema con `docker compose up`, sin instalar PostgreSQL a mano.
 - **Listo cuando:** `docker compose up` levanta la base de datos y la API, y `http://localhost:8000/admin/` muestra el login.
 
@@ -292,11 +292,11 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ### 1.7 API base
 - [x] **Qué se hace:** instalar Django REST Framework, `djangorestframework-simplejwt` y `drf-spectacular`. Publicar la documentación en `/api/docs/`.
-- **Para qué:** la caja (React, Etapa 12) y la futura app móvil hablan con el sistema por esta API.
+- **Para qué:** la caja (React) y la futura app móvil hablan con el sistema por esta API.
 - **Listo cuando:** `/api/docs/` muestra la documentación y `/api/auth/token/` entrega un token con un usuario de prueba.
 
 ### 1.8 Pruebas y revisión de estilo
-- [x] **Qué se hace:** configurar `pytest` y `ruff` (PEP 8). La revisión automática en GitHub (CI) se pasó a la Etapa 13.
+- [x] **Qué se hace:** configurar `pytest` y `ruff` (PEP 8).
 - **Para qué:** revisar la calidad en cada cambio.
 - **Listo cuando:** un *pull request* de prueba muestra la revisión en verde.
 
@@ -305,14 +305,10 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - El modelo `Branch` (sucursal) se creó en el paso 1.4 (y no en el 3.1) porque el usuario necesita apuntar a una sucursal desde la primera migración.
 - Unfold no trae traducción al español; se agregó una propia en `backend/locale/es_MX/`.
 - La base de datos no publica su puerto en la PC (había otro PostgreSQL usando el 5432); se accede con `docker compose exec db psql -U laundry`.
-- **Celery y Redis se quitaron** de esta etapa (se habían configurado en el antiguo paso 1.6) porque nada los usa todavía; se agregan en el paso 9.1.
-- Se hizo un primer esqueleto de la caja en React y luego **se quitó de la rama** para enfocarse en backend y admin; se retoma en la Etapa 12 (los pasos del proyecto React y de tipos generados pasaron ahí).
+- Para empezar con lo mínimo **se quitó lo que todavía no se usa** (apps vacías, carpetas `static/` y `templates/`, Celery y Redis, la CI y un primer esqueleto de la caja en React); cada cosa se agrega en la etapa que la usa.
 
 **Riesgos y pendientes:**
-- **Pendiente – sin revisión automática:** las pruebas y el lint se corren a mano hasta que se agregue la CI (Etapa 13).
 - **Pendiente – traducción de Unfold incompleta:** se tradujeron 157 textos de la interfaz principal; los de complementos no usados (importar/exportar, historial, editor de texto) siguen en inglés.
-- **Pendiente – marca de la lavandería:** el admin usa un color azul genérico y sin logo (Etapa 2).
-- **Pendiente – producción:** no hay `docker-compose.prod.yml` (Etapa 13).
 
 **✅ Etapa 1 terminada cuando:** `docker compose up` levanta la base de datos, la API y el admin, y las pruebas y el lint pasan.
 
@@ -323,7 +319,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Objetivo:** dejar listo el "esqueleto" del panel de administración, con la imagen de la lavandería, el menú organizado por áreas y la página de inicio, para que cada etapa siguiente solo agregue sus pantallas.
 
 ### 2.1 Marca de la lavandería
-- [ ] **Qué se hace:** configurar en `UNFOLD` el nombre, el logo, el ícono del navegador (*favicon*) y los colores de la lavandería, en modo claro y oscuro.
+- [ ] **Qué se hace:** crear `backend/static/` (y `STATICFILES_DIRS`) y configurar en `UNFOLD` el nombre, el logo, el ícono del navegador (*favicon*) y los colores de la lavandería, en modo claro y oscuro.
 - **Para qué:** que el panel se reconozca como el sistema de la lavandería.
 - **Listo cuando:** el login y el panel muestran el logo y los colores. Si aún no hay logo, se usa uno provisional y queda como pendiente.
 
@@ -333,7 +329,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** el menú muestra las áreas con íconos, cada usuario solo ve las secciones a las que tiene permiso y las áreas sin modelos todavía no aparecen.
 
 ### 2.3 Página de inicio (dashboard)
-- [ ] **Qué se hace:** reemplazar la página de inicio del admin por un dashboard propio (plantilla en `backend/templates/admin/` y `DASHBOARD_CALLBACK` de Unfold) con la estructura de tarjetas que se llenará en la Etapa 11 (ventas del día, máquinas, encargos, stock bajo, diferencias de caja). Por ahora muestra datos de ejemplo marcados como "próximamente".
+- [ ] **Qué se hace:** reemplazar la página de inicio del admin por un dashboard propio (plantilla en `backend/templates/admin/`, agregando esa carpeta a `TEMPLATES['DIRS']` y `DASHBOARD_CALLBACK` de Unfold) con la estructura de tarjetas que se llenará en la Etapa 11 (ventas del día, máquinas, encargos, stock bajo, diferencias de caja). Por ahora muestra datos de ejemplo marcados como "próximamente".
 - **Para qué:** dejar definida la vista que el admin verá al entrar, y llenarla conforme existan los datos.
 - **Listo cuando:** al entrar al admin se ve el dashboard con su estructura, y una prueba confirma que la página carga para un admin y no para un usuario sin acceso.
 
@@ -391,7 +387,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 4 – Catálogo e inventario
 
-**Objetivo:** dar de alta qué se vende, a qué precio, y qué insumos se gastan.
+**Objetivo:** dar de alta qué se vende, a qué precio, y qué insumos se gastan. Se crean las apps `sales` (servicios y precios) e `inventory` (productos, consumo y movimientos).
 
 ### 4.1 Servicios y precios
 - [ ] **Qué se hace:** crear los modelos `Service` y `ServicePrice` (precio por modalidad: autoservicio / encargo; campo `program` opcional para el futuro).
@@ -405,7 +401,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ### 4.3 Consumo por carga
 - [ ] **Qué se hace:** crear `LoadConsumption` (servicio + producto + cantidad) y cargar 150–200 ml de detergente y de suavizante para "Lavado por carga".
-- **Para qué:** que el sistema descuente insumos automáticamente en cada lavado (se usa en la Etapa 9).
+- **Para qué:** que el sistema descuente insumos automáticamente en cada lavado.
 - **Listo cuando:** el consumo se puede editar desde el admin.
 
 ### 4.4 Movimientos de inventario
@@ -429,7 +425,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 5 – Clientes
 
-**Objetivo:** registrar y buscar clientes (modelo, API y admin). La pantalla de la caja va en la Etapa 12.
+**Objetivo:** registrar y buscar clientes (modelo, API y admin). Se crea la app `customers`.
 
 ### 5.1 Modelo `Customer`
 - [ ] **Qué se hace:** crear `Customer` con nombre y teléfono obligatorios (teléfono único por sucursal); dirección, correo y notas opcionales.
@@ -472,7 +468,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 7 – Ventas, pagos y descuentos
 
-**Objetivo:** las reglas de cobro (ventas, pagos, descuentos y cancelaciones) en el backend, con su API y su consulta en el admin. La pantalla de cobro va en la Etapa 12.
+**Objetivo:** las reglas de cobro (ventas, pagos, descuentos y cancelaciones) en el backend, con su API y su consulta en el admin.
 
 ### 7.1 Modelos de venta
 - [ ] **Qué se hace:** crear `Sale` (modalidad, estado, subtotal, descuento, total, saldo, turno) y `SaleItem` (servicio o producto, cantidad, precio unitario copiado del catálogo).
@@ -520,7 +516,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 9 – Máquinas y ciclos (modo manual y simulador)
 
-**Objetivo:** registrar cada uso de máquina ligado a la venta, sin depender todavía de la cajita.
+**Objetivo:** registrar cada uso de máquina ligado a la venta, sin depender todavía de la cajita. Se crea la app `machines`.
 
 ### 9.1 Celery y Redis
 - [ ] **Qué se hace:** agregar Celery con Redis como broker (`config/celery.py`, servicios `redis`, `worker` y `beat` en `docker-compose.yml`, `REDIS_URL` en `.env.example`) y una tarea de prueba.
@@ -538,7 +534,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ### 9.4 Interfaz MachineDriver
 - [ ] **Qué se hace:** definir la interfaz `MachineDriver` (`get_status`, `start_cycle`, `stop_cycle`) y un registro que elige el driver según `Machine.driver`.
-- **Para qué:** que ventas y ciclos no sepan qué tecnología controla la máquina; en la Etapa 14 solo se agrega otro driver.
+- **Para qué:** que ventas y ciclos no sepan qué tecnología controla la máquina; después solo se agrega otro driver (p. ej. el de la cajita).
 - **Listo cuando:** existe la interfaz y una prueba que usa un driver falso.
 
 ### 9.5 Driver manual
@@ -566,7 +562,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 10 – Tickets
 
-**Objetivo:** que el backend entregue los datos del ticket listos para imprimir (`mvp.md` §4, *Ticket*). La impresión desde la caja va en la Etapa 12.
+**Objetivo:** que el backend entregue los datos del ticket listos para imprimir (`mvp.md` §4, *Ticket*).
 
 ### 10.1 Datos del ticket
 - [ ] **Qué se hace:** endpoint `/api/sales/{id}/receipt/` que devuelve todo calculado: encabezado, líneas, línea de promoción de detergente (siempre que haya lavado), totales, pagos, cambio, saldo y fecha de entrega.
@@ -653,7 +649,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **✅ Etapa 12 terminada cuando:** un empleado hace en la caja todo su turno: abrir caja, cobrar, encargos, activar máquinas (manual), imprimir tickets y corte.
 
-**Riesgos y pendientes (conocidos de la Etapa 1):**
+**Riesgos y pendientes:**
 - **Riesgo – dependencias del frontend:** `npm audit` reportaba 7 avisos "high" en dependencias internas de la herramienta de shadcn (`ts-morph` → `fast-glob` → `braces`), que no van en la app del navegador; revisar al retomar.
 - **Riesgo – `openapi-typescript`** pedía TypeScript 5 y la plantilla usa el 6 (se resolvió con un `override` en `package.json`).
 
@@ -668,7 +664,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** se entra por SSH y el dominio apunta a la VM.
 
 ### 13.2 Producción con Docker
-- [ ] **Qué se hace:** `docker-compose.prod.yml` con Caddy (HTTPS automático), API, worker, beat, PostgreSQL, Redis y el frontend compilado (Etapa 12). Variables en `.env` del servidor.
+- [ ] **Qué se hace:** `docker-compose.prod.yml` con Caddy (HTTPS automático), API, worker, beat, PostgreSQL, Redis y el frontend compilado. Variables en `.env` del servidor.
 - **Listo cuando:** `https://<dominio>/` abre la caja y `/admin/` el panel, con candado HTTPS.
 
 ### 13.3 Respaldos
