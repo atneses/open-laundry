@@ -469,12 +469,13 @@ permisos efectivos = permisos del rol + permisos agregados al usuario
 | Precios, servicios, consumo por carga        | `sales.manage_catalog`         |  ✅   |    ❌    |                ✅                |
 | Alta y configuración de máquinas y cajita    | `machines.manage_machines`     |  ✅   |    ❌    |                ✅                |
 | Reportes                                     | `core.view_reports`            |  ✅   |    ❌    |                ✅                |
-| Gestionar usuarios, roles y permisos         | `core.manage_users`            |  ✅   |    ❌    |        ❌ **solo admin**         |
+| Gestionar usuarios, roles y permisos         | `core.manage_users`            |  ✅   |    ❌    |                ✅                |
 
-- Solo un admin agrega o quita permisos; **gestionar usuarios y permisos no se delega**, para que nadie se dé permisos a sí mismo.
+- Solo quien tiene *Gestionar usuarios, roles y permisos* agrega o quita permisos, y por eso un empleado no puede darse permisos a sí mismo. Ese permiso también se puede dar como extra: quien lo tiene decide a quién confiárselo.
 - Al quitar un permiso, deja de valer en la siguiente acción, sin cerrar sesión. Se registra quién lo otorgó o quitó y cuándo.
 - Si un empleado no tiene el permiso, la acción queda **bloqueada**: la hace un admin o un empleado con ese permiso.
 - **Implementación:** `Group` por rol, `Permission` personalizados con los códigos de la tabla y `user_permissions` para los individuales. Cada endpoint de DRF declara el permiso que exige; el frontend solo oculta botones. **La validación siempre ocurre en el backend.** En el admin, la ficha del usuario muestra los permisos del rol y casillas para los extra.
+- **Los roles se pueden editar:** se crean con los permisos de la tabla y después el admin puede cambiarlos; las actualizaciones del sistema nunca deshacen sus cambios. Cuando una etapa agrega permisos nuevos, se le dan a los roles una sola vez (Admin: todos; Empleado: los de la tabla).
 
 ### Ticket para el cliente
 

@@ -40,20 +40,18 @@ Las casillas `[ ]` sirven para ir marcando el avance.
   - [2.1 Marca de la lavandería](#21-marca-de-la-lavandería)
   - [2.2 Menú lateral por áreas](#22-menú-lateral-por-áreas)
 - [Etapa 3 – Usuarios, roles y permisos](#etapa-3--usuarios-roles-y-permisos)
-  - [3.1 Sucursal (Branch)](#31-sucursal-branch)
-  - [3.2 Permisos personalizados](#32-permisos-personalizados)
-  - [3.3 Roles](#33-roles)
-  - [3.4 Permisos extra y bitácora](#34-permisos-extra-y-bitácora)
-  - [3.5 Clase de permiso para la API](#35-clase-de-permiso-para-la-api)
-  - [3.6 Endpoints de autenticación](#36-endpoints-de-autenticación)
-  - [3.7 Usuarios en el admin](#37-usuarios-en-el-admin)
+  - [3.1 Permiso para gestionar usuarios](#31-permiso-para-gestionar-usuarios)
+  - [3.2 Roles](#32-roles)
+  - [3.3 Permisos extra y bitácora](#33-permisos-extra-y-bitácora)
+  - [3.4 Usuarios en el admin](#34-usuarios-en-el-admin)
 - [Etapa 4 – Catálogo e inventario](#etapa-4--catálogo-e-inventario)
-  - [4.1 Servicios y precios](#41-servicios-y-precios)
-  - [4.2 Productos (insumos)](#42-productos-insumos)
-  - [4.3 Consumo por carga](#43-consumo-por-carga)
-  - [4.4 Movimientos de inventario](#44-movimientos-de-inventario)
-  - [4.5 Alertas de stock](#45-alertas-de-stock)
-  - [4.6 Pantallas de admin](#46-pantallas-de-admin)
+  - [4.1 Clase de permiso para la API](#41-clase-de-permiso-para-la-api)
+  - [4.2 Servicios y precios](#42-servicios-y-precios)
+  - [4.3 Productos (insumos)](#43-productos-insumos)
+  - [4.4 Consumo por carga](#44-consumo-por-carga)
+  - [4.5 Movimientos de inventario](#45-movimientos-de-inventario)
+  - [4.6 Alertas de stock](#46-alertas-de-stock)
+  - [4.7 Pantallas de admin](#47-pantallas-de-admin)
 - [Etapa 5 – Clientes](#etapa-5--clientes)
   - [5.1 Modelo Customer](#51-modelo-customer)
   - [5.2 API de clientes](#52-api-de-clientes)
@@ -344,43 +342,48 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **Objetivo:** que cada persona entre con su cuenta y solo pueda hacer lo que le corresponde (`mvp.md` §4, *Roles y permisos*).
 
-### 3.1 Sucursal (`Branch`)
-- [ ] **Qué se hace:** el modelo `Branch` ya existe (paso 1.4); crear una migración de datos que dé de alta la sucursal única.
-- **Para qué:** casi todos los datos cuelgan de una sucursal; así queda listo si algún día se abre otra.
-- **Listo cuando:** la sucursal existe después de migrar y aparece en el admin.
+### 3.1 Permiso para gestionar usuarios
+- [x] **Qué se hace:** crear el permiso `core.manage_users` (gestionar usuarios, roles y permisos). Los demás permisos de `mvp.md` §4 los define cada app en su etapa.
+- **Para qué:** que solo quien tenga ese permiso administre al personal.
+- **Listo cuando:** el permiso existe después de migrar.
 
-### 3.2 Permisos personalizados
-- [ ] **Qué se hace:** definir los 15 códigos de permiso de la tabla de `mvp.md` (`sales.charge`, `machines.start_machine`, …, `core.manage_users`) como `Permission` de Django.
-- **Para qué:** cada acción del sistema se protege con un permiso con nombre.
-- **Listo cuando:** los permisos existen en la base de datos después de migrar.
+### 3.2 Roles
+- [x] **Qué se hace:** crear los grupos **Admin** (todos los permisos) y **Empleado** (los permisos por defecto de la tabla de `mvp.md` §4) con una migración de datos. Después el admin puede editarlos, y cada etapa que define permisos agrega una migración que se los da a los roles una sola vez.
+- **Para qué:** asignar un rol completo a un usuario con un solo clic, sin repetir la asignación de permisos en cada etapa.
+- **Listo cuando:** después de migrar, Admin tiene todos los permisos y Empleado no tiene `core.manage_users` (prueba).
 
-### 3.3 Roles
-- [ ] **Qué se hace:** crear con una migración los `Group` **Admin** (todos los permisos) y **Empleado** (los permisos por defecto de la tabla).
-- **Para qué:** asignar un rol completo a un usuario con un solo clic.
-- **Listo cuando:** un usuario del grupo Empleado tiene exactamente los 7 permisos por defecto.
-
-### 3.4 Permisos extra y bitácora
-- [ ] **Qué se hace:** permitir agregar permisos individuales a un empleado (`user_permissions`), **excepto** `core.manage_users`. Crear el modelo `PermissionLog` y registrar quién otorgó o quitó cada permiso.
+### 3.3 Permisos extra y bitácora
+- [x] **Qué se hace:** permitir agregar permisos individuales a un empleado (`user_permissions`). Crear el modelo `PermissionLog` y registrar quién otorgó o quitó cada permiso.
 - **Solo lectura:** el admin de `PermissionLog` usa una clase base de `core` que no permite agregar, editar ni borrar; la reutilizarán las demás bitácoras, ventas, pagos y cortes. Documentar en `CLAUDE.md` cómo usarla.
 - **Para qué:** que el admin delegue tareas sin convertir al empleado en admin, y que quede registro.
-- **Listo cuando:** una prueba confirma que no se puede dar `core.manage_users` a un empleado y que cada cambio queda en la bitácora.
+- **Listo cuando:** una prueba confirma que cada cambio queda en la bitácora.
 
-### 3.5 Clase de permiso para la API
-- [ ] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("sales.deliver_with_balance")`, que se pone en cada endpoint.
-- **Para qué:** que la validación ocurra siempre en el servidor, no solo escondiendo botones.
-- **Listo cuando:** una prueba muestra que un empleado sin el permiso recibe error 403.
-
-### 3.6 Endpoints de autenticación
-- [ ] **Qué se hace:** `/api/auth/token/`, `/api/auth/refresh/` y `/api/auth/me/` (usuario actual + lista de permisos efectivos).
-- **Para qué:** que la caja sepa quién está conectado y qué botones mostrar.
-- **Listo cuando:** `/api/auth/me/` devuelve los permisos correctos para un admin y para un empleado.
-
-### 3.7 Usuarios en el admin
-- [ ] **Qué se hace:** pantalla de usuario en Unfold con rol, estado (activo / inactivo) y casillas de permisos extra. Los usuarios no se borran, se desactivan.
+### 3.4 Usuarios en el admin
+- [x] **Qué se hace:** pantalla de usuario en Unfold con rol, estado (activo / inactivo) y casillas de permisos extra, visible solo con `core.manage_users`. Los usuarios no se borran, se desactivan.
 - **Para qué:** que el admin gestione al personal sin tocar código.
-- **Listo cuando:** se puede crear un empleado, darle un permiso extra y desactivarlo.
+- **Listo cuando:** se puede crear un empleado, darle un permiso extra y desactivarlo; un usuario sin `core.manage_users` no entra a la pantalla (prueba).
 
-**✅ Etapa 3 terminada cuando:** un admin y un empleado entran al admin y a la API, cada uno ve solo lo suyo y las pruebas de permisos pasan.
+**Notas de la implementación:**
+- Los roles se crean en la migración `core/0003_create_roles` (*Admin*: todos los permisos; *Empleado*: ninguno, hasta que las apps definan los suyos). Se editan en el admin, solo con `core.manage_users`, y `migrate` no deshace esos cambios.
+- **Cambio respecto a lo planeado:** al principio los roles se sincronizaban en cada `migrate` y eran de solo lectura. Se cambió porque eso deshacía cualquier cambio que un admin hiciera a un rol.
+- **En cada etapa con permisos nuevos:** agregar una migración de datos que llame a `core.roles.grant_permissions` (Admin: todos los de la app; Empleado: los de la tabla de `mvp.md` §4). Solo agrega, nunca quita.
+- **Cambio respecto a lo planeado:** `core.manage_users` estaba bloqueado como permiso extra (señal y filtro del formulario). Se quitó el bloqueo porque, con los roles editables, quien tiene ese permiso ya podía darlo mediante un rol; ahora se puede dar también como extra.
+- Seguridad adicional: un usuario sin rango de superusuario no ve la casilla de superusuario ni puede editar a un superusuario (evita que alguien se suba de privilegios).
+- Los usuarios no se pueden borrar desde el admin; se desactivan.
+- Todos los textos que ve el usuario se escriben en inglés en el código y se marcan para traducción (`gettext_lazy`); la traducción al español se agrega aparte.
+- La bitácora (`PermissionLog`) se muestra en el área *Bitácoras* del menú.
+
+**Riesgos y pendientes:**
+- **Riesgo – cambios fuera del admin sin bitácora:** si se agregan o quitan permisos desde la consola o el código, no quedan en `PermissionLog` (solo se registran los cambios hechos en el admin).
+- **Pendiente – cambios de rol sin bitácora:** se registran los permisos extra, pero no cuando a un usuario se le cambia el rol (grupo) ni cuando se cambian los permisos de un rol.
+- **Pendiente – acceso al admin:** para que un empleado entre al admin hay que marcarle "Es staff" a mano.
+- **Decisión – permisos extra y roles:** se puede agregar como extra cualquier permiso de la base (incluidos los automáticos de Django: ver/agregar/cambiar/borrar de cada modelo, y `core.manage_users`), y un usuario puede tener varios roles; sus permisos se suman.
+- **Riesgo – roles editables sin protecciones (decisión):** un admin puede quitarle `core.manage_users` al rol Admin (solo el superusuario podría gestionar usuarios), dárselo al rol Empleado o a un empleado como extra (esa persona podría a su vez darse cualquier permiso) o borrar un rol (sus usuarios lo pierden). Por ahora se decidió no bloquearlo.
+- **Riesgo – migración olvidada:** si una etapa crea permisos y no agrega su migración para los roles, ni Admin los recibe; solo el superusuario los tendría hasta que se asignen a mano.
+- **Riesgo – permisos automáticos de Django como extra:** un `ModelAdmin` que no sobrescribe `has_*_permission` usa los permisos automáticos, así que un extra como `machines.change_machine` daría acceso sin el permiso del MVP (`machines.manage_machines`). Hoy solo pasa con `core.change_branch` / `core.delete_branch`. Cada pantalla de admin nueva debe revisar el permiso del MVP en sus `has_*_permission`.
+- **Pendiente – traducciones:** los textos del código están en inglés con `gettext_lazy` (nombres de modelos y campos, títulos del menú y del admin, mensajes, nombre del permiso). Falta agregar su traducción al español en `backend/locale/es_MX/`; mientras tanto, los que Django no traduce por su cuenta se ven en inglés. Los nombres de permisos necesitan un manejo aparte porque se guardan en la base de datos.
+
+**✅ Etapa 3 terminada cuando:** un admin y un empleado entran al admin, cada uno ve solo lo suyo y las pruebas de permisos pasan.
 
 ---
 
@@ -388,32 +391,37 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **Objetivo:** dar de alta qué se vende, a qué precio, y qué insumos se gastan. Se crean las apps `sales` (servicios y precios) e `inventory` (productos, consumo y movimientos).
 
-### 4.1 Servicios y precios
+### 4.1 Clase de permiso para la API
+- [ ] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("sales.manage_catalog")`, que se pone en cada endpoint. Es la primera etapa con endpoints protegidos por permiso.
+- **Para qué:** que la validación ocurra siempre en el servidor, no solo escondiendo botones.
+- **Listo cuando:** una prueba muestra que un usuario sin el permiso recibe error 403.
+
+### 4.2 Servicios y precios
 - [ ] **Qué se hace:** crear los modelos `Service` y `ServicePrice` (precio por modalidad: autoservicio / encargo; campo `program` opcional para el futuro).
 - **Para qué:** tener precios distintos para autoservicio y encargo, y poder agregar servicios nuevos (p. ej. lavado de tenis) sin programar.
 - **Listo cuando:** en el admin se dan de alta "Lavado por carga" y "Secado por carga" con sus dos precios.
 
-### 4.2 Productos (insumos)
+### 4.3 Productos (insumos)
 - [ ] **Qué se hace:** crear el modelo `Product` (detergente, suavizante, bolsas) con stock actual, stock mínimo y si se vende o no.
 - **Para qué:** controlar cuánto insumo hay.
 - **Listo cuando:** existen detergente y suavizante con `is_for_sale = false`.
 
-### 4.3 Consumo por carga
+### 4.4 Consumo por carga
 - [ ] **Qué se hace:** crear `LoadConsumption` (servicio + producto + cantidad) y cargar 150–200 ml de detergente y de suavizante para "Lavado por carga".
 - **Para qué:** que el sistema descuente insumos automáticamente en cada lavado.
 - **Listo cuando:** el consumo se puede editar desde el admin.
 
-### 4.4 Movimientos de inventario
+### 4.5 Movimientos de inventario
 - [ ] **Qué se hace:** crear `StockMovement` (entrada, consumo, venta, ajuste) y la regla de que cada movimiento actualiza `stock`. Los ajustes requieren `inventory.adjust_stock`.
 - **Para qué:** tener el historial de por qué cambió el stock.
 - **Listo cuando:** registrar una entrada de 5 L sube el stock en 5000 ml, con prueba automática.
 
-### 4.5 Alertas de stock
+### 4.6 Alertas de stock
 - [ ] **Qué se hace:** endpoint `/api/products/low-stock/` y un filtro en el admin con los productos por debajo del mínimo.
 - **Para qué:** avisar antes de quedarse sin detergente.
 - **Listo cuando:** al bajar el stock del mínimo, el producto aparece en la alerta.
 
-### 4.6 Pantallas de admin
+### 4.7 Pantallas de admin
 - [ ] **Qué se hace:** configurar en Unfold las secciones *Catálogo* (servicios, precios) e *Inventario* (productos, movimientos, consumo por carga), con filtros y búsqueda.
 - **Para qué:** que el admin mantenga el catálogo sin ayuda técnica.
 - **Listo cuando:** se puede cambiar un precio desde el admin y la API devuelve el nuevo.
@@ -585,7 +593,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** se puede ver, por ejemplo, "ventas en tarjeta de la semana pasada de un empleado".
 
 ### 11.3 Endpoints de reportes
-- [ ] **Qué se hace:** `/api/reports/daily-sales/`, `/machine-usage/` e `/inventory/`, protegidos con `core.view_reports`.
+- [ ] **Qué se hace:** crear el permiso `core.view_reports` y los endpoints `/api/reports/daily-sales/`, `/machine-usage/` e `/inventory/`, protegidos con él.
 - **Listo cuando:** devuelven los mismos números que el dashboard.
 
 **✅ Etapa 11 terminada cuando:** el admin puede revisar el día y el mes sin pedir ayuda.
@@ -613,7 +621,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** `npm run lint`, `npm run typecheck`, `npm test` y `npm run build` pasan.
 
 ### 12.4 Login en la caja
-- [ ] **Qué se hace:** pantalla de inicio de sesión en React, guardado del token y renovación automática; cierre de sesión.
+- [ ] **Qué se hace:** endpoint `/api/auth/me/` (usuario actual + lista de permisos efectivos) y pantalla de inicio de sesión en React, guardado del token y renovación automática; cierre de sesión.
 - **Para qué:** que cada empleado entre con su cuenta en la PC de caja.
 - **Listo cuando:** un empleado entra, ve su nombre y, al cerrar sesión, vuelve al login.
 
