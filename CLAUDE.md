@@ -10,7 +10,7 @@ Lee esto antes de trabajar en el proyecto. Para el **qué** y el **porqué** del
 
 ## Idioma
 
-- **Todo el código en inglés:** apps, modelos, campos, funciones, variables, nombres de pruebas, comentarios, docstrings, nombres de pasos de CI y comentarios de configuración.
+- **Todo el código en inglés:** apps, modelos, campos, funciones, variables, nombres de pruebas, comentarios, docstrings, nombres de pasos de CI (cuando exista) y comentarios de configuración.
 - **Lo que ve el usuario, en español (México):** `verbose_name` de modelos y campos, etiquetas del admin, textos de la caja (React), mensajes de error mostrados al usuario y traducciones en `backend/locale/es_MX/`.
 - **Documentación para el negocio en español:** `mvp.md`, `plan.md`, `README.md`.
 - Las equivalencias concepto → nombre en código están en `mvp.md` §3, *Nombres en el código*.
@@ -60,7 +60,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
   - Todo lo que pertenece a un local lleva `branch` (FK a `core.Branch`).
   - Montos con `DecimalField` (nunca `float`).
   - Los registros con historial (ventas, pagos, cortes, bitácoras) **no se borran**: se cancelan o desactivan.
-- **Migraciones:** siempre en el repositorio, generadas con `makemigrations`. Nunca editar la base de datos a mano. La CI verifica que no falten.
+- **Migraciones:** siempre en el repositorio, generadas con `makemigrations`. Nunca editar la base de datos a mano. Verificar que no falten con `makemigrations --check`.
 - **Permisos:**
   - Cada acción se protege con los códigos de permiso de `mvp.md` §4 (p. ej. `sales.charge`, `sales.deliver_with_balance`).
   - **La validación siempre en el backend** (clase de permiso en cada endpoint de DRF); el frontend solo oculta botones.
@@ -112,6 +112,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 - **No hacer commit, push ni merge sin que el usuario lo pida.**
 - Mensajes de commit con prefijo convencional, en inglés: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`.
 - Nunca subir: `.env`, la carpeta `Aitaire/` (datos privados del negocio), respaldos de firmware (`firmware/*.bin`).
+- No crear `frontend/` (Etapa 12), `.github/` (Etapa 13), `firmware/` ni `mosquitto/` (Etapa 14) antes de su etapa sin acordarlo.
 
 ## Desarrollo incremental: primero lo mínimo indispensable
 

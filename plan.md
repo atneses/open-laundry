@@ -36,7 +36,7 @@ Las casillas `[ ]` sirven para ir marcando el avance.
   - [1.6 Celery](#16-celery)
   - [1.7 Django Admin con Unfold](#17-django-admin-con-unfold)
   - [1.8 API base](#18-api-base)
-  - [1.9 Pruebas y CI](#19-pruebas-y-ci)
+  - [1.9 Pruebas y revisión de estilo](#19-pruebas-y-revisión-de-estilo)
 - [Etapa 2 – Personalización del admin (Unfold)](#etapa-2--personalización-del-admin-unfold)
   - [2.1 Marca de la lavandería](#21-marca-de-la-lavandería)
   - [2.2 Menú lateral por áreas](#22-menú-lateral-por-áreas)
@@ -104,7 +104,7 @@ Las casillas `[ ]` sirven para ir marcando el avance.
   - [13.1 Servidor](#131-servidor)
   - [13.2 Producción con Docker](#132-producción-con-docker)
   - [13.3 Respaldos](#133-respaldos)
-  - [13.4 Despliegue automático](#134-despliegue-automático)
+  - [13.4 Revisión automática (CI) y despliegue automático](#134-revisión-automática-ci-y-despliegue-automático)
   - [13.5 Datos iniciales](#135-datos-iniciales)
   - [13.6 Capacitación](#136-capacitación)
   - [13.7 Periodo de prueba](#137-periodo-de-prueba)
@@ -192,7 +192,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
   - *Para qué:* revisar cada cambio antes de mezclarlo y poder deshacerlo.
 - [ ] **Pruebas automáticas** con `pytest` + `pytest-django` en el backend y `vitest` en el frontend (Etapa 12). Cada regla de negocio importante (cobro, corte de caja, permisos, ciclos) lleva su prueba.
   - *Para qué:* que un cambio nuevo no rompa algo que ya funcionaba.
-- [ ] **CI en GitHub Actions:** en cada *pull request* corren el lint (`ruff`; `oxlint` desde la Etapa 12) y las pruebas.
+- [ ] **Revisiones antes de terminar:** lint (`ruff`; `oxlint` desde la Etapa 12), pruebas y migraciones se corren a mano (comandos en `CLAUDE.md`). La revisión automática en GitHub (CI) se agrega en la Etapa 13.
 - [ ] **Migraciones de base de datos** siempre en el repositorio; nunca se edita la base a mano.
 - [ ] **Secretos** (contraseñas, claves) solo en `.env`, que no se sube a git. En el repositorio va un `.env.example` sin valores reales.
 - [ ] **Primero lo mínimo indispensable:** cada funcionalidad se construye primero en su versión mínima que cumple el "Listo cuando"; las mejoras se proponen y se anotan como pendientes (ver `CLAUDE.md`).
@@ -261,7 +261,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Objetivo:** tener el esqueleto del backend corriendo en una computadora de desarrollo con un solo comando.
 
 ### 1.1 Estructura del repositorio
-- [x] **Qué se hace:** crear las carpetas `backend/`, `firmware/`, `mosquitto/` y `docs/` (`frontend/` se crea en la Etapa 12). Mover `lavadora.png`, `secadora.png` y el manual a `docs/`.
+- [x] **Qué se hace:** crear las carpetas `backend/` y `docs/` (`frontend/` se crea en la Etapa 12; `firmware/` y `mosquitto/`, en la Etapa 14). Mover `lavadora.png`, `secadora.png` y el manual a `docs/`.
 - **Para qué:** ordenar el proyecto como se definió en `mvp.md` §8.
 - **Listo cuando:** la estructura existe y `mvp.md` sigue mostrando bien las imágenes (actualizar rutas).
 
@@ -300,8 +300,8 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Para qué:** la caja (React, Etapa 12) y la futura app móvil hablan con el sistema por esta API.
 - **Listo cuando:** `/api/docs/` muestra la documentación y `/api/auth/token/` entrega un token con un usuario de prueba.
 
-### 1.9 Pruebas y CI
-- [x] **Qué se hace:** configurar `pytest` y `ruff`, y un *workflow* de GitHub Actions que los corra (el del frontend se agrega en la Etapa 12).
+### 1.9 Pruebas y revisión de estilo
+- [x] **Qué se hace:** configurar `pytest` y `ruff` (PEP 8). La revisión automática en GitHub (CI) se pasó a la Etapa 13.
 - **Para qué:** revisar la calidad en cada cambio.
 - **Listo cuando:** un *pull request* de prueba muestra la revisión en verde.
 
@@ -313,12 +313,12 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - Se hizo un primer esqueleto de la caja en React y luego **se quitó de la rama** para enfocarse en backend y admin; se retoma en la Etapa 12 (los pasos del proyecto React y de tipos generados pasaron ahí).
 
 **Riesgos y pendientes:**
-- **Riesgo – CI sin probar en GitHub:** el *workflow* corre bien en local, pero no se ha visto pasar en GitHub; se confirma al subir la rama.
+- **Pendiente – sin revisión automática:** las pruebas y el lint se corren a mano hasta que se agregue la CI (Etapa 13).
 - **Pendiente – traducción de Unfold incompleta:** se tradujeron 157 textos de la interfaz principal; los de complementos no usados (importar/exportar, historial, editor de texto) siguen en inglés.
 - **Pendiente – marca de la lavandería:** el admin usa un color azul genérico y sin logo (Etapa 2).
 - **Pendiente – producción:** no hay `docker-compose.prod.yml` (Etapa 13).
 
-**✅ Etapa 1 terminada cuando:** `docker compose up` levanta la API, el admin y Celery, y la CI pasa.
+**✅ Etapa 1 terminada cuando:** `docker compose up` levanta la API, el admin y Celery, y las pruebas y el lint pasan.
 
 ---
 
@@ -613,8 +613,8 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** el script genera los tipos sin errores.
 
 ### 12.3 Pruebas y CI del frontend
-- [ ] **Qué se hace:** configurar `vitest`, Testing Library y `oxlint`, y agregar al *workflow* de CI un job del frontend (lint, tipos, pruebas y compilación).
-- **Listo cuando:** la CI del frontend pasa en un *pull request*.
+- [ ] **Qué se hace:** configurar `vitest`, Testing Library y `oxlint` (lint, tipos, pruebas y compilación).
+- **Listo cuando:** `npm run lint`, `npm run typecheck`, `npm test` y `npm run build` pasan.
 
 ### 12.4 Login en la caja
 - [ ] **Qué se hace:** pantalla de inicio de sesión en React, guardado del token y renovación automática; cierre de sesión.
@@ -675,9 +675,12 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Para qué:** un respaldo que nunca se ha restaurado no garantiza nada.
 - **Listo cuando:** se restauró un respaldo en una base de prueba y los datos están completos.
 
-### 13.4 Despliegue automático
-- [ ] **Qué se hace:** *workflow* que, al mezclar a `main`, construye las imágenes y actualiza el servidor.
-- **Listo cuando:** un cambio pequeño llega a producción sin entrar al servidor a mano.
+### 13.4 Revisión automática (CI) y despliegue automático
+- [ ] **Qué se hace:** *workflows* de GitHub Actions (`.github/workflows/`) que:
+  1. en cada *pull request* corren el lint, las migraciones, las pruebas del backend y del frontend, y la compilación;
+  2. al mezclar a `main`, construyen las imágenes y actualizan el servidor.
+- **Para qué:** que ningún cambio llegue a `main` ni a producción sin pasar las pruebas, aunque alguien olvide correrlas.
+- **Listo cuando:** un *pull request* muestra la revisión en verde y un cambio pequeño llega a producción sin entrar al servidor a mano.
 
 ### 13.5 Datos iniciales
 - [ ] **Qué se hace:** cargar en producción la sucursal, las 6 máquinas (driver manual), servicios y precios reales, insumos con su stock, descuentos vigentes y las cuentas de cada empleado.
@@ -701,6 +704,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 > **Requiere:** Etapa 0 terminada (pasos 0.1, 0.2, 0.3, 0.5 y 0.6).
 > **Precaución:** durante las pruebas en mesa, **desconectar los 6 cables de las máquinas** de la cajita (o dejar las máquinas en modo PUSH) para no regalar créditos por accidente.
+> **Carpetas:** al empezar esta etapa se crean `firmware/` (programa de la cajita) y `mosquitto/` (configuración del broker).
 
 ### 14.1 Broker MQTT
 - [ ] **Qué se hace:** agregar el servicio `mqtt` (Mosquitto) al docker compose, con TLS en el puerto 8883, usuario y contraseña por dispositivo y permisos por tema (`acl`): la cajita solo lee `laundry/<id>/cmd` y escribe en `laundry/<id>/ack` y `.../status`; el backend publica órdenes.

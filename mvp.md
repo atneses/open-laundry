@@ -662,7 +662,7 @@ Sobre LG: la [página de LG México](https://www.lg.com/mx/business/lavanderia-c
 - **Máquinas:** manual de la secadora; cambiar la contraseña `3000`; probar un medidor de consumo en una lavadora (opcional).
 - **LG:** enviar la consulta de información (`contacto_lg.md`) y revisar el portal de desarrolladores con sesión iniciada.
 - **Caja:** driver de la POS-8360 y ticket de prueba de 80 mm; cuenta de desarrollador de Mercado Pago (API de Point).
-- **Proyecto:** repositorio, estructura `backend/` + `frontend/`, docker compose, CI básico.
+- **Proyecto:** repositorio, estructura `backend/`, docker compose y pruebas.
 
 ### Fase 1 – MVP operativo
 - Autenticación, usuarios, roles y permisos individuales.
