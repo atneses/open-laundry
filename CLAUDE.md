@@ -21,7 +21,7 @@ Lee esto antes de trabajar en el proyecto. Para el **qué** y el **porqué** del
 |---------------------|------------------------------------------------------------------------------------------------------------|
 | Backend             | Python 3.13, **Django 5.2 LTS**, Django REST Framework, `djangorestframework-simplejwt`, `drf-spectacular` |
 | Admin               | Django Admin + `django-unfold` (back-office: configuración, consultas, reportes)                           |
-| Tareas              | Celery + Redis                                                                                             |
+| Tareas              | Celery + Redis (Etapa 9, cuando se necesiten tareas en segundo plano)                                      |
 | Base de datos       | PostgreSQL 16                                                                                              |
 | Frontend (caja)     | React + TypeScript + Vite, **Tailwind + shadcn/ui**, TanStack Query, React Router (Etapa 12)               |
 | Control de máquinas | MQTT (Mosquitto) + programa propio en la cajita de relés (Etapa 14)                                        |

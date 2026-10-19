@@ -33,10 +33,9 @@ Las casillas `[ ]` sirven para ir marcando el avance.
   - [1.3 Apps de Django](#13-apps-de-django)
   - [1.4 Usuario personalizado (User)](#14-usuario-personalizado-user)
   - [1.5 Docker para desarrollo](#15-docker-para-desarrollo)
-  - [1.6 Celery](#16-celery)
-  - [1.7 Django Admin con Unfold](#17-django-admin-con-unfold)
-  - [1.8 API base](#18-api-base)
-  - [1.9 Pruebas y revisión de estilo](#19-pruebas-y-revisión-de-estilo)
+  - [1.6 Django Admin con Unfold](#16-django-admin-con-unfold)
+  - [1.7 API base](#17-api-base)
+  - [1.8 Pruebas y revisión de estilo](#18-pruebas-y-revisión-de-estilo)
 - [Etapa 2 – Personalización del admin (Unfold)](#etapa-2--personalización-del-admin-unfold)
   - [2.1 Marca de la lavandería](#21-marca-de-la-lavandería)
   - [2.2 Menú lateral por áreas](#22-menú-lateral-por-áreas)
@@ -75,13 +74,14 @@ Las casillas `[ ]` sirven para ir marcando el avance.
   - [8.1 Modelo DropOffOrder](#81-modelo-dropofforder)
   - [8.2 Flujo de estados](#82-flujo-de-estados)
 - [Etapa 9 – Máquinas y ciclos (modo manual y simulador)](#etapa-9--máquinas-y-ciclos-modo-manual-y-simulador)
-  - [9.1 Modelos](#91-modelos)
-  - [9.2 Ciclos generados por la venta](#92-ciclos-generados-por-la-venta)
-  - [9.3 Interfaz MachineDriver](#93-interfaz-machinedriver)
-  - [9.4 Driver manual](#94-driver-manual)
-  - [9.5 Simulador](#95-simulador)
-  - [9.6 Consumo de insumos](#96-consumo-de-insumos)
-  - [9.7 Cierre por tiempo](#97-cierre-por-tiempo)
+  - [9.1 Celery y Redis](#91-celery-y-redis)
+  - [9.2 Modelos](#92-modelos)
+  - [9.3 Ciclos generados por la venta](#93-ciclos-generados-por-la-venta)
+  - [9.4 Interfaz MachineDriver](#94-interfaz-machinedriver)
+  - [9.5 Driver manual](#95-driver-manual)
+  - [9.6 Simulador](#96-simulador)
+  - [9.7 Consumo de insumos](#97-consumo-de-insumos)
+  - [9.8 Cierre por tiempo](#98-cierre-por-tiempo)
 - [Etapa 10 – Tickets](#etapa-10--tickets)
   - [10.1 Datos del ticket](#101-datos-del-ticket)
 - [Etapa 11 – Reportes](#etapa-11--reportes)
@@ -172,13 +172,13 @@ flowchart TD
     end
 ```
 
-| Etapa | Nombre | Fase en `mvp.md` |
-|:-----:|--------|:----------------:|
-| 0 | Preparación en el local | Fase 0 |
-| 1–11 | Backend y admin (modelos, reglas, API y Unfold) | Fase 1 |
-| 12 | Caja (React) | Fase 1 |
-| 13 | Despliegue y arranque en el local (MVP) | Fase 1 |
-| 14–16 | Control de máquinas e integraciones | Fase 2 |
+| Etapa | Nombre                                          | Fase en `mvp.md` |
+|:-----:|-------------------------------------------------|:----------------:|
+|   0   | Preparación en el local                         |      Fase 0      |
+| 1–11  | Backend y admin (modelos, reglas, API y Unfold) |      Fase 1      |
+|  12   | Caja (React)                                    |      Fase 1      |
+|  13   | Despliegue y arranque en el local (MVP)         |      Fase 1      |
+| 14–16 | Control de máquinas e integraciones             |      Fase 2      |
 
 Primero se construyen el **backend y el admin** (Etapas 1 a 11): todas las reglas de negocio, la API y las pantallas de administración con Unfold. Después, la **caja en React** (Etapa 12) usa esa API ya probada.
 
@@ -281,26 +281,21 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** `AUTH_USER_MODEL = "core.User"` y la primera migración se aplica.
 
 ### 1.5 Docker para desarrollo
-- [x] **Qué se hace:** escribir `backend/Dockerfile` y un `docker-compose.yml` con los servicios `db` (PostgreSQL 16), `redis`, `api` (Django), `worker` y `beat` (Celery). El servicio `web` (React) se agrega en la Etapa 12.
-- **Para qué:** que cualquiera levante todo el sistema con `docker compose up`, sin instalar PostgreSQL ni Redis a mano.
-- **Listo cuando:** `docker compose up` levanta todo y `http://localhost:8000/admin/` muestra el login.
+- [x] **Qué se hace:** escribir `backend/Dockerfile` y un `docker-compose.yml` con los servicios `db` (PostgreSQL 16) y `api` (Django). Redis y Celery se agregan en la Etapa 9 y el servicio `web` (React) en la Etapa 12.
+- **Para qué:** que cualquiera levante todo el sistema con `docker compose up`, sin instalar PostgreSQL a mano.
+- **Listo cuando:** `docker compose up` levanta la base de datos y la API, y `http://localhost:8000/admin/` muestra el login.
 
-### 1.6 Celery
-- [x] **Qué se hace:** configurar Celery con Redis como broker (`config/celery.py`) y crear una tarea de prueba.
-- **Para qué:** las órdenes a las máquinas y los reintentos corren en segundo plano, sin trabar la caja.
-- **Listo cuando:** la tarea de prueba se ejecuta y se ve en los logs del `worker`.
-
-### 1.7 Django Admin con Unfold
+### 1.6 Django Admin con Unfold
 - [x] **Qué se hace:** instalar `django-unfold`, ponerlo en `INSTALLED_APPS` antes de `django.contrib.admin`, y configurar nombre, logo, colores e idioma español en `UNFOLD`.
 - **Para qué:** tener desde el inicio el panel de administración con la imagen de la lavandería.
 - **Listo cuando:** `/admin/` se ve con el tema de Unfold y en español.
 
-### 1.8 API base
+### 1.7 API base
 - [x] **Qué se hace:** instalar Django REST Framework, `djangorestframework-simplejwt` y `drf-spectacular`. Publicar la documentación en `/api/docs/`.
 - **Para qué:** la caja (React, Etapa 12) y la futura app móvil hablan con el sistema por esta API.
 - **Listo cuando:** `/api/docs/` muestra la documentación y `/api/auth/token/` entrega un token con un usuario de prueba.
 
-### 1.9 Pruebas y revisión de estilo
+### 1.8 Pruebas y revisión de estilo
 - [x] **Qué se hace:** configurar `pytest` y `ruff` (PEP 8). La revisión automática en GitHub (CI) se pasó a la Etapa 13.
 - **Para qué:** revisar la calidad en cada cambio.
 - **Listo cuando:** un *pull request* de prueba muestra la revisión en verde.
@@ -310,6 +305,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - El modelo `Branch` (sucursal) se creó en el paso 1.4 (y no en el 3.1) porque el usuario necesita apuntar a una sucursal desde la primera migración.
 - Unfold no trae traducción al español; se agregó una propia en `backend/locale/es_MX/`.
 - La base de datos no publica su puerto en la PC (había otro PostgreSQL usando el 5432); se accede con `docker compose exec db psql -U laundry`.
+- **Celery y Redis se quitaron** de esta etapa (se habían configurado en el antiguo paso 1.6) porque nada los usa todavía; se agregan en el paso 9.1.
 - Se hizo un primer esqueleto de la caja en React y luego **se quitó de la rama** para enfocarse en backend y admin; se retoma en la Etapa 12 (los pasos del proyecto React y de tipos generados pasaron ahí).
 
 **Riesgos y pendientes:**
@@ -318,7 +314,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Pendiente – marca de la lavandería:** el admin usa un color azul genérico y sin logo (Etapa 2).
 - **Pendiente – producción:** no hay `docker-compose.prod.yml` (Etapa 13).
 
-**✅ Etapa 1 terminada cuando:** `docker compose up` levanta la API, el admin y Celery, y las pruebas y el lint pasan.
+**✅ Etapa 1 terminada cuando:** `docker compose up` levanta la base de datos, la API y el admin, y las pruebas y el lint pasan.
 
 ---
 
@@ -526,35 +522,40 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **Objetivo:** registrar cada uso de máquina ligado a la venta, sin depender todavía de la cajita.
 
-### 9.1 Modelos
+### 9.1 Celery y Redis
+- [ ] **Qué se hace:** agregar Celery con Redis como broker (`config/celery.py`, servicios `redis`, `worker` y `beat` en `docker-compose.yml`, `REDIS_URL` en `.env.example`) y una tarea de prueba.
+- **Para qué:** las órdenes a las máquinas, el simulador y el cierre periódico de ciclos corren en segundo plano, sin trabar la caja. Es la primera etapa que lo necesita.
+- **Listo cuando:** la tarea de prueba se ejecuta y se ve en los logs del `worker`; en las pruebas automáticas corre en el mismo proceso, sin Redis.
+
+### 9.2 Modelos
 - [ ] **Qué se hace:** crear `MachineController`, `Machine` (con canal de relé y pulsos, aunque aún no se usen) y `MachineCycle` con sus estados (`pending`, `requested`, `credit_sent`, `running`, `finished`, `failed`, `cancelled`) y la marca `is_manual`.
 - **Listo cuando:** las 4 lavadoras y 2 secadoras están dadas de alta en el admin.
 
-### 9.2 Ciclos generados por la venta
+### 9.3 Ciclos generados por la venta
 - [ ] **Qué se hace:** al cobrar, cada carga de un servicio que usa máquina crea un `MachineCycle` (3 cargas → 3 ciclos). En encargo quedan `pending`.
 - **Para qué:** poder cuadrar ventas contra usos reales.
 - **Listo cuando:** una venta de 2 lavados y 1 secado crea 3 ciclos (prueba).
 
-### 9.3 Interfaz MachineDriver
+### 9.4 Interfaz MachineDriver
 - [ ] **Qué se hace:** definir la interfaz `MachineDriver` (`get_status`, `start_cycle`, `stop_cycle`) y un registro que elige el driver según `Machine.driver`.
 - **Para qué:** que ventas y ciclos no sepan qué tecnología controla la máquina; en la Etapa 14 solo se agrega otro driver.
 - **Listo cuando:** existe la interfaz y una prueba que usa un driver falso.
 
-### 9.4 Driver manual
+### 9.5 Driver manual
 - [ ] **Qué se hace:** `ManualDriver`: al activar, marca el ciclo como `is_manual` y `running`; el empleado presiona Start en la máquina (modo PUSH).
 - **Para qué:** es como operan hoy y es el respaldo permanente si falla la cajita.
 - **Listo cuando:** activar una máquina en modo manual deja el ciclo en curso.
 
-### 9.5 Simulador
+### 9.6 Simulador
 - [ ] **Qué se hace:** `SimulatorDriver`: imita a la cajita, con confirmación tras unos segundos o falla al azar (configurable). Corre en una tarea de Celery.
 - **Para qué:** construir y probar las pantallas de máquinas sin tener la cajita conectada.
 - **Listo cuando:** se ve el paso `requested` → `credit_sent` y, a veces, `failed`.
 
-### 9.6 Consumo de insumos
+### 9.7 Consumo de insumos
 - [ ] **Qué se hace:** al iniciar un ciclo de lavado sin `customer_supplies`, crear los movimientos de consumo según `LoadConsumption`.
 - **Listo cuando:** un lavado baja 150–200 ml de detergente y de suavizante; con `customer_supplies` no baja nada.
 
-### 9.7 Cierre por tiempo
+### 9.8 Cierre por tiempo
 - [ ] **Qué se hace:** tarea periódica (Celery Beat) que pasa a `finished` los ciclos que superen la duración esperada del programa.
 - **Para qué:** que no queden ciclos "en curso" para siempre cuando no hay medidor.
 - **Listo cuando:** un ciclo viejo se cierra solo.
