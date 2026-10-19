@@ -14,6 +14,7 @@ Sistema web para una lavandería de una sola sucursal con autoservicio y servici
   - [Interfaces](#interfaces)
 - [3. Modelo de datos](#3-modelo-de-datos)
   - [Apps de Django](#apps-de-django)
+  - [Nombres en el código](#nombres-en-el-código)
   - [Entidades](#entidades)
   - [Reglas del modelo](#reglas-del-modelo)
 - [4. Funcionalidades](#4-funcionalidades)
@@ -62,7 +63,7 @@ Sistema web para una lavandería de una sola sucursal con autoservicio y servici
 | **Back-office**             | Admin de Django personalizado con **Unfold**. React solo para la operación diaria.                                                                                                          |
 | **Equipos**                 | 4 lavadoras `GCWM1069CD7` y 2 secadoras `CDG27RUCNS` (LG, comerciales).                                                                                                                     |
 | **Control de máquinas**     | **Cajita de relés existente** con programa propio, conectada por MQTT: manda pulsos de crédito a la entrada de pago de cada máquina. Respaldo: modo libre (PUSH) + registro manual. Ver §5. |
-| **Sucursales**              | Una sola. Se guarda un modelo `Sucursal` mínimo por si se abre otra.                                                                                                                        |
+| **Sucursales**              | Una sola. Se guarda un modelo `Branch` mínimo por si se abre otra.                                                                                                                          |
 | **Infraestructura**         | Nube (AWS de inicio, sin atarse a ella) con Docker. API para web y, a futuro, móvil.                                                                                                        |
 
 ---
@@ -121,7 +122,7 @@ flowchart TB
 
 | Capa                   | Tecnología                                                                  | Nota                                                                       |
 |------------------------|-----------------------------------------------------------------------------|----------------------------------------------------------------------------|
-| Backend                | Django 5 + DRF                                                              |                                                                            |
+| Backend                | Django 5.2 LTS + DRF                                                        |                                                                            |
 | Auth                   | `djangorestframework-simplejwt`                                             | JWT para web y móvil; permisos con Groups/Permissions de Django.           |
 | Tareas asíncronas      | Celery + Redis                                                              | Comandos a máquinas y reintentos sin bloquear la API.                      |
 | Control de máquinas    | MQTT (Mosquitto) + programa propio en la cajita (ESPHome o firmware propio) | La cajita se conecta sola al broker; no hay que abrir puertos en el local. |
@@ -132,7 +133,7 @@ flowchart TB
 | BD                     | PostgreSQL 16                                                               |                                                                            |
 | Documentación API      | `drf-spectacular` (OpenAPI)                                                 | Genera el cliente TS.                                                      |
 | Contenedores           | Docker + docker compose                                                     | `api`, `worker`, `beat`, `db`, `redis`, `web`, `mqtt`, `mqtt-listener`.    |
-| CI/CD                  | GitHub Actions                                                              | Pruebas, lint (ruff, eslint), build de imágenes.                           |
+| CI/CD                  | GitHub Actions                                                              | Pruebas, lint (ruff, oxlint), build de imágenes.                           |
 
 **Despliegue:** al inicio, una VM (AWS EC2/Lightsail o GCP Compute Engine) con docker compose, Caddy/Nginx con HTTPS y respaldos diarios de PostgreSQL a S3/GCS. Al crecer: BD administrada (RDS / Cloud SQL), ECS Fargate / Cloud Run y Redis administrado. Configuración por variables de entorno y almacenamiento compatible con S3 (`django-storages`): nada específico de un proveedor en el código.
 
@@ -154,273 +155,291 @@ flowchart TB
 ### Apps de Django
 ```
 backend/
-├── core/          # Sucursal, Usuario, roles, configuración
-├── clientes/      # Cliente
-├── inventario/    # Producto, ConsumoPorCarga, MovimientoInventario
-├── ventas/        # Servicio, PrecioServicio, Venta, DetalleVenta, Pago, Encargo, Descuento, CorteCaja
-└── maquinas/      # Controlador, Maquina, CicloUso, drivers/ (relay_board, manual, simulator, lg_cloud)
+├── core/          # Branch, User, roles, configuración
+├── customers/     # Customer
+├── inventory/     # Product, LoadConsumption, StockMovement
+├── sales/         # Service, ServicePrice, Sale, SaleItem, Payment, DropOffOrder, Discount, AppliedDiscount, CashSession
+└── machines/      # MachineController, Machine, MachineCycle, drivers/ (relay_board, manual, simulator, lg_cloud)
 ```
+
+### Nombres en el código
+
+El código está en inglés; la interfaz, en español. Equivalencias principales:
+
+| Concepto                 | Código                      | Concepto                  | Código                         |
+|--------------------------|-----------------------------|---------------------------|--------------------------------|
+| Sucursal                 | `Branch`                    | Venta / línea de venta    | `Sale` / `SaleItem`            |
+| Usuario                  | `User`                      | Pago                      | `Payment`                      |
+| Cliente                  | `Customer`                  | Encargo                   | `DropOffOrder`                 |
+| Servicio / precio        | `Service` / `ServicePrice`  | Descuento / aplicado      | `Discount` / `AppliedDiscount` |
+| Producto (insumo)        | `Product`                   | Corte de caja (turno)     | `CashSession`                  |
+| Consumo por carga        | `LoadConsumption`           | Cajita de relés           | `MachineController`            |
+| Movimiento de inventario | `StockMovement`             | Máquina                   | `Machine`                      |
+| Bitácora de permisos     | `PermissionLog`             | Ciclo de uso              | `MachineCycle`                 |
+| Autoservicio / encargo   | `self_service` / `drop_off` | Solicitud de autorización | `AuthorizationRequest`         |
 
 ### Entidades
 
 ```mermaid
 erDiagram
-    SUCURSAL ||--o{ USUARIO : tiene
-    SUCURSAL ||--o{ CLIENTE : tiene
-    SUCURSAL ||--o{ MAQUINA : tiene
-    SUCURSAL ||--o{ PRODUCTO : tiene
-    SUCURSAL ||--o{ PRECIO_SERVICIO : define
-    SUCURSAL ||--o{ CONTROLADOR : tiene
-    USUARIO ||--o{ BITACORA_PERMISO : "recibe / otorga"
-    USUARIO ||--o{ CORTE_CAJA : abre
-    USUARIO ||--o{ VENTA : registra
-    CORTE_CAJA ||--o{ VENTA : "turno de"
-    CLIENTE |o--o{ VENTA : compra
-    VENTA ||--|{ DETALLE_VENTA : contiene
-    VENTA ||--o{ PAGO : "se paga con"
-    VENTA ||--o| ENCARGO : "si es encargo"
-    VENTA ||--o{ DESCUENTO_APLICADO : recibe
-    DESCUENTO ||--o{ DESCUENTO_APLICADO : "se aplica como"
-    DESCUENTO }o--o{ SERVICIO : "aplica a"
-    SERVICIO ||--o{ PRECIO_SERVICIO : "tiene precios"
-    SERVICIO |o--o{ DETALLE_VENTA : "se vende en"
-    PRODUCTO |o--o{ DETALLE_VENTA : "se vende en"
-    SERVICIO ||--o{ CONSUMO_POR_CARGA : consume
-    PRODUCTO ||--o{ CONSUMO_POR_CARGA : "se consume en"
-    PRODUCTO ||--o{ MOVIMIENTO_INVENTARIO : registra
-    DETALLE_VENTA |o--o{ CICLO_USO : "genera (1 por carga)"
-    CONTROLADOR |o--o{ MAQUINA : "controla (1 relé c/u)"
-    MAQUINA |o--o{ CICLO_USO : ejecuta
-    CICLO_USO |o--o{ MOVIMIENTO_INVENTARIO : "descuenta insumos"
+    BRANCH ||--o{ USER : tiene
+    BRANCH ||--o{ CUSTOMER : tiene
+    BRANCH ||--o{ MACHINE : tiene
+    BRANCH ||--o{ PRODUCT : tiene
+    BRANCH ||--o{ SERVICE_PRICE : define
+    BRANCH ||--o{ MACHINE_CONTROLLER : tiene
+    USER ||--o{ PERMISSION_LOG : "recibe / otorga"
+    USER ||--o{ CASH_SESSION : abre
+    USER ||--o{ SALE : registra
+    CASH_SESSION ||--o{ SALE : "turno de"
+    CUSTOMER |o--o{ SALE : compra
+    SALE ||--|{ SALE_ITEM : contiene
+    SALE ||--o{ PAYMENT : "se paga con"
+    SALE ||--o| DROP_OFF_ORDER : "si es encargo"
+    SALE ||--o{ APPLIED_DISCOUNT : recibe
+    DISCOUNT ||--o{ APPLIED_DISCOUNT : "se aplica como"
+    DISCOUNT }o--o{ SERVICE : "aplica a"
+    SERVICE ||--o{ SERVICE_PRICE : "tiene precios"
+    SERVICE |o--o{ SALE_ITEM : "se vende en"
+    PRODUCT |o--o{ SALE_ITEM : "se vende en"
+    SERVICE ||--o{ LOAD_CONSUMPTION : consume
+    PRODUCT ||--o{ LOAD_CONSUMPTION : "se consume en"
+    PRODUCT ||--o{ STOCK_MOVEMENT : registra
+    SALE_ITEM |o--o{ MACHINE_CYCLE : "genera (1 por carga)"
+    MACHINE_CONTROLLER |o--o{ MACHINE : "controla (1 relé c/u)"
+    MACHINE |o--o{ MACHINE_CYCLE : ejecuta
+    MACHINE_CYCLE |o--o{ STOCK_MOVEMENT : "descuenta insumos"
 
-    SUCURSAL {
+    BRANCH {
         int id PK
-        string nombre
-        string direccion
-        string telefono
+        string name
+        string address
+        string phone
     }
-    USUARIO {
+    USER {
         int id PK
-        string nombre
+        string username
+        string first_name
+        string last_name
         string email
-        string rol "admin | empleado (Group de Django)"
-        int sucursal_id FK
-        bool activo
-        m2m permisos_extra "user_permissions agregados por un admin"
+        string role "admin | employee (Django Group)"
+        int branch_id FK
+        bool is_active
+        m2m extra_permissions "user_permissions agregados por un admin"
     }
-    BITACORA_PERMISO {
+    PERMISSION_LOG {
         int id PK
-        int usuario_id FK
-        string permiso
-        string accion "otorgado | revocado"
-        int hecho_por FK "admin"
-        datetime fecha
+        int user_id FK
+        string permission
+        string action "granted | revoked"
+        int performed_by FK "admin"
+        datetime created_at
     }
-    CLIENTE {
+    CUSTOMER {
         int id PK
-        string nombre "obligatorio"
-        string telefono "obligatorio, único por sucursal"
+        string name "obligatorio"
+        string phone "obligatorio, único por sucursal"
         string email "opcional"
-        string direccion "opcional"
-        text notas
-        datetime creado_en
+        string address "opcional"
+        text notes
+        datetime created_at
     }
-    SERVICIO {
+    SERVICE {
         int id PK
-        string nombre "Lavado por carga, Secado por carga, Lavado de tenis"
-        string tipo "lavado | secado | otro"
-        string unidad "carga | pieza | par"
-        string maquina_tipo "lavadora | secadora | ninguna"
-        bool usa_maquina
-        bool activo
+        string name "Lavado por carga, Secado por carga, Lavado de tenis"
+        string kind "wash | dry | other"
+        string unit "load | piece | pair"
+        string machine_kind "washer | dryer | none"
+        bool uses_machine
+        bool is_active
     }
-    PRECIO_SERVICIO {
+    SERVICE_PRICE {
         int id PK
-        int servicio_id FK
-        string modalidad "autoservicio | encargo"
-        string programa "opcional, para precios por programa a futuro"
-        decimal precio
-        date vigente_desde
-        int sucursal_id FK
+        int service_id FK
+        string mode "self_service | drop_off"
+        string program "opcional, para precios por programa a futuro"
+        decimal price
+        date valid_from
+        int branch_id FK
     }
-    PRODUCTO {
+    PRODUCT {
         int id PK
-        string nombre
+        string name
         string sku
-        string unidad "ml | g | pieza"
-        decimal costo
-        decimal stock_actual
-        decimal stock_minimo
-        bool se_vende "false para detergente y suavizante"
-        decimal precio_venta "opcional"
-        int sucursal_id FK
+        string unit "ml | g | piece"
+        decimal cost
+        decimal stock
+        decimal min_stock
+        bool is_for_sale "false para detergente y suavizante"
+        decimal sale_price "opcional"
+        int branch_id FK
     }
-    CONSUMO_POR_CARGA {
+    LOAD_CONSUMPTION {
         int id PK
-        int servicio_id FK
-        int producto_id FK
-        decimal cantidad "150 a 200 ml, editable"
+        int service_id FK
+        int product_id FK
+        decimal quantity "150 a 200 ml, editable"
     }
-    MOVIMIENTO_INVENTARIO {
+    STOCK_MOVEMENT {
         int id PK
-        int producto_id FK
-        string tipo "entrada | consumo | venta | ajuste"
-        decimal cantidad
-        decimal costo_unitario "opcional"
-        int ciclo_uso_id FK "opcional"
-        int venta_id FK "opcional"
-        int usuario_id FK
-        datetime fecha
+        int product_id FK
+        string kind "purchase | consumption | sale | adjustment"
+        decimal quantity
+        decimal unit_cost "opcional"
+        int machine_cycle_id FK "opcional"
+        int sale_id FK "opcional"
+        int user_id FK
+        datetime created_at
     }
-    VENTA {
+    SALE {
         int id PK
-        string folio
-        int cliente_id FK "obligatorio en encargo"
-        int sucursal_id FK
-        int usuario_id FK
-        string modalidad "autoservicio | encargo"
-        string estado "pendiente_pago | pago_parcial | pagada | cancelada"
+        string number "folio"
+        int customer_id FK "obligatorio en encargo"
+        int branch_id FK
+        int user_id FK
+        string mode "self_service | drop_off"
+        string status "pending | partially_paid | paid | cancelled"
         decimal subtotal
-        decimal descuento
+        decimal discount_total
         decimal total
-        decimal saldo
-        int turno_id FK "CorteCaja"
-        int cancelada_por FK "opcional"
-        string motivo_cancelacion "opcional"
-        datetime cancelada_en "opcional"
-        datetime creada_en
+        decimal balance
+        int cash_session_id FK
+        int cancelled_by FK "opcional"
+        string cancel_reason "opcional"
+        datetime cancelled_at "opcional"
+        datetime created_at
     }
-    ENCARGO {
+    DROP_OFF_ORDER {
         int id PK
-        int venta_id FK "1:1"
-        string estado "recibido | en_proceso | listo | entregado"
-        datetime fecha_promesa
-        datetime entregado_en "opcional"
-        text notas
+        int sale_id FK "1:1"
+        string status "received | in_progress | ready | delivered"
+        datetime promised_at
+        datetime delivered_at "opcional"
+        text notes
     }
-    DETALLE_VENTA {
+    SALE_ITEM {
         int id PK
-        int venta_id FK
-        int servicio_id FK "o producto"
-        int producto_id FK "o servicio"
-        decimal cantidad
-        decimal precio_unitario "copiado de PrecioServicio"
-        decimal importe
+        int sale_id FK
+        int service_id FK "o producto"
+        int product_id FK "o servicio"
+        decimal quantity
+        decimal unit_price "copiado de ServicePrice"
+        decimal amount
     }
-    PAGO {
+    PAYMENT {
         int id PK
-        int venta_id FK
-        string metodo "efectivo | tarjeta_credito | tarjeta_debito"
-        decimal monto
-        string referencia "voucher de Mercado Pago Point"
+        int sale_id FK
+        string method "cash | credit_card | debit_card"
+        decimal amount
+        string reference "voucher de Mercado Pago Point"
         string mp_payment_intent_id "Fase 2"
-        datetime fecha
+        datetime paid_at
     }
-    DESCUENTO {
+    DISCOUNT {
         int id PK
-        string nombre
-        string tipo "porcentaje | monto_fijo"
-        decimal valor
-        string alcance "venta | servicio"
-        string modalidad "opcional: autoservicio | encargo"
-        date vigente_desde "opcional"
-        date vigente_hasta "opcional"
-        bool activo
-        int creado_por FK "admin"
+        string name
+        string kind "percentage | fixed_amount"
+        decimal value
+        string scope "sale | service"
+        string mode "opcional: self_service | drop_off"
+        date valid_from "opcional"
+        date valid_until "opcional"
+        bool is_active
+        int created_by FK "admin"
     }
-    DESCUENTO_APLICADO {
+    APPLIED_DISCOUNT {
         int id PK
-        int venta_id FK
-        int detalle_venta_id FK "opcional"
-        int descuento_id FK
-        decimal monto
-        int usuario_id FK
+        int sale_id FK
+        int sale_item_id FK "opcional"
+        int discount_id FK
+        decimal amount
+        int user_id FK
     }
-    CORTE_CAJA {
+    CASH_SESSION {
         int id PK
-        int sucursal_id FK
-        int usuario_id FK
-        datetime apertura
-        datetime cierre "opcional"
-        decimal fondo_inicial
-        decimal efectivo_esperado
-        decimal efectivo_contado "opcional"
-        decimal diferencia "opcional"
-        decimal total_tarjeta
-        int num_ventas
-        int num_cancelaciones
-        text notas
+        int branch_id FK
+        int user_id FK
+        datetime opened_at
+        datetime closed_at "opcional"
+        decimal opening_float
+        decimal expected_cash
+        decimal counted_cash "opcional"
+        decimal difference "opcional"
+        decimal card_total
+        int sales_count
+        int cancellations_count
+        text notes
     }
-    CONTROLADOR {
+    MACHINE_CONTROLLER {
         int id PK
-        int sucursal_id FK
-        string nombre "Cajita principal"
+        int branch_id FK
+        string name "Cajita principal"
         string mqtt_client_id
-        string credencial_hash
-        bool en_linea
-        datetime ultima_conexion
-        string version_firmware
+        string credential_hash
+        bool is_online
+        datetime last_seen_at
+        string firmware_version
     }
-    MAQUINA {
+    MACHINE {
         int id PK
-        int sucursal_id FK
-        string tipo "lavadora | secadora"
-        string modelo
-        string numero_serie
-        string alias "Lavadora 3"
+        int branch_id FK
+        string kind "washer | dryer"
+        string model
+        string serial_number
+        string label "Lavadora 3"
         string driver "relay_board | manual | simulator | lg_cloud"
-        int controlador_id FK "opcional"
-        int canal_rele "1 a 8"
-        int pulsos_por_ciclo
-        int ancho_pulso_ms "50 o 100"
-        int pausa_entre_pulsos_ms
-        string medidor_id "opcional"
-        string id_externo
-        string estado "disponible | en_uso | fuera_servicio | desconocido"
-        datetime ultima_sincronizacion
+        int controller_id FK "opcional"
+        int relay_channel "1 a 8"
+        int pulses_per_cycle
+        int pulse_width_ms "50 o 100"
+        int pulse_gap_ms
+        string meter_id "opcional"
+        string external_id
+        string status "available | in_use | out_of_service | unknown"
+        datetime last_synced_at
     }
-    CICLO_USO {
+    MACHINE_CYCLE {
         int id PK
-        int maquina_id FK "opcional hasta asignarse"
-        int venta_id FK
-        int detalle_venta_id FK
-        int usuario_id FK
-        int cliente_id FK "opcional"
-        string programa "opcional"
-        bool insumos_cliente "default false"
-        datetime inicio_solicitado
-        datetime inicio_confirmado "opcional"
-        datetime fin "opcional"
-        string estado "pendiente_asignar | solicitado | credito_enviado | en_curso | terminado | fallido | cancelado"
-        bool manual "true si se arrancó en modo PUSH"
-        json respuesta_driver
+        int machine_id FK "opcional hasta asignarse"
+        int sale_id FK
+        int sale_item_id FK
+        int user_id FK
+        int customer_id FK "opcional"
+        string program "opcional"
+        bool customer_supplies "default false"
+        datetime requested_at
+        datetime started_at "opcional"
+        datetime finished_at "opcional"
+        string status "pending | requested | credit_sent | running | finished | failed | cancelled"
+        bool is_manual "true si se arrancó en modo PUSH"
+        json driver_response
     }
 ```
 
 ### Reglas del modelo
 
 **Ventas y ciclos**
-- **Cada carga vendida** de un servicio con `usa_maquina = true` genera un `CicloUso` (3 cargas → 3 ciclos). Así se **cuadran las ventas contra los usos reales** y se detectan ciclos no cobrados.
+- **Cada carga vendida** de un servicio con `uses_machine = true` genera un `MachineCycle` (3 cargas → 3 ciclos). Así se **cuadran las ventas contra los usos reales** y se detectan ciclos no cobrados.
 - **Autoservicio:** se cobra completo, el empleado activa la máquina y el ciclo se inicia de inmediato.
-- **Encargo:** los ciclos quedan *pendientes de asignar* y el empleado los activa al procesar la ropa; él `Encargo` avanza de estado con ellos. Se puede pagar en varios `Pago`. Un encargo con saldo solo lo entrega quien tenga `encargos.entregar_con_saldo`.
-- **Estados del ciclo:** `solicitado` → `credito_enviado` (la cajita confirmó el crédito; falta presionar Start) → `en_curso` (por el medidor de consumo, el empleado o por tiempo) → `terminado`. Si la cajita no confirma pasa a `fallido`. `manual = true` cuando se arrancó en modo PUSH.
-- **DetalleVenta:** un servicio **o** un producto. `precio_unitario` se copia de `PrecioServicio` según la modalidad y se conserva aunque el precio cambie.
+- **Encargo:** los ciclos quedan *pendientes de asignar* y el empleado los activa al procesar la ropa; el `DropOffOrder` avanza de estado con ellos. Se puede pagar en varios `Payment`. Un encargo con saldo solo lo entrega quien tenga `sales.deliver_with_balance`.
+- **Estados del ciclo:** `requested` → `credit_sent` (la cajita confirmó el crédito; falta presionar Start) → `running` (por el medidor de consumo, el empleado o por tiempo) → `finished`. Si la cajita no confirma pasa a `failed`. `is_manual = true` cuando se arrancó en modo PUSH.
+- **SaleItem:** un servicio **o** un producto. `unit_price` se copia de `ServicePrice` según la modalidad y se conserva aunque el precio cambie.
 
 **Precios y descuentos**
-- **PrecioServicio:** hoy un precio fijo por servicio y modalidad (`programa` vacío). Para cobrar distinto ciertos programas se agregan filas con `programa`; si no hay, se usa el general. Un servicio nuevo es solo dar de alta registros.
-- **Descuento:** los crea quien tenga `descuentos.gestionar`. El empleado elige de la lista los vigentes para esa modalidad y servicio (p. ej. "10% martes en autoservicio"). `DescuentoAplicado` guarda el monto y quién lo aplicó.
+- **ServicePrice:** hoy un precio fijo por servicio y modalidad (`program` vacío). Para cobrar distinto ciertos programas se agregan filas con `program`; si no hay, se usa el general. Un servicio nuevo es solo dar de alta registros.
+- **Discount:** los crea quien tenga `sales.manage_discounts`. El empleado elige de la lista los vigentes para esa modalidad y servicio (p. ej. "10% martes en autoservicio"). `AppliedDiscount` guarda el monto y quién lo aplicó.
 
 **Inventario**
-- **ConsumoPorCarga:** solo para lavado (el secado no consume). Valor inicial 150–200 ml de detergente y 150–200 ml de suavizante, editable desde el admin.
-- Al iniciar un ciclo con `insumos_cliente = false` se genera un `MovimientoInventario(tipo=consumo)`. Así se ve el costo de la promoción y salen alertas de stock mínimo. Comparar cada mes el consumo teórico contra las compras ayuda a afinar la medida y detectar mermas.
+- **LoadConsumption:** solo para lavado (el secado no consume). Valor inicial 150–200 ml de detergente y 150–200 ml de suavizante, editable desde el admin.
+- Al iniciar un ciclo con `customer_supplies = false` se genera un `StockMovement(kind=consumption)`. Así se ve el costo de la promoción y salen alertas de stock mínimo. Comparar cada mes el consumo teórico contra las compras ayuda a afinar la medida y detectar mermas.
 
 **Caja y pagos**
-- **CorteCaja:** uno por turno y empleado; no se puede cobrar sin caja abierta. `efectivo_esperado = fondo_inicial + pagos en efectivo del turno` (menos cancelados). `total_tarjeta` se cuadra contra el reporte de Mercado Pago Point.
+- **CashSession:** uno por turno y empleado; no se puede cobrar sin caja abierta. `expected_cash = opening_float + cash payments of the session` (menos cancelados). `card_total` se cuadra contra el reporte de Mercado Pago Point.
 - **Pago con tarjeta:** en el MVP se captura a mano la referencia del voucher; en la Fase 2 la integración con la API de Point la llena sola (`mp_payment_intent_id`).
 
 **Usuarios y máquinas**
-- **Usuario:** una cuenta por persona; al irse se desactiva (no se borra). `rol` = `Group` de Django; `permisos_extra` = `user_permissions`.
-- **Controlador / Máquina:** una cajita controla las 6 máquinas, un relé por máquina (`canal_rele`). Los pulsos de cada máquina deben coincidir con su configuración de pago (ver §5).
+- **User:** una cuenta por persona; al irse se desactiva (no se borra). `role` = `Group` de Django; `extra_permissions` = `user_permissions`.
+- **MachineController / Machine:** una cajita controla las 6 máquinas, un relé por máquina (`relay_channel`). Los pulsos de cada máquina deben coincidir con su configuración de pago (ver §5).
 
 ---
 
@@ -434,23 +453,23 @@ Cada acción es un **permiso**. Un **rol** es un paquete de permisos por defecto
 permisos efectivos = permisos del rol + permisos agregados al usuario
 ```
 
-| Permiso                                      | Código                        | Admin | Empleado | ¿Se puede agregar a un empleado? |
-|----------------------------------------------|-------------------------------|:-----:|:--------:|:--------------------------------:|
-| Cobrar ventas e imprimir tickets             | `ventas.cobrar`               |  ✅   |    ✅    |                —                 |
-| Activar máquinas / registrar ciclos          | `maquinas.activar`            |  ✅   |    ✅    |                —                 |
-| Registrar clientes y gestionar encargos      | `clientes.gestionar`          |  ✅   |    ✅    |                —                 |
-| Aplicar descuentos del catálogo              | `descuentos.aplicar`          |  ✅   |    ✅    |                —                 |
-| Cancelar ventas (con motivo)                 | `ventas.cancelar`             |  ✅   |    ✅    |                —                 |
-| Registrar entradas de inventario             | `inventario.entrada`          |  ✅   |    ✅    |                —                 |
-| Abrir y cerrar **su** caja                   | `caja.operar`                 |  ✅   |    ✅    |                —                 |
-| Crear, editar o desactivar descuentos        | `descuentos.gestionar`        |  ✅   |    ❌    |                ✅                |
-| Ajustes de inventario (mermas, correcciones) | `inventario.ajustar`          |  ✅   |    ❌    |                ✅                |
-| Entregar un encargo con saldo pendiente      | `encargos.entregar_con_saldo` |  ✅   |    ❌    |                ✅                |
-| Ver cortes de otros turnos                   | `caja.ver_todos`              |  ✅   |    ❌    |                ✅                |
-| Precios, servicios, consumo por carga        | `catalogo.gestionar`          |  ✅   |    ❌    |                ✅                |
-| Alta y configuración de máquinas y cajita    | `maquinas.gestionar`          |  ✅   |    ❌    |                ✅                |
-| Reportes                                     | `reportes.ver`                |  ✅   |    ❌    |                ✅                |
-| Gestionar usuarios, roles y permisos         | `usuarios.gestionar`          |  ✅   |    ❌    |        ❌ **solo admin**         |
+| Permiso                                      | Código                         | Admin | Empleado | ¿Se puede agregar a un empleado? |
+|----------------------------------------------|--------------------------------|:-----:|:--------:|:--------------------------------:|
+| Cobrar ventas e imprimir tickets             | `sales.charge`                 |  ✅   |    ✅    |                —                 |
+| Activar máquinas / registrar ciclos          | `machines.start_machine`       |  ✅   |    ✅    |                —                 |
+| Registrar clientes y gestionar encargos      | `customers.manage_customers`   |  ✅   |    ✅    |                —                 |
+| Aplicar descuentos del catálogo              | `sales.apply_discount`         |  ✅   |    ✅    |                —                 |
+| Cancelar ventas (con motivo)                 | `sales.cancel_sale`            |  ✅   |    ✅    |                —                 |
+| Registrar entradas de inventario             | `inventory.receive_stock`      |  ✅   |    ✅    |                —                 |
+| Abrir y cerrar **su** caja                   | `sales.operate_cash_session`   |  ✅   |    ✅    |                —                 |
+| Crear, editar o desactivar descuentos        | `sales.manage_discounts`       |  ✅   |    ❌    |                ✅                |
+| Ajustes de inventario (mermas, correcciones) | `inventory.adjust_stock`       |  ✅   |    ❌    |                ✅                |
+| Entregar un encargo con saldo pendiente      | `sales.deliver_with_balance`   |  ✅   |    ❌    |                ✅                |
+| Ver cortes de otros turnos                   | `sales.view_all_cash_sessions` |  ✅   |    ❌    |                ✅                |
+| Precios, servicios, consumo por carga        | `sales.manage_catalog`         |  ✅   |    ❌    |                ✅                |
+| Alta y configuración de máquinas y cajita    | `machines.manage_machines`     |  ✅   |    ❌    |                ✅                |
+| Reportes                                     | `core.view_reports`            |  ✅   |    ❌    |                ✅                |
+| Gestionar usuarios, roles y permisos         | `core.manage_users`            |  ✅   |    ❌    |        ❌ **solo admin**         |
 
 - Solo un admin agrega o quita permisos; **gestionar usuarios y permisos no se delega**, para que nadie se dé permisos a sí mismo.
 - Al quitar un permiso, deja de valer en la siguiente acción, sin cerrar sesión. Se registra quién lo otorgó o quitó y cuándo.
@@ -492,31 +511,31 @@ Entrega estimada: 18/10/2026 18:00
 
 - **Autoservicio:** puede indicar la máquina asignada a cada carga ("Lavadora 3").
 - **Encargo:** el ticket de recepción sirve para recoger la ropa; al entregar se imprime otro con saldo en $0.
-- La línea "Detergente y suavizante (promoción) $0.00" sale **siempre** que haya cargas de lavado. Si el cliente trajo sus productos, el ticket no cambia (`insumos_cliente` es solo interno).
+- La línea "Detergente y suavizante (promoción) $0.00" sale **siempre** que haya cargas de lavado. Si el cliente trajo sus productos, el ticket no cambia (`customer_supplies` es solo interno).
 - Con tarjeta: tipo y referencia del voucher. En efectivo: monto recibido y cambio.
-- **Impresión (MVP):** vista React con `@media print` a **80 mm** (~48 caracteres por línea) en la POS-8360 USB, desde el diálogo del navegador (sin márgenes ni encabezados). **Mejora opcional:** impresión directa y apertura de cajón con ESC/POS vía QZ Tray. El backend entrega los datos ya calculados (`/api/ventas/{id}/ticket/`), reutilizables para WhatsApp o PDF.
+- **Impresión (MVP):** vista React con `@media print` a **80 mm** (~48 caracteres por línea) en la POS-8360 USB, desde el diálogo del navegador (sin márgenes ni encabezados). **Mejora opcional:** impresión directa y apertura de cajón con ESC/POS vía QZ Tray. El backend entrega los datos ya calculados (`/api/sales/{id}/receipt/`), reutilizables para WhatsApp o PDF.
 
 ### Endpoints principales (REST)
 ```
 /api/auth/token/  /api/auth/refresh/
-/api/auth/me/                     usuario actual + permisos efectivos
-/api/usuarios/                    CRUD (solo admin)
-/api/usuarios/{id}/permisos/      agregar / quitar permisos individuales (solo admin)
-/api/clientes/                    CRUD + búsqueda por teléfono/nombre
-/api/servicios/                   catálogo + precios por modalidad
-/api/productos/                   CRUD + /alertas-stock/
-/api/inventario/movimientos/
-/api/ventas/                      crear (con modalidad), pagar, cancelar
-/api/ventas/{id}/ticket/          datos del ticket
-/api/encargos/                    listado por estado, cambiar estado, entregar
-/api/descuentos/                  catálogo (gestionar / vigentes)
-/api/caja/cortes/                 abrir / cerrar turno, corte actual, historial
-/api/maquinas/                    listado con estado
-/api/maquinas/{id}/iniciar/       crea CicloUso y encola el comando
-/api/maquinas/{id}/pulso-prueba/  solo con maquinas.gestionar
-/api/controladores/               estado de la cajita (en línea, última conexión)
-/api/ciclos/                      historial de usos
-/api/reportes/ventas-diarias/  /uso-maquinas/  /inventario/
+/api/auth/me/                       usuario actual + permisos efectivos
+/api/users/                         CRUD (solo admin)
+/api/users/{id}/permissions/        agregar / quitar permisos individuales (solo admin)
+/api/customers/                     CRUD + búsqueda por teléfono/nombre
+/api/services/                      catálogo + precios por modalidad
+/api/products/                      CRUD + /low-stock/
+/api/inventory/movements/
+/api/sales/                         crear (con modalidad), pagar, cancelar
+/api/sales/{id}/receipt/            datos del ticket
+/api/drop-off-orders/               listado por estado, cambiar estado, entregar
+/api/discounts/                     catálogo (gestionar / vigentes)
+/api/cash-sessions/                 abrir / cerrar turno, corte actual, historial
+/api/machines/                      listado con estado
+/api/machines/{id}/start/           crea MachineCycle y encola el comando
+/api/machines/{id}/test-pulse/      solo con machines.manage_machines
+/api/machine-controllers/           estado de la cajita (en línea, última conexión)
+/api/machine-cycles/                historial de usos
+/api/reports/daily-sales/  /machine-usage/  /inventory/
 ```
 
 ---
@@ -525,11 +544,11 @@ Entrega estimada: 18/10/2026 18:00
 
 ### Equipos
 
-|  Lavadora `GCWM1069CD7` (×4)  |  Secadora `CDG27RUCNS` (×2)   |
-|:-----------------------------:|:-----------------------------:|
-| ![lavadora.png](lavadora.png) | ![secadora.png](secadora.png) |
+|    Lavadora `GCWM1069CD7` (×4)     |     Secadora `CDG27RUCNS` (×2)     |
+|:----------------------------------:|:----------------------------------:|
+| ![lavadora.png](docs/lavadora.png) | ![secadora.png](docs/secadora.png) |
 
-Del manual de la lavadora (`Wahser_GCWM1069CD7_manual.pdf`):
+Del manual de la lavadora (`docs/Wahser_GCWM1069CD7_manual.pdf`):
 - Modelo tipo **tarjeta / OPL**. Desde el menú de servicio se elige **PAY** (monedas o tarjeta) o **FREE / OPL** (*On-Premise Laundry*: sin pago, muestra *PUSH* y arranca con Start). Hoy las máquinas están en **OPL**.
 - En modo PAY acepta **monedero por pulsos de crédito** (50 o 100 ms) con valor configurable por pulso, o lector de tarjeta Greenwald / ESD.
 - 120 V, 60 Hz, enchufe de 3 patas en contacto propio.
@@ -545,7 +564,7 @@ Del manual de la lavadora (`Wahser_GCWM1069CD7_manual.pdf`):
 | **Cómo funcionaba**         | El programa "ControlEquipos" (Visual Basic 6, en la PC del negocio) le mandaba órdenes por **HTTP en una red local aislada**: router propio de Aitare, sin internet, red `192.168.10.x` (`/?E=1&T=…`, `/?E=3&PM=…&PR=…`). La cajita cerraba el relé varias veces, como monedas; la máquina **pitaba y mostraba el tiempo** y se presionaba Start. |
 | **Por qué se dejó de usar** | Fallaba seguido. Causa probable: la PC tenía que estar en la red sin internet y Windows se cambiaba sola a la red con internet. Otras posibles: antena del ESP8266 dentro de la caja de plástico o la fuente. La distancia no es problema (local de 4 × 7 m). El router de Aitare está apagado.                                                   |
 
-Fotos y copia del programa: carpeta `Aitaire/`.
+Fotos de la placa: `docs/board_1.jpeg` y `docs/board_2.jpeg`. Copia del programa de Aitare: carpeta `Aitaire/` (fuera de git).
 
 ### Plan: programa propio en la cajita
 
@@ -557,10 +576,10 @@ Se conservan la placa, los relés y los 6 cables; solo se cambia el programa (ES
 4. Si la señal del ESP8266 no alcanza, se cambia solo la placa por una **ESP32 de 8 relés con antena externa**.
 
 **Cómo se comunica:**
-- `RelayBoardDriver` (implementa `MachineDriver`) publica en `lavanderia/<controlador>/cmd`: `{"id": 812, "canal": 3, "pulsos": 4, "ancho_ms": 50, "pausa_ms": 150}`.
-- La cajita envía los pulsos por el relé y responde en `lavanderia/<controlador>/ack`: `{"id": 812, "ok": true}`. Publica *en línea / fuera de línea* con el mensaje de "última voluntad" de MQTT.
-- **Sin pulsos duplicados:** él `id` es el del `CicloUso`; la cajita recuerda los últimos y no repite si llega un reintento.
-- La **escucha MQTT** (proceso aparte) recibe confirmaciones, estado y consumo, y actualiza `CicloUso`, `Maquina` y `Controlador`. Se guarda la respuesta cruda en `respuesta_driver`.
+- `RelayBoardDriver` (implementa `MachineDriver`) publica en `laundry/<controller>/cmd`: `{"id": 812, "channel": 3, "pulses": 4, "width_ms": 50, "gap_ms": 150}`.
+- La cajita envía los pulsos por el relé y responde en `laundry/<controller>/ack`: `{"id": 812, "ok": true}`. Publica *en línea / fuera de línea* con el mensaje de "última voluntad" de MQTT.
+- **Sin pulsos duplicados:** él `id` es el del `MachineCycle`; la cajita recuerda los últimos y no repite si llega un reintento.
+- La **escucha MQTT** (proceso aparte) recibe confirmaciones, estado y consumo, y actualiza `MachineCycle`, `Machine` y `MachineController`. Se guarda la respuesta cruda en `driver_response`.
 - Cada cajita tiene su propio usuario MQTT y solo accede a sus temas.
 
 **Flujo de una venta:**
@@ -573,24 +592,24 @@ sequenceDiagram
     participant L as Lavadora 3
 
     E->>S: Cobra 1 carga de lavado (autoservicio)
-    S->>S: Crea CicloUso (solicitado)
-    S->>P: cmd {id: ciclo 812, relé 3, 4 pulsos, 50 ms}
+    S->>S: Crea MachineCycle (requested)
+    S->>P: cmd {id: 812, channel: 3, pulses: 4, width_ms: 50}
     P->>L: 4 pulsos (como 4 monedas)
-    P-->>S: ack {id: ciclo 812, ok}
+    P-->>S: ack {id: 812, ok: true}
     S-->>E: "Crédito enviado: presiona Start en Lavadora 3"
-    S->>S: CicloUso → crédito enviado
+    S->>S: MachineCycle → credit_sent
     E->>L: Elige programa y Start
     Note over S,L: Con medidor: el consumo sube → en curso<br/>El consumo baja → terminado
     alt La cajita no confirma en 10 s
         S-->>E: "Sin respuesta de la cajita: usa modo manual"
-        S->>S: CicloUso → fallido (la venta se conserva)
+        S->>S: MachineCycle → failed (la venta se conserva)
     end
 ```
 
 - **Caja:** "Activar Lavadora 3" → "Crédito enviado: presiona Start", con indicador de cajita en línea.
 - **Admin:** alta de la cajita, relé y pulsos por máquina, **pulso de prueba** y bitácora de órdenes.
 - **Sin ciclos colgados:** una tarea de Celery Beat cierra por tiempo los ciclos sin medidor.
-- **Sin internet o con la cajita fallando:** la máquina se pasa a **OPL (PUSH)** y la venta se registra a mano (`CicloUso.manual`), sin perderla.
+- **Sin internet o con la cajita fallando:** la máquina se pasa a **OPL (PUSH)** y la venta se registra a mano (`MachineCycle.is_manual`), sin perderla.
 
 ### Configuración de las máquinas
 
@@ -599,7 +618,7 @@ sequenceDiagram
 | Entrar al menú de servicio                           | Tarjeta de servicio o interruptor + contraseña                                                                              |        23–24, 26        |
 | Pago o libre (`Product Type`)                        | **`PAY`** (respaldo: `FrEE` / OPL)                                                                                          |           68            |
 | Monedas o tarjeta (`Vend Type`)                      | **Coin**                                                                                                                    |           70            |
-| Duración del pulso (`Coin Drop Type`)                | 50 ms o 100 ms, igual que `Maquina.ancho_pulso_ms`                                                                          |           72            |
+| Duración del pulso (`Coin Drop Type`)                | 50 ms o 100 ms, igual que `Machine.pulse_width_ms`                                                                          |           72            |
 | Precio por programa (`Regular Price Setup`)          | Según los pulsos (0.00–9.95)                                                                                                |          26–29          |
 | Valor de cada pulso (`Coin 1 Value`)                 | **Pulsos por ciclo = precio ÷ valor por pulso** (fábrica: 1.00 ÷ 0.25 = 4). Se puede simplificar a 1 pulso igualando ambos. |           63            |
 | Tiempo que guarda el crédito (`Standby Return Time`) | 0 = siempre; 1–180 = ese tiempo                                                                                             |           66            |
@@ -683,7 +702,7 @@ Laundry/
 ├── backend/
 │   ├── config/            # settings (base, dev, prod, UNFOLD), urls, celery.py
 │   ├── templates/admin/   # plantillas del dashboard de Unfold
-│   ├── core/  clientes/  inventario/  ventas/  maquinas/
+│   ├── core/  customers/  inventory/  sales/  machines/
 │   ├── requirements/      # o pyproject.toml
 │   └── Dockerfile
 ├── frontend/
@@ -694,7 +713,9 @@ Laundry/
 ├── docker-compose.yml
 ├── docker-compose.prod.yml
 ├── .env.example
-└── docs/                  # mvp.md, contacto_lg.md, imágenes, manuales
+├── docs/                  # imágenes, manuales, datos de configuración
+├── mvp.md
+└── plan.md
 ```
 
 ---
@@ -723,7 +744,7 @@ sequenceDiagram
     actor A as Admin (celular, desde cualquier lugar)
 
     E->>S: Entregar encargo A-123 con saldo $80
-    S->>S: Crea SolicitudAutorizacion<br/>(pendiente, expira en 15 min)
+    S->>S: Crea AuthorizationRequest<br/>(pending, expira en 15 min)
     S-->>E: "Esperando autorización…"
     S->>A: Notificación push:<br/>"Juan quiere entregar A-123 con saldo $80"
 
@@ -743,14 +764,14 @@ sequenceDiagram
 - **Notificación:** Web Push (respaldo: correo; después: WhatsApp) y bandeja de "Solicitudes pendientes" en el panel del admin.
 - **Seguridad:** autoriza exactamente lo pedido (acción + objeto + monto); un solo uso; expira en 15 min (configurable); solo un admin aprueba. Conviene implementarla junto con verificación en dos pasos para admins.
 - **Acciones solicitables:** entregar encargo con saldo y ajustes de inventario, ampliable a otras.
-- **Modelo:** `SolicitudAutorizacion(tipo, solicitante, objeto_tipo, objeto_id, datos JSON, estado [pendiente | aprobada | rechazada | expirada | usada], resuelta_por, comentario, creada_en, expira_en, resuelta_en)`. La acción solo se ejecuta con una solicitud aprobada, vigente, sin usar y con los mismos datos.
+- **Modelo:** `AuthorizationRequest(kind, requested_by, object_type, object_id, data JSON, status [pending | approved | rejected | expired | used], resolved_by, comment, created_at, expires_at, resolved_at)`. La acción solo se ejecuta con una solicitud aprobada, vigente, sin usar y con los mismos datos.
 
 ---
 
 ## Referencias
 
-- Manual de la lavadora `GCWM1069CD7`: `Wahser_GCWM1069CD7_manual.pdf`
-- Instalación de Aitare (fotos y programa): `Aitaire/`
+- Manual de la lavadora `GCWM1069CD7`: `docs/Wahser_GCWM1069CD7_manual.pdf`
+- Instalación de Aitare: fotos en `docs/board_1.jpeg` y `docs/board_2.jpeg`; programa en `Aitaire/` (fuera de git)
 - Consulta a LG: `contacto_lg.md`
 - LG México – Smart Laundry Lounge: https://www.lg.com/mx/business/lavanderia-comercial/smart-laundry-lounge/
 - LG – Commercial Laundry API: https://thinq.developer.lge.com/en/cloud/about/service/commercial-laundry/
