@@ -23,11 +23,11 @@ Lee esto antes de trabajar en el proyecto. Para el **qué** y el **porqué** del
 | Admin               | Django Admin + `django-unfold` (back-office: configuración, consultas, reportes)                           |
 | Tareas              | Celery + Redis                                                                                             |
 | Base de datos       | PostgreSQL 16                                                                                              |
-| Frontend (caja)     | React + TypeScript + Vite, **Tailwind + shadcn/ui**, TanStack Query, React Router                          |
-| Control de máquinas | MQTT (Mosquitto) + programa propio en la cajita de relés (Etapa 12)                                        |
+| Frontend (caja)     | React + TypeScript + Vite, **Tailwind + shadcn/ui**, TanStack Query, React Router (Etapa 12)               |
+| Control de máquinas | MQTT (Mosquitto) + programa propio en la cajita de relés (Etapa 14)                                        |
 | Entorno             | Docker + docker compose                                                                                    |
 
-Las versiones están fijadas en `backend/requirements/*.txt` y `frontend/package.json`.
+Las versiones están fijadas en `backend/requirements/*.txt` (y en `frontend/package.json` cuando exista).
 
 ## Estilo de código Python y Django
 
@@ -76,6 +76,9 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 
 ## Frontend (caja)
 
+> **Orden de trabajo:** primero se construyen el backend y el admin (Etapas 1 a 11 de `plan.md`). La caja en React se hace en la **Etapa 12**; no crear `frontend/` antes sin acordarlo. Estas reglas aplican desde entonces.
+
+
 - Componentes de UI con **shadcn/ui** (`npx shadcn@latest add <componente>`); los archivos generados viven en `src/components/ui/`.
 - Estilos con clases de Tailwind; no crear archivos CSS por componente.
 - Datos del servidor con **TanStack Query**; llamadas a la API por `src/lib/api.ts` y rutas relativas `/api/...` (Vite las reenvía al backend).
@@ -92,6 +95,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
   docker compose exec api ruff format . && docker compose exec api ruff check .
   docker compose exec api pytest
   docker compose exec api python manage.py makemigrations --check --dry-run
+  # Desde la Etapa 12:
   cd frontend && npm run lint && npm run typecheck && npm test && npm run build
   ```
 - Si algo no se pudo verificar, decirlo explícitamente.
@@ -99,7 +103,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 ## Entorno de desarrollo
 
 - Todo corre en Docker: `docker compose up -d`. Comandos de Django con `docker compose exec api ...`.
-- Caja: http://localhost:5173 · Admin: http://localhost:8000/admin/ · Docs API: http://localhost:8000/api/docs/
+- Admin: http://localhost:8000/admin/ · Docs API: http://localhost:8000/api/docs/ (la caja, http://localhost:5173, desde la Etapa 12)
 - La base de datos **no publica su puerto** en la PC (el 5432 está ocupado): `docker compose exec db psql -U laundry`.
 
 ## Git
@@ -109,11 +113,27 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 - Mensajes de commit con prefijo convencional, en inglés: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`.
 - Nunca subir: `.env`, la carpeta `Aitaire/` (datos privados del negocio), respaldos de firmware (`firmware/*.bin`).
 
+## Desarrollo incremental: primero lo mínimo indispensable
+
+Cada funcionalidad se construye **primero en su versión mínima que funcione** y cumpla el "Listo cuando" de su paso en `plan.md`. Lo demás se agrega después, cuando se necesite.
+
+- **Sí entra en la primera versión:** el flujo principal, las validaciones que protegen dinero o datos (permisos, montos, saldos, stock) y sus pruebas.
+- **No entra (se anota como pendiente):** opciones "por si acaso", configuraciones que nadie pidió, optimizaciones sin un problema medido, pantallas o campos de fases futuras, abstracciones para casos que aún no existen.
+- Si una mejora parece valiosa, **se propone al usuario** en lugar de construirla.
+
+**Documentar riesgos y pendientes de cada funcionalidad.** Al terminarla, agregar en su etapa de `plan.md` una sección **"Riesgos y pendientes"** con:
+
+- **Riesgos:** lo que podría fallar o no está probado en condiciones reales (p. ej. "no probado con la impresora real", "si se cae internet durante el cobro, …", "regla supuesta, falta confirmar con el negocio").
+- **Pendientes:** lo que se dejó fuera de la versión mínima, lo que falta para que esté completa y lo que depende de otra etapa o de información del negocio.
+
+Si no hay riesgos ni pendientes, escribir "Ninguno identificado" en lugar de omitir la sección. Lo importante debe repetirse también en el resumen al usuario.
+
 ## Al terminar un paso del plan
 
 1. Marcar sus casillas en `plan.md` y anotar en la etapa cualquier diferencia con lo planeado.
-2. Si cambió una decisión, actualizar `mvp.md` (y regenerar su índice si cambiaron los títulos).
-3. Resumir al usuario qué se hizo, cómo se verificó y qué quedó pendiente.
+2. Completar la sección **"Riesgos y pendientes"** de la etapa (ver arriba).
+3. Si cambió una decisión, actualizar `mvp.md` (y regenerar su índice si cambiaron los títulos).
+4. Resumir al usuario qué se hizo, cómo se verificó, y qué riesgos y pendientes quedan.
 
 ## Seguridad y hardware
 
