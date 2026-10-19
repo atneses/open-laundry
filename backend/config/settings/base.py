@@ -8,6 +8,8 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
+from django.templatetags.static import static
+from django.urls import reverse_lazy
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -68,6 +70,9 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {"default": env.db("DATABASE_URL")}
 
 AUTH_USER_MODEL = "core.User"
+# Unfold's login form has no hidden "next" field, so logging in from
+# /admin/login/ directly would fall back to /accounts/profile/ (which does not exist).
+LOGIN_REDIRECT_URL = reverse_lazy("admin:index")
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -84,8 +89,9 @@ USE_I18N = True
 LOCALE_PATHS = [BASE_DIR / "locale"]
 USE_TZ = True
 
-# Static files (admin), served by runserver in development
+# Static files (admin and branding), served by runserver in development
 STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -118,7 +124,16 @@ UNFOLD = {
     "SITE_TITLE": "Lavandería",
     "SITE_HEADER": "Lavandería",
     "SITE_SUBHEADER": "Administración",
+    # Provisional branding until the laundry provides its logo and colors.
     "SITE_SYMBOL": "local_laundry_service",
+    "SITE_FAVICONS": [
+        {
+            "rel": "icon",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "href": lambda request: static("favicon.svg"),
+        },
+    ],
     "SHOW_HISTORY": True,
     "SHOW_LANGUAGES": False,
     # Primary color (blue). To be adjusted to the laundry branding.
@@ -136,5 +151,37 @@ UNFOLD = {
             "900": "oklch(37% .146 265)",
             "950": "oklch(28% .091 267)",
         },
+    },
+    # Sidebar grouped by business area (mvp.md §2). Each stage adds its own
+    # area and models; items are only shown to users with the view permission.
+    "SIDEBAR": {
+        "show_search": False,
+        "show_all_applications": False,
+        "navigation": [
+            {
+                "title": "Usuarios y permisos",
+                "separator": False,
+                "items": [
+                    {
+                        "title": "Usuarios",
+                        "icon": "person",
+                        "link": reverse_lazy("admin:core_user_changelist"),
+                        "permission": lambda request: request.user.has_perm("core.view_user"),
+                    },
+                    {
+                        "title": "Grupos",
+                        "icon": "groups",
+                        "link": reverse_lazy("admin:auth_group_changelist"),
+                        "permission": lambda request: request.user.has_perm("auth.view_group"),
+                    },
+                    {
+                        "title": "Sucursales",
+                        "icon": "store",
+                        "link": reverse_lazy("admin:core_branch_changelist"),
+                        "permission": lambda request: request.user.has_perm("core.view_branch"),
+                    },
+                ],
+            },
+        ],
     },
 }

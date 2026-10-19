@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Provisional favicon: a front-loading washing machine. -->
+  <rect x="8" y="4" width="48" height="56" rx="8" fill="#2563eb"/>
+  <rect x="8" y="4" width="48" height="12" rx="8" fill="#1d4ed8"/>
+  <circle cx="18" cy="10" r="2.5" fill="#ffffff"/>
+  <circle cx="26" cy="10" r="2.5" fill="#ffffff"/>
+  <circle cx="32" cy="37" r="15" fill="#ffffff"/>
+  <circle cx="32" cy="37" r="10" fill="#93c5fd"/>
+</svg>

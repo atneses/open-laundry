@@ -71,6 +71,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
   - Documentar con `drf-spectacular` (tipos de respuesta correctos) para que el frontend pueda generar sus tipos.
 - **Lógica de negocio** (cálculo de totales, corte de caja, generación de ciclos, consumo de insumos) en funciones o servicios del modelo/app, no en las vistas, para poder probarla sin HTTP.
 - **Admin (Unfold):** ventas, pagos, cortes y bitácoras de **solo lectura**. Usar las clases de `unfold.admin` (`ModelAdmin`, etc.).
+- **Menú del admin:** cada modelo nuevo se agrega al menú lateral en `UNFOLD["SIDEBAR"]` (`config/settings/base.py`), dentro de su área de `mvp.md` §2 (creando el área si no existe), con un ícono de Material Symbols y `"permission"` que revise el permiso de vista del modelo (p. ej. `request.user.has_perm("core.view_user")`).
 - **Configuración:** valores sensibles o por entorno solo desde variables de entorno (`.env`, que no se sube a git; documentar las nuevas en `.env.example`). Settings en `config/settings/{base,dev,test,prod}.py`.
 - **Idioma de la interfaz:** no volver a agregar `LocaleMiddleware`; el sistema es solo en español. Si un texto de Unfold sale en inglés, agregar su traducción en `backend/locale/es_MX/LC_MESSAGES/django.po` y compilar con `compilemessages`.
 

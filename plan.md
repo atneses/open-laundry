@@ -39,8 +39,6 @@ Las casillas `[ ]` sirven para ir marcando el avance.
 - [Etapa 2 – Personalización del admin (Unfold)](#etapa-2--personalización-del-admin-unfold)
   - [2.1 Marca de la lavandería](#21-marca-de-la-lavandería)
   - [2.2 Menú lateral por áreas](#22-menú-lateral-por-áreas)
-  - [2.3 Página de inicio (dashboard)](#23-página-de-inicio-dashboard)
-  - [2.4 Base para pantallas del admin](#24-base-para-pantallas-del-admin)
 - [Etapa 3 – Usuarios, roles y permisos](#etapa-3--usuarios-roles-y-permisos)
   - [3.1 Sucursal (Branch)](#31-sucursal-branch)
   - [3.2 Permisos personalizados](#32-permisos-personalizados)
@@ -316,29 +314,29 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 2 – Personalización del admin (Unfold)
 
-**Objetivo:** dejar listo el "esqueleto" del panel de administración, con la imagen de la lavandería, el menú organizado por áreas y la página de inicio, para que cada etapa siguiente solo agregue sus pantallas.
+**Objetivo:** dejar el panel de administración con la imagen de la lavandería y el menú organizado por áreas, para que cada etapa siguiente solo agregue sus pantallas.
 
 ### 2.1 Marca de la lavandería
-- [ ] **Qué se hace:** crear `backend/static/` (y `STATICFILES_DIRS`) y configurar en `UNFOLD` el nombre, el logo, el ícono del navegador (*favicon*) y los colores de la lavandería, en modo claro y oscuro.
+- [x] **Qué se hace:** crear `backend/static/` (y `STATICFILES_DIRS`) y configurar en `UNFOLD` el nombre, el logo, el ícono del navegador (*favicon*) y los colores de la lavandería, en modo claro y oscuro.
 - **Para qué:** que el panel se reconozca como el sistema de la lavandería.
 - **Listo cuando:** el login y el panel muestran el logo y los colores. Si aún no hay logo, se usa uno provisional y queda como pendiente.
 
 ### 2.2 Menú lateral por áreas
-- [ ] **Qué se hace:** configurar la navegación de Unfold (`SIDEBAR`) con las áreas de `mvp.md` §2 (*Operación*, *Catálogo*, *Inventario*, *Máquinas*, *Usuarios y permisos*, *Bitácoras*), con íconos. En esta etapa solo aparecen los modelos que ya existen (sucursales, usuarios, grupos); cada etapa siguiente agrega los suyos.
+- [x] **Qué se hace:** configurar la navegación de Unfold (`SIDEBAR`) por áreas con íconos, empezando por *Usuarios y permisos* (sucursales, usuarios, grupos), que es la única con modelos. Cada etapa siguiente agrega su área y sus modelos según `mvp.md` §2 (*Operación*, *Catálogo*, *Inventario*, *Máquinas*, *Bitácoras*).
 - **Para qué:** que el admin encuentre todo por área y no en una lista larga de modelos.
-- **Listo cuando:** el menú muestra las áreas con íconos, cada usuario solo ve las secciones a las que tiene permiso y las áreas sin modelos todavía no aparecen.
+- **Listo cuando:** el menú muestra el área *Usuarios y permisos* con íconos, cada usuario solo ve las opciones a las que tiene permiso (prueba) y no aparece la lista genérica de apps de Django.
 
-### 2.3 Página de inicio (dashboard)
-- [ ] **Qué se hace:** reemplazar la página de inicio del admin por un dashboard propio (plantilla en `backend/templates/admin/`, agregando esa carpeta a `TEMPLATES['DIRS']` y `DASHBOARD_CALLBACK` de Unfold) con la estructura de tarjetas que se llenará en la Etapa 11 (ventas del día, máquinas, encargos, stock bajo, diferencias de caja). Por ahora muestra datos de ejemplo marcados como "próximamente".
-- **Para qué:** dejar definida la vista que el admin verá al entrar, y llenarla conforme existan los datos.
-- **Listo cuando:** al entrar al admin se ve el dashboard con su estructura, y una prueba confirma que la página carga para un admin y no para un usuario sin acceso.
+**Notas de la implementación:**
+- La marca provisional usa el ícono de lavandería de Material Symbols (`SITE_SYMBOL`), un *favicon* SVG de una lavadora (`backend/static/favicon.svg`) y el azul que ya tenía el admin.
+- El menú se define en `UNFOLD["SIDEBAR"]` (`config/settings/base.py`); cada opción revisa el permiso de vista del modelo.
+- **Corrección:** el formulario de login de Unfold no envía el campo `next`; al entrar directo por `/admin/login/` se llegaba a `/accounts/profile/` (404). Se agregó `LOGIN_REDIRECT_URL` hacia el inicio del admin, con su prueba.
+- La página de inicio sigue mostrando la lista estándar de modelos de Django; el dashboard propio se hace en el paso 11.1.
 
-### 2.4 Base para pantallas del admin
-- [ ] **Qué se hace:** crear en `core` una clase base para los admins de registros con historial (ventas, pagos, cortes, bitácoras) que los deja **de solo lectura** (sin agregar, editar ni borrar), y documentar en `CLAUDE.md` cómo usarla.
-- **Para qué:** que todas las pantallas sigan la misma regla sin repetir código en cada etapa.
-- **Listo cuando:** una prueba confirma que un admin de ejemplo hecho con esa base no permite agregar, editar ni borrar.
+**Riesgos y pendientes:**
+- **Pendiente – marca real:** cambiar el ícono, el *favicon* y los colores provisionales por el logo y los colores de la lavandería.
+- **Riesgo – modo oscuro no verificado:** Unfold lo trae integrado, pero no se pudo comprobar en las capturas automáticas.
 
-**✅ Etapa 2 terminada cuando:** el admin tiene la marca de la lavandería, el menú por áreas y el dashboard inicial, y existe la base de solo lectura.
+**✅ Etapa 2 terminada cuando:** el admin tiene la marca de la lavandería y el menú por áreas.
 
 ---
 
@@ -363,6 +361,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ### 3.4 Permisos extra y bitácora
 - [ ] **Qué se hace:** permitir agregar permisos individuales a un empleado (`user_permissions`), **excepto** `core.manage_users`. Crear el modelo `PermissionLog` y registrar quién otorgó o quitó cada permiso.
+- **Solo lectura:** el admin de `PermissionLog` usa una clase base de `core` que no permite agregar, editar ni borrar; la reutilizarán las demás bitácoras, ventas, pagos y cortes. Documentar en `CLAUDE.md` cómo usarla.
 - **Para qué:** que el admin delegue tareas sin convertir al empleado en admin, y que quede registro.
 - **Listo cuando:** una prueba confirma que no se puede dar `core.manage_users` a un empleado y que cada cambio queda en la bitácora.
 
@@ -578,7 +577,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Objetivo:** que el admin vea cómo va el negocio desde el dashboard de Unfold.
 
 ### 11.1 Indicadores del dashboard
-- [ ] **Qué se hace:** tarjetas y gráficas en la página de inicio del admin: ventas del día (efectivo / tarjeta), cargas por máquina, encargos pendientes y listos, stock bajo, diferencias de caja, cancelaciones y descuentos por empleado.
+- [ ] **Qué se hace:** reemplazar la página de inicio del admin por un dashboard propio (plantilla en `backend/templates/admin/` y `DASHBOARD_CALLBACK` de Unfold) con tarjetas y gráficas: ventas del día (efectivo / tarjeta), cargas por máquina, encargos pendientes y listos, stock bajo, diferencias de caja, cancelaciones y descuentos por empleado.
 - **Listo cuando:** los números coinciden con los datos de prueba.
 
 ### 11.2 Consultas con filtros
