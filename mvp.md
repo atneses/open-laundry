@@ -524,8 +524,8 @@ Entrega estimada: 18/10/2026 18:00
 /api/users/{id}/permissions/        agregar / quitar permisos individuales (solo admin)
 /api/customers/                     CRUD + búsqueda por teléfono/nombre
 /api/services/                      catálogo + precios por modalidad
-/api/products/                      CRUD + /low-stock/
-/api/inventory/movements/
+/api/products/                      solo lectura + /low-stock/ (se crean y editan en el admin)
+/api/inventory/movements/           registrar entradas (receive_stock) + historial
 /api/sales/                         crear (con modalidad), pagar, cancelar
 /api/sales/{id}/receipt/            datos del ticket
 /api/drop-off-orders/               listado por estado, cambiar estado, entregar

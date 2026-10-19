@@ -45,27 +45,28 @@ Las casillas `[ ]` sirven para ir marcando el avance.
   - [3.3 Permisos extra y bitácora](#33-permisos-extra-y-bitácora)
   - [3.4 Usuarios en el admin](#34-usuarios-en-el-admin)
 - [Etapa 4 – Catálogo e inventario](#etapa-4--catálogo-e-inventario)
-  - [4.1 Clase de permiso para la API](#41-clase-de-permiso-para-la-api)
-  - [4.2 Servicios y precios](#42-servicios-y-precios)
-  - [4.3 Productos (insumos)](#43-productos-insumos)
-  - [4.4 Consumo por carga](#44-consumo-por-carga)
-  - [4.5 Movimientos de inventario](#45-movimientos-de-inventario)
-  - [4.6 Alertas de stock](#46-alertas-de-stock)
-  - [4.7 Pantallas de admin](#47-pantallas-de-admin)
+  - [4.1 Servicios y precios](#41-servicios-y-precios)
+  - [4.2 Productos (insumos)](#42-productos-insumos)
+  - [4.3 Consumo por carga](#43-consumo-por-carga)
+  - [4.4 Movimientos de inventario](#44-movimientos-de-inventario)
+  - [4.5 Alertas de stock](#45-alertas-de-stock)
+  - [4.6 Pantallas de admin](#46-pantallas-de-admin)
 - [Etapa 5 – Clientes](#etapa-5--clientes)
   - [5.1 Modelo Customer](#51-modelo-customer)
-  - [5.2 API de clientes](#52-api-de-clientes)
+  - [5.2 Clase de permiso para la API](#52-clase-de-permiso-para-la-api)
+  - [5.3 API de clientes](#53-api-de-clientes)
 - [Etapa 6 – Caja (turnos)](#etapa-6--caja-turnos)
   - [6.1 Modelo CashSession](#61-modelo-cashsession)
   - [6.2 Abrir caja](#62-abrir-caja)
   - [6.3 Cerrar caja (corte)](#63-cerrar-caja-corte)
   - [6.4 Consulta de cortes](#64-consulta-de-cortes)
 - [Etapa 7 – Ventas, pagos y descuentos](#etapa-7--ventas-pagos-y-descuentos)
-  - [7.1 Modelos de venta](#71-modelos-de-venta)
-  - [7.2 Pagos](#72-pagos)
-  - [7.3 Regla de autoservicio](#73-regla-de-autoservicio)
-  - [7.4 Descuentos](#74-descuentos)
-  - [7.5 Cancelaciones](#75-cancelaciones)
+  - [7.1 API del catálogo](#71-api-del-catálogo)
+  - [7.2 Modelos de venta](#72-modelos-de-venta)
+  - [7.3 Pagos](#73-pagos)
+  - [7.4 Regla de autoservicio](#74-regla-de-autoservicio)
+  - [7.5 Descuentos](#75-descuentos)
+  - [7.6 Cancelaciones](#76-cancelaciones)
 - [Etapa 8 – Encargos](#etapa-8--encargos)
   - [8.1 Modelo DropOffOrder](#81-modelo-dropofforder)
   - [8.2 Flujo de estados](#82-flujo-de-estados)
@@ -77,7 +78,8 @@ Las casillas `[ ]` sirven para ir marcando el avance.
   - [9.5 Driver manual](#95-driver-manual)
   - [9.6 Simulador](#96-simulador)
   - [9.7 Consumo de insumos](#97-consumo-de-insumos)
-  - [9.8 Cierre por tiempo](#98-cierre-por-tiempo)
+  - [9.8 API de entradas de inventario](#98-api-de-entradas-de-inventario)
+  - [9.9 Cierre por tiempo](#99-cierre-por-tiempo)
 - [Etapa 10 – Tickets](#etapa-10--tickets)
   - [10.1 Datos del ticket](#101-datos-del-ticket)
 - [Etapa 11 – Reportes](#etapa-11--reportes)
@@ -96,6 +98,7 @@ Las casillas `[ ]` sirven para ir marcando el avance.
   - [12.9 Tablero de máquinas en la caja](#129-tablero-de-máquinas-en-la-caja)
   - [12.10 Vista de impresión](#1210-vista-de-impresión)
   - [12.11 Impresión y reimpresión](#1211-impresión-y-reimpresión)
+  - [12.12 Entradas de inventario en la caja](#1212-entradas-de-inventario-en-la-caja)
 - [Etapa 13 – Despliegue y arranque en el local (MVP)](#etapa-13--despliegue-y-arranque-en-el-local-mvp)
   - [13.1 Servidor](#131-servidor)
   - [13.2 Producción con Docker](#132-producción-con-docker)
@@ -389,44 +392,39 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 4 – Catálogo e inventario
 
-**Objetivo:** dar de alta qué se vende, a qué precio, y qué insumos se gastan. Se crean las apps `sales` (servicios y precios) e `inventory` (productos, consumo y movimientos).
+**Objetivo:** dar de alta qué se vende, a qué precio, y qué insumos se gastan. Se crean las apps `sales` (servicios y precios) e `inventory` (productos, consumo y movimientos). Esta etapa es **solo modelos, reglas y admin**: la API del catálogo se hace en la Etapa 7 (7.1) y la de stock bajo en la Etapa 11 (11.3).
 
-### 4.1 Clase de permiso para la API
-- [ ] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("sales.manage_catalog")`, que se pone en cada endpoint. Es la primera etapa con endpoints protegidos por permiso.
-- **Para qué:** que la validación ocurra siempre en el servidor, no solo escondiendo botones.
-- **Listo cuando:** una prueba muestra que un usuario sin el permiso recibe error 403.
-
-### 4.2 Servicios y precios
+### 4.1 Servicios y precios
 - [ ] **Qué se hace:** crear los modelos `Service` y `ServicePrice` (precio por modalidad: autoservicio / encargo; campo `program` opcional para el futuro).
 - **Para qué:** tener precios distintos para autoservicio y encargo, y poder agregar servicios nuevos (p. ej. lavado de tenis) sin programar.
 - **Listo cuando:** en el admin se dan de alta "Lavado por carga" y "Secado por carga" con sus dos precios.
 
-### 4.3 Productos (insumos)
+### 4.2 Productos (insumos)
 - [ ] **Qué se hace:** crear el modelo `Product` (detergente, suavizante, bolsas) con stock actual, stock mínimo y si se vende o no.
 - **Para qué:** controlar cuánto insumo hay.
 - **Listo cuando:** existen detergente y suavizante con `is_for_sale = false`.
 
-### 4.4 Consumo por carga
+### 4.3 Consumo por carga
 - [ ] **Qué se hace:** crear `LoadConsumption` (servicio + producto + cantidad) y cargar 150–200 ml de detergente y de suavizante para "Lavado por carga".
 - **Para qué:** que el sistema descuente insumos automáticamente en cada lavado.
 - **Listo cuando:** el consumo se puede editar desde el admin.
 
-### 4.5 Movimientos de inventario
+### 4.4 Movimientos de inventario
 - [ ] **Qué se hace:** crear `StockMovement` (entrada, consumo, venta, ajuste) y la regla de que cada movimiento actualiza `stock`. Los ajustes requieren `inventory.adjust_stock`.
 - **Para qué:** tener el historial de por qué cambió el stock.
 - **Listo cuando:** registrar una entrada de 5 L sube el stock en 5000 ml, con prueba automática.
 
-### 4.6 Alertas de stock
-- [ ] **Qué se hace:** endpoint `/api/products/low-stock/` y un filtro en el admin con los productos por debajo del mínimo.
+### 4.5 Alertas de stock
+- [ ] **Qué se hace:** un filtro en el admin con los productos por debajo del mínimo.
 - **Para qué:** avisar antes de quedarse sin detergente.
-- **Listo cuando:** al bajar el stock del mínimo, el producto aparece en la alerta.
+- **Listo cuando:** al bajar el stock del mínimo, el producto aparece en el filtro.
 
-### 4.7 Pantallas de admin
+### 4.6 Pantallas de admin
 - [ ] **Qué se hace:** configurar en Unfold las secciones *Catálogo* (servicios, precios) e *Inventario* (productos, movimientos, consumo por carga), con filtros y búsqueda.
 - **Para qué:** que el admin mantenga el catálogo sin ayuda técnica.
-- **Listo cuando:** se puede cambiar un precio desde el admin y la API devuelve el nuevo.
+- **Listo cuando:** se puede cambiar un precio desde el admin.
 
-**✅ Etapa 4 terminada cuando:** el catálogo y el inventario se administran desde el admin y la API los expone.
+**✅ Etapa 4 terminada cuando:** el catálogo y el inventario se administran desde el admin.
 
 ---
 
@@ -438,7 +436,12 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - [ ] **Qué se hace:** crear `Customer` con nombre y teléfono obligatorios (teléfono único por sucursal); dirección, correo y notas opcionales.
 - **Listo cuando:** no se puede crear un cliente sin teléfono ni repetir un teléfono.
 
-### 5.2 API de clientes
+### 5.2 Clase de permiso para la API
+- [ ] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("customers.manage_customers")`, que se pone en cada endpoint. Es la primera etapa con endpoints protegidos por permiso (se movió aquí desde la Etapa 4, que no tiene endpoints).
+- **Para qué:** que la validación ocurra siempre en el servidor, no solo escondiendo botones.
+- **Listo cuando:** una prueba muestra que un usuario sin el permiso recibe error 403 en `/api/customers/`.
+
+### 5.3 API de clientes
 - [ ] **Qué se hace:** `/api/customers/` con alta, edición y **búsqueda por teléfono o nombre**.
 - **Para qué:** en caja se busca al cliente por teléfono mientras se le atiende.
 - **Listo cuando:** buscar los últimos dígitos del teléfono encuentra al cliente.
@@ -477,26 +480,31 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **Objetivo:** las reglas de cobro (ventas, pagos, descuentos y cancelaciones) en el backend, con su API y su consulta en el admin.
 
-### 7.1 Modelos de venta
+### 7.1 API del catálogo
+- [ ] **Qué se hace:** `/api/services/` (servicios activos con su precio por modalidad) y `/api/products/` (productos a la venta), de solo lectura para la caja. El catálogo se sigue editando en el admin (Etapa 4).
+- **Para qué:** que la caja sepa qué puede cobrar y a qué precio.
+- **Listo cuando:** al cambiar un precio en el admin, la API devuelve el nuevo.
+
+### 7.2 Modelos de venta
 - [ ] **Qué se hace:** crear `Sale` (modalidad, estado, subtotal, descuento, total, saldo, turno) y `SaleItem` (servicio o producto, cantidad, precio unitario copiado del catálogo).
 - **Para qué:** que el precio cobrado no cambie aunque después se modifique el catálogo.
 - **Listo cuando:** crear una venta de 3 cargas de lavado en autoservicio calcula el total con el precio de autoservicio.
 
-### 7.2 Pagos
+### 7.3 Pagos
 - [ ] **Qué se hace:** crear `Payment` (efectivo, tarjeta de crédito, tarjeta de débito; monto; referencia del voucher). Una venta puede tener varios pagos; el saldo y el estado se recalculan solos (`pending`, `partially_paid`, `paid`).
 - **Para qué:** permitir anticipos en encargos y pagos mixtos.
 - **Listo cuando:** dos pagos parciales dejan la venta en `paid` con saldo 0.
 
-### 7.3 Regla de autoservicio
+### 7.4 Regla de autoservicio
 - [ ] **Qué se hace:** en autoservicio la venta debe quedar pagada completa antes de poder activar máquinas.
 - **Listo cuando:** una prueba confirma que no se puede activar una máquina con saldo pendiente en autoservicio.
 
-### 7.4 Descuentos
+### 7.5 Descuentos
 - [ ] **Qué se hace:** crear `Discount` (porcentaje o monto fijo, vigencia, modalidad, servicios) y `AppliedDiscount`. La API solo ofrece al empleado los descuentos vigentes que aplican a esa venta; crearlos requiere `sales.manage_discounts`.
 - **Para qué:** que el empleado solo use descuentos autorizados.
 - **Listo cuando:** un descuento vencido o de otra modalidad no aparece ni se puede aplicar.
 
-### 7.5 Cancelaciones
+### 7.6 Cancelaciones
 - [ ] **Qué se hace:** cancelar una venta con motivo obligatorio; queda quién, cuándo y por qué. Los pagos en efectivo cancelados se descuentan del corte.
 - **Listo cuando:** cancelar sin motivo da error, y el corte refleja la cancelación.
 
@@ -558,7 +566,12 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - [ ] **Qué se hace:** al iniciar un ciclo de lavado sin `customer_supplies`, crear los movimientos de consumo según `LoadConsumption`.
 - **Listo cuando:** un lavado baja 150–200 ml de detergente y de suavizante; con `customer_supplies` no baja nada.
 
-### 9.8 Cierre por tiempo
+### 9.8 API de entradas de inventario
+- [ ] **Qué se hace:** `/api/inventory/movements/`: `POST` para registrar una entrada de insumo (requiere `inventory.receive_stock`) y `GET` para el historial de movimientos. Los ajustes (`inventory.adjust_stock`) se siguen haciendo en el admin.
+- **Para qué:** que un empleado sin acceso al admin registre desde la caja los insumos que llegan.
+- **Listo cuando:** registrar una entrada por la API sube el stock; sin `inventory.receive_stock` responde 403 (pruebas).
+
+### 9.9 Cierre por tiempo
 - [ ] **Qué se hace:** tarea periódica (Celery Beat) que pasa a `finished` los ciclos que superen la duración esperada del programa.
 - **Para qué:** que no queden ciclos "en curso" para siempre cuando no hay medidor.
 - **Listo cuando:** un ciclo viejo se cierra solo.
@@ -593,7 +606,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** se puede ver, por ejemplo, "ventas en tarjeta de la semana pasada de un empleado".
 
 ### 11.3 Endpoints de reportes
-- [ ] **Qué se hace:** crear el permiso `core.view_reports` y los endpoints `/api/reports/daily-sales/`, `/machine-usage/` e `/inventory/`, protegidos con él.
+- [ ] **Qué se hace:** crear el permiso `core.view_reports` y los endpoints `/api/reports/daily-sales/`, `/machine-usage/` e `/inventory/`, protegidos con él, y `/api/products/low-stock/` con los productos por debajo del mínimo (movido desde la Etapa 4).
 - **Listo cuando:** devuelven los mismos números que el dashboard.
 
 **✅ Etapa 11 terminada cuando:** el admin puede revisar el día y el mes sin pedir ayuda.
@@ -654,7 +667,11 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - [ ] **Qué se hace:** imprimir automáticamente al cobrar, al recibir un encargo y al entregarlo; botón de reimpresión en el historial.
 - **Listo cuando:** sale el ticket en la POS-8360 de la caja.
 
-**✅ Etapa 12 terminada cuando:** un empleado hace en la caja todo su turno: abrir caja, cobrar, encargos, activar máquinas (manual), imprimir tickets y corte.
+### 12.12 Entradas de inventario en la caja
+- [ ] **Qué se hace:** pantalla para registrar los insumos que llegan (producto y cantidad), con la API de 9.8.
+- **Listo cuando:** un empleado registra una entrada desde la caja y el stock sube.
+
+**✅ Etapa 12 terminada cuando:** un empleado hace en la caja todo su turno: abrir caja, cobrar, encargos, activar máquinas (manual), registrar entradas de inventario, imprimir tickets y corte.
 
 **Riesgos y pendientes:**
 - **Riesgo – dependencias del frontend:** `npm audit` reportaba 7 avisos "high" en dependencias internas de la herramienta de shadcn (`ts-morph` → `fast-glob` → `braces`), que no van en la app del navegador; revisar al retomar.
