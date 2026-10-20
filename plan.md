@@ -191,7 +191,9 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - El modelo `Branch` (sucursal) se creó en el paso 1.4 (y no en el 3.1) porque el usuario necesita apuntar a una sucursal desde la primera migración.
 
 **Riesgos y pendientes:**
-- **Pendiente – traducciones (todas las etapas):** los textos propios (modelos, campos, menú, mensajes, permisos) están en inglés con `gettext_lazy`; falta su traducción en `backend/locale/es_MX/`, y mientras tanto los que Django no traduce se ven en inglés. Los nombres de permisos necesitan un manejo aparte porque se guardan en la base de datos. De Unfold, que no trae español, se tradujeron 157 textos de la interfaz principal; los de complementos no usados (importar/exportar, historial, editor de texto) siguen en inglés.
+- **Traducciones:** los textos propios están traducidos en `backend/locale/es_MX/` (se mantienen con `makemessages`) y los de Unfold, que no trae español, en `backend/locale_unfold/`, aparte para que `makemessages` no los marque como obsoletos.
+- **Pendiente – nombres de permisos:** se guardan en la base en inglés y el admin los muestra así en las casillas de roles y usuarios, aunque su traducción ya está en el `.po`.
+- **Pendiente – traducción de Unfold incompleta:** los textos de complementos no usados (importar/exportar, historial, editor de texto) siguen en inglés.
 
 **✅ Etapa 1 terminada cuando:** `docker compose up` levanta la base de datos, la API y el admin, y las pruebas y el lint pasan.
 

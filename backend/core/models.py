@@ -55,8 +55,8 @@ class PermissionLog(models.Model):
     """Audit trail of extra permissions granted to or revoked from a user."""
 
     class Action(models.TextChoices):
-        GRANTED = "granted", _("granted")
-        REVOKED = "revoked", _("revoked")
+        GRANTED = "granted", _("Granted")
+        REVOKED = "revoked", _("Revoked")
 
     user = models.ForeignKey(
         User,

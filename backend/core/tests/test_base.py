@@ -3,6 +3,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.utils.translation import gettext
 
 from core.models import Branch
 
@@ -58,3 +59,12 @@ def test_root_redirects_to_admin(client):
     response = client.get("/")
     assert response.status_code == 302
     assert response.url == reverse("admin:index")
+
+
+@pytest.mark.parametrize(
+    ("text", "spanish"),
+    [("Users and permissions", "Usuarios y permisos"), ("Select action", "Seleccionar acción")],
+)
+def test_project_and_unfold_strings_are_translated(text, spanish):
+    # One string from locale/ (project) and one from locale_unfold/ (Unfold).
+    assert gettext(text) == spanish

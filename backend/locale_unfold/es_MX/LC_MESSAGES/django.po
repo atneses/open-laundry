@@ -1,0 +1,494 @@
+# Spanish translation of django-unfold strings (the package ships none).
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: es_MX\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Select record"
+msgstr "Seleccionar registro"
+
+msgid "Select action"
+msgstr "Seleccionar acción"
+
+msgid "Save"
+msgstr "Guardar"
+
+msgid "Collapse"
+msgstr "Contraer"
+
+msgid "Name"
+msgstr "Nombre"
+
+msgid "Value"
+msgstr "Valor"
+
+msgid "Default"
+msgstr "Predeterminado"
+
+msgid "Code"
+msgstr "Código"
+
+msgid "Current file"
+msgstr "Archivo actual"
+
+msgid "Reset to default"
+msgstr "Restablecer valor predeterminado"
+
+msgid "All"
+msgstr "Todos"
+
+#, python-format
+msgid " By %(filter_title)s "
+msgstr " Por %(filter_title)s "
+
+msgid "Yes"
+msgstr "Sí"
+
+msgid "No"
+msgstr "No"
+
+msgid "From"
+msgstr "Desde"
+
+msgid "To"
+msgstr "Hasta"
+
+msgid "Date from"
+msgstr "Fecha desde"
+
+msgid "Time"
+msgstr "Hora"
+
+msgid "Date to"
+msgstr "Fecha hasta"
+
+msgid "Not enough data."
+msgstr "No hay suficientes datos."
+
+msgid "Add new item"
+msgstr "Agregar elemento"
+
+msgid "Edit"
+msgstr "Editar"
+
+msgid "Export"
+msgstr "Exportar"
+
+msgid "Import"
+msgstr "Importar"
+
+msgid "Submit"
+msgstr "Enviar"
+
+msgid "Delete"
+msgstr "Eliminar"
+
+msgid "Update"
+msgstr "Actualizar"
+
+msgid "New"
+msgstr "Nuevo"
+
+msgid "Date/time"
+msgstr "Fecha y hora"
+
+msgid "Action"
+msgstr "Acción"
+
+msgid "Comment"
+msgstr "Comentario"
+
+msgid "previous"
+msgstr "anterior"
+
+msgid "next"
+msgstr "siguiente"
+
+msgid "Changed by"
+msgstr "Modificado por"
+
+msgid "Changes"
+msgstr "Cambios"
+
+msgid "Field"
+msgstr "Campo"
+
+msgid "Old value"
+msgstr "Valor anterior"
+
+msgid "New value"
+msgstr "Valor nuevo"
+
+msgid "Revert"
+msgstr "Revertir"
+
+msgid "Change History"
+msgstr "Historial de cambios"
+
+msgid "Close"
+msgstr "Cerrar"
+
+msgid "Select action to run"
+msgstr "Selecciona una acción para ejecutar"
+
+msgid "Items must be selected in order to perform actions on them. No items have been changed."
+msgstr "Debes seleccionar elementos para aplicarles una acción. No se modificó ningún elemento."
+
+msgid "Select value"
+msgstr "Seleccionar valor"
+
+msgid "Run the selected action"
+msgstr "Ejecutar la acción seleccionada"
+
+msgid "Run"
+msgstr "Ejecutar"
+
+msgid "Click here to select the objects across all pages"
+msgstr "Haz clic aquí para seleccionar los objetos de todas las páginas"
+
+#, python-format
+msgid "Select all %(total_count)s %(module_name)s"
+msgstr "Seleccionar los %(total_count)s %(module_name)s"
+
+msgid "Clear selection"
+msgstr "Limpiar selección"
+
+msgid "Django site admin"
+msgstr "Administración"
+
+#, python-format
+msgid "Models in the %(name)s application"
+msgstr "Modelos de la aplicación %(name)s"
+
+msgid "You don’t have permission to view or edit anything."
+msgstr "No tienes permiso para ver ni editar nada."
+
+msgid "After you've created a user, you’ll be able to edit more user options."
+msgstr "Después de crear el usuario podrás editar más opciones."
+
+#, python-format
+msgid "Enter a new password for the user <strong>%(username)s</strong>."
+msgstr "Escribe una contraseña nueva para el usuario <strong>%(username)s</strong>."
+
+msgid "Change password"
+msgstr "Cambiar contraseña"
+
+msgid "History"
+msgstr "Historial"
+
+msgid "View on site"
+msgstr "Ver en el sitio"
+
+msgid "Objects"
+msgstr "Objetos"
+
+msgid "Summary"
+msgstr "Resumen"
+
+msgid "Welcome back to"
+msgstr "Bienvenido de nuevo a"
+
+#, python-format
+msgid "You are authenticated as %(username)s, but are not authorized to access this page. Would you like to login to a different account?"
+msgstr "Iniciaste sesión como %(username)s, pero no tienes acceso a esta página. ¿Quieres entrar con otra cuenta?"
+
+msgid "Log in"
+msgstr "Iniciar sesión"
+
+msgid "Forgotten your password or username?"
+msgstr "¿Olvidaste tu contraseña o tu usuario?"
+
+msgid "Show all"
+msgstr "Mostrar todo"
+
+msgid "Type to search"
+msgstr "Escribe para buscar"
+
+msgid "Save and continue editing"
+msgstr "Guardar y seguir editando"
+
+msgid "Save and view"
+msgstr "Guardar y ver"
+
+msgid "Save and add another"
+msgstr "Guardar y agregar otro"
+
+msgid "Save as new"
+msgstr "Guardar como nuevo"
+
+msgid "You have been successfully logged out from the administration"
+msgstr "Cerraste sesión correctamente"
+
+msgid "Thanks for spending some quality time with the web site today."
+msgstr "Gracias por usar el sistema."
+
+msgid "Log in again"
+msgstr "Iniciar sesión de nuevo"
+
+msgid "Your password was changed."
+msgstr "Tu contraseña se cambió."
+
+msgid "Please enter your old password, for security’s sake, and then enter your new password twice so we can verify you typed it in correctly."
+msgstr "Por seguridad, escribe tu contraseña actual y después la nueva dos veces para verificar que esté bien escrita."
+
+msgid "No data"
+msgstr "Sin datos"
+
+msgid "View site"
+msgstr "Ver sitio"
+
+msgid "Log out"
+msgstr "Cerrar sesión"
+
+#, python-format
+msgid "Add %(name)s"
+msgstr "Agregar %(name)s"
+
+msgid "All applications"
+msgstr "Todas las aplicaciones"
+
+msgid "View"
+msgstr "Ver"
+
+msgid "Change"
+msgstr "Modificar"
+
+msgid "Add"
+msgstr "Agregar"
+
+msgid "Unknown"
+msgstr "Desconocido"
+
+msgid "True"
+msgstr "Sí"
+
+msgid "False"
+msgstr "No"
+
+msgid "Apply Filters"
+msgstr "Aplicar filtros"
+
+msgid "Hide counts"
+msgstr "Ocultar conteos"
+
+msgid "Show counts"
+msgstr "Mostrar conteos"
+
+msgid "Clear all filters"
+msgstr "Quitar todos los filtros"
+
+msgid "Filters"
+msgstr "Filtros"
+
+msgid "Toggle sorting"
+msgstr "Cambiar orden"
+
+msgid "Remove from sorting"
+msgstr "Quitar del orden"
+
+#, python-format
+msgid "Sorting priority: %(priority_number)s"
+msgstr "Prioridad de orden: %(priority_number)s"
+
+msgid "Navigate"
+msgstr "Navegar"
+
+msgid "Select"
+msgstr "Seleccionar"
+
+msgid "Clear"
+msgstr "Limpiar"
+
+msgid "Recent searches"
+msgstr "Búsquedas recientes"
+
+msgid "Nothing matched your search"
+msgstr "No hay resultados para tu búsqueda"
+
+msgid "No, take me back"
+msgstr "No, regresar"
+
+msgid "Yes, I’m sure"
+msgstr "Sí, estoy seguro"
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "Record picture"
+msgstr "Imagen del registro"
+
+msgid "This item will be deleted."
+msgstr "Este elemento se eliminará."
+
+msgid "Click to cancel"
+msgstr "Haz clic para cancelar"
+
+msgid "No results found"
+msgstr "No se encontraron resultados"
+
+msgid "This page yielded into no results."
+msgstr "Esta página no tiene resultados."
+
+msgid "Reset filters"
+msgstr "Restablecer filtros"
+
+msgid "Image preview"
+msgstr "Vista previa de la imagen"
+
+msgid "Click to download"
+msgstr "Haz clic para descargar"
+
+msgid "Go back"
+msgstr "Regresar"
+
+msgid "Recent actions"
+msgstr "Acciones recientes"
+
+msgid "Unknown content"
+msgstr "Contenido desconocido"
+
+msgid "Previous"
+msgstr "Anterior"
+
+msgid "Next"
+msgstr "Siguiente"
+
+msgid "Search apps and models..."
+msgstr "Buscar aplicaciones y modelos..."
+
+msgid "Available shortcuts"
+msgstr "Atajos disponibles"
+
+msgid "Global shortcuts"
+msgstr "Atajos generales"
+
+msgid "Open command tool"
+msgstr "Abrir buscador de comandos"
+
+msgid "Open shortcuts list"
+msgstr "Abrir lista de atajos"
+
+msgid "Toggle sidebar"
+msgstr "Mostrar u ocultar menú lateral"
+
+msgid "Toggle dark/light mode"
+msgstr "Cambiar modo claro/oscuro"
+
+msgid "Changelist shortcuts"
+msgstr "Atajos de listados"
+
+msgid "Toggle filter"
+msgstr "Mostrar u ocultar filtros"
+
+msgid "Create new record"
+msgstr "Crear registro"
+
+msgid "Command tool shortcuts"
+msgstr "Atajos del buscador de comandos"
+
+msgid "Open selection"
+msgstr "Abrir selección"
+
+msgid "Open selection in new tab"
+msgstr "Abrir selección en una pestaña nueva"
+
+msgid "Django administration"
+msgstr "Administración"
+
+msgid "Home"
+msgstr "Inicio"
+
+msgid "General"
+msgstr "General"
+
+msgid "Light"
+msgstr "Claro"
+
+msgid "Dark"
+msgstr "Oscuro"
+
+msgid "System"
+msgstr "Sistema"
+
+msgid "Return to site"
+msgstr "Volver al sitio"
+
+#, python-format
+msgid "%(full_result_count)s total"
+msgstr "%(full_result_count)s en total"
+
+msgid "Choose file to upload"
+msgstr "Elegir archivo"
+
+msgid "Toggle password visibility"
+msgstr "Mostrar u ocultar contraseña"
+
+#, python-format
+msgid "Change selected %(model)s"
+msgstr "Modificar %(model)s seleccionado"
+
+#, python-format
+msgid "Add another %(model)s"
+msgstr "Agregar otro %(model)s"
+
+#, python-format
+msgid "View selected %(model)s"
+msgstr "Ver %(model)s seleccionado"
+
+#, python-format
+msgid "Delete selected %(model)s"
+msgstr "Eliminar %(model)s seleccionado"
+
+msgid "Add row"
+msgstr "Agregar fila"
+
+msgid "Welcome"
+msgstr "Bienvenido"
+
+msgid "Select all objects on this page for an action"
+msgstr "Seleccionar todos los objetos de esta página"
+
+msgid "Date"
+msgstr "Fecha"
+
+msgid "Select currency"
+msgstr "Seleccionar moneda"
+
+msgid "Group"
+msgstr "Grupo"
+
+msgid "Permissions"
+msgstr "Permisos"
+
+msgid "User"
+msgstr "Usuario"
+
+msgid "Object"
+msgstr "Objeto"
+
+msgid "Object permissions"
+msgstr "Permisos del objeto"
+
+msgid "Group permissions"
+msgstr "Permisos del grupo"
+
+msgid "User permissions"
+msgstr "Permisos del usuario"
+
+msgid "Manage group"
+msgstr "Administrar grupo"
+
+msgid "Manage user"
+msgstr "Administrar usuario"
+
+#, python-format
+msgid "%(counter)s result"
+msgid_plural "%(counter)s results"
+msgstr[0] "%(counter)s resultado"
+msgstr[1] "%(counter)s resultados"
+
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "Corrige el error de abajo."
+msgstr[1] "Corrige los errores de abajo."

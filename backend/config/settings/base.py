@@ -89,8 +89,9 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = "es-mx"
 TIME_ZONE = env("DJANGO_TIME_ZONE", default="America/Mexico_City")
 USE_I18N = True
-# Project translations (includes Unfold strings, which ship without Spanish).
-LOCALE_PATHS = [BASE_DIR / "locale"]
+# Project translations (kept with makemessages), then the hand-made Spanish for
+# Unfold, which ships none. They live apart so makemessages does not obsolete them.
+LOCALE_PATHS = [BASE_DIR / "locale", BASE_DIR / "locale_unfold"]
 USE_TZ = True
 
 # Static files (admin and branding), served by runserver in development
