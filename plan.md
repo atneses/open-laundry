@@ -427,7 +427,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **✅ Etapa 4 terminada cuando:** el catálogo y el inventario se administran desde el admin.
 
 **Notas de la implementación:**
-- Apps `sales` (`Service`, `ServicePrice` y las modalidades `Mode`) e `inventory` (`Product`, `LoadConsumption`, `StockMovement`). Los precios se editan dentro de la ficha del servicio.
+- Apps `sales` (`Service`, `ServicePrice` y las modalidades `Mode`) e `inventory` (`Product`, `LoadConsumption`, `StockMovement`). Los precios se capturan dentro de la ficha del servicio.
 - **Permisos:** `sales.manage_catalog` (servicios, precios, **productos** y consumo por carga), `inventory.receive_stock` (entradas) e `inventory.adjust_stock` (ajustes). Las migraciones `sales/0002` e `inventory/0003` se los dan a los roles: Admin, todos; Empleado, `receive_stock`.
 - Cada pantalla del admin revisa estos permisos, no los automáticos de Django. Productos y movimientos se ven con cualquiera de los tres; crear o editar productos requiere `manage_catalog`.
 - **Movimientos:** `quantity` lleva signo (compra > 0; consumo y venta < 0; ajuste ≠ 0), validado en el modelo y en la base de datos. `record_stock_movement` (`inventory/services.py`) guarda el movimiento y actualiza el stock con `F()` en una transacción. En el admin, quien tiene `receive_stock` solo puede registrar compras y quien tiene `adjust_stock`, ajustes; el consumo y las ventas los generará el sistema (Etapas 7 y 9). Los movimientos no se editan ni se borran, y el stock del producto es de solo lectura.
@@ -436,8 +436,8 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **Riesgos y pendientes:**
 - **Riesgo – stock negativo:** no se impide que el stock quede en negativo (p. ej. si el consumo teórico supera lo registrado o faltó capturar una entrada). Se decidió así para no bloquear un lavado; el filtro de stock bajo lo hace visible.
-- **Riesgo – historial de precios:** si se edita el precio de una fila en lugar de agregar otra con nueva fecha `valid_from`, se pierde el precio anterior. Las ventas no se afectan porque copiarán el precio (Etapa 7).
-- **Pendiente – precio vigente:** falta la función que elige el precio vigente (por modalidad, sucursal, programa y fecha); se necesita al cobrar (Etapa 7).
+- **Cambio respecto a lo planeado – precios sin fecha:** se quitó `valid_from` (precios programados a futuro). Ahora el último precio agregado es el activo y los anteriores quedan inactivos como historial, con su fecha `created_at` (`ServicePrice.save`, migración `sales/0003`). Los precios no se editan ni se borran (el modelo solo permite desactivarlos; `update()` y `bulk_update` se lo saltan); un error de captura se corrige agregando otro precio, así que queda en el historial.
+- **Pendiente – precio a cobrar:** al cobrar (Etapa 7) se busca el precio activo por servicio, modalidad, programa y sucursal; si no hay uno por programa, se usa el general.
 - **Pendiente – enlaces del movimiento:** `StockMovement` todavía no tiene `sale` ni `machine_cycle`; se agregan cuando existan esos modelos (Etapas 7 y 9).
 - **Pendiente – motivo del ajuste:** los ajustes no guardan motivo; `mvp.md` §6 pide bitácora de ajustes de inventario. Por ahora queda quién y cuándo.
 - **Pendiente – traducciones:** los textos nuevos (modelos, campos, menú, permisos) están en inglés con `gettext_lazy`; falta su traducción en `backend/locale/es_MX/`.

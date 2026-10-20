@@ -3,6 +3,7 @@
 from decimal import Decimal
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.urls import reverse
 
@@ -18,8 +19,8 @@ def wash():
     )
 
 
-def service_form(branch, prices, **overrides):
-    """POST data for the service admin form with its inline prices."""
+def service_form(branch, new_prices, existing=()):
+    """POST data for the service admin form: existing prices first, then the new ones."""
     data = {
         "name": "Wash per load",
         "kind": "wash",
@@ -27,20 +28,29 @@ def service_form(branch, prices, **overrides):
         "machine_kind": "washer",
         "uses_machine": "on",
         "is_active": "on",
-        "prices-TOTAL_FORMS": str(len(prices)),
-        "prices-INITIAL_FORMS": "0",
+        "prices-TOTAL_FORMS": str(len(existing) + len(new_prices)),
+        "prices-INITIAL_FORMS": str(len(existing)),
         "prices-MIN_NUM_FORMS": "0",
         "prices-MAX_NUM_FORMS": "1000",
     }
-    for i, (mode, price) in enumerate(prices):
+    for i, price in enumerate(existing):
+        data |= {f"prices-{i}-id": price.pk, f"prices-{i}-service": price.service_id}
+    for i, (mode, price) in enumerate(new_prices, start=len(existing)):
         data |= {
             f"prices-{i}-mode": mode,
             f"prices-{i}-program": "",
             f"prices-{i}-price": price,
-            f"prices-{i}-valid_from": "2026-10-19",
             f"prices-{i}-branch": branch.pk,
         }
-    return data | overrides
+    return data
+
+
+def add_price(service, mode, price, branch):
+    return ServicePrice.objects.create(service=service, mode=mode, price=price, branch=branch)
+
+
+def active_prices(service):
+    return {p.mode: p.price for p in service.prices.filter(is_active=True)}
 
 
 def test_admin_creates_a_service_with_both_prices(admin_client, branch):
@@ -49,22 +59,65 @@ def test_admin_creates_a_service_with_both_prices(admin_client, branch):
     assert response.status_code == 302, response.content
 
     service = Service.objects.get(name="Wash per load")
-    prices = {p.mode: p.price for p in service.prices.all()}
-    assert prices == {Mode.SELF_SERVICE: Decimal("45.00"), Mode.DROP_OFF: Decimal("60.00")}
+    assert active_prices(service) == {
+        Mode.SELF_SERVICE: Decimal("45.00"),
+        Mode.DROP_OFF: Decimal("60.00"),
+    }
 
 
-def test_price_can_be_changed_from_the_admin(admin_client, branch, wash):
-    price = ServicePrice.objects.create(
-        service=wash, mode=Mode.SELF_SERVICE, price="45.00", valid_from="2026-10-19", branch=branch
-    )
-    data = service_form(branch, [("self_service", "50.00")])
-    data |= {"prices-INITIAL_FORMS": "1", "prices-0-id": price.pk, "prices-0-service": wash.pk}
+def test_new_price_from_the_admin_replaces_the_active_one(admin_client, branch, wash):
+    old = add_price(wash, Mode.SELF_SERVICE, "45.00", branch)
+    data = service_form(branch, [("self_service", "50.00")], existing=[old])
 
     response = admin_client.post(reverse("admin:sales_service_change", args=[wash.pk]), data)
     assert response.status_code == 302, response.content
 
+    old.refresh_from_db()
+    assert not old.is_active
+    assert old.price == Decimal("45.00")  # kept as history
+    assert active_prices(wash) == {Mode.SELF_SERVICE: Decimal("50.00")}
+
+
+def test_existing_prices_cannot_be_edited_in_the_admin(admin_client, branch, wash):
+    old = add_price(wash, Mode.SELF_SERVICE, "45.00", branch)
+    data = service_form(branch, [], existing=[old])
+    data["prices-0-price"] = "99.00"
+
+    admin_client.post(reverse("admin:sales_service_change", args=[wash.pk]), data)
+
+    old.refresh_from_db()
+    assert old.price == Decimal("45.00")
+    assert old.is_active
+
+
+def test_last_price_added_is_the_active_one_per_mode(branch, wash):
+    add_price(wash, Mode.SELF_SERVICE, "45.00", branch)
+    add_price(wash, Mode.DROP_OFF, "60.00", branch)
+    add_price(wash, Mode.SELF_SERVICE, "50.00", branch)
+
+    assert active_prices(wash) == {
+        Mode.SELF_SERVICE: Decimal("50.00"),
+        Mode.DROP_OFF: Decimal("60.00"),
+    }
+    assert wash.prices.count() == 3
+
+
+def test_a_saved_price_cannot_be_edited(branch, wash):
+    price = add_price(wash, Mode.SELF_SERVICE, "45.00", branch)
+    price.price = "99.00"
+    with pytest.raises(ValidationError):
+        price.save()
     price.refresh_from_db()
-    assert price.price == Decimal("50.00")
+    assert price.price == Decimal("45.00")
+
+
+def test_a_price_can_be_deactivated_but_not_reactivated(branch, wash):
+    price = add_price(wash, Mode.SELF_SERVICE, "45.00", branch)
+    price.is_active = False
+    price.save()
+    price.is_active = True
+    with pytest.raises(ValidationError):
+        price.save()
 
 
 def test_uses_machine_must_match_machine_kind():
@@ -72,11 +125,13 @@ def test_uses_machine_must_match_machine_kind():
         Service.objects.create(name="Wash", kind="wash", machine_kind="none", uses_machine=True)
 
 
-def test_one_price_per_service_mode_and_day(branch, wash):
-    fields = {"service": wash, "mode": Mode.DROP_OFF, "valid_from": "2026-10-19", "branch": branch}
-    ServicePrice.objects.create(price="60.00", **fields)
+def test_database_allows_one_active_price_per_service_and_mode(branch, wash):
+    # bulk_create skips save(), so the database constraint is the last guard.
+    fields = {"service": wash, "mode": Mode.DROP_OFF, "branch": branch}
     with pytest.raises(IntegrityError):
-        ServicePrice.objects.create(price="65.00", **fields)
+        ServicePrice.objects.bulk_create(
+            [ServicePrice(price="60.00", **fields), ServicePrice(price="65.00", **fields)]
+        )
 
 
 def test_catalog_admin_requires_manage_catalog(client, staff_with_perms):

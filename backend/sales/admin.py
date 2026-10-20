@@ -27,8 +27,16 @@ class CatalogPermissionMixin:
 
 class ServicePriceInline(CatalogPermissionMixin, TabularInline):
     model = ServicePrice
-    extra = 1
-    fields = ["mode", "program", "price", "valid_from", "branch"]
+    extra = 0
+    fields = ["mode", "program", "price", "branch", "is_active", "created_at"]
+    readonly_fields = ["is_active", "created_at"]
+
+    # Prices are history: to change one, add a new price.
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Service)

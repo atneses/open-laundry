@@ -259,7 +259,8 @@ erDiagram
         string mode "self_service | drop_off"
         string program "opcional, para precios por programa a futuro"
         decimal price
-        date valid_from
+        bool is_active "el último agregado es el activo"
+        datetime created_at
         int branch_id FK
     }
     PRODUCT {
@@ -426,7 +427,7 @@ erDiagram
 - **SaleItem:** un servicio **o** un producto. `unit_price` se copia de `ServicePrice` según la modalidad y se conserva aunque el precio cambie.
 
 **Precios y descuentos**
-- **ServicePrice:** hoy un precio fijo por servicio y modalidad (`program` vacío). Para cobrar distinto ciertos programas se agregan filas con `program`; si no hay, se usa el general. Un servicio nuevo es solo dar de alta registros.
+- **ServicePrice:** hoy un precio fijo por servicio y modalidad (`program` vacío). Para cobrar distinto ciertos programas se agregan filas con `program`; si no hay, se usa el general. Un servicio nuevo es solo dar de alta registros. **Los precios no se editan:** para cambiar uno se agrega otro, que pasa a ser el activo, y el anterior queda inactivo como historial (con su fecha de captura). Solo hay un precio activo por servicio, modalidad, programa y sucursal.
 - **Discount:** los crea quien tenga `sales.manage_discounts`. El empleado elige de la lista los vigentes para esa modalidad y servicio (p. ej. "10% martes en autoservicio"). `AppliedDiscount` guarda el monto y quién lo aplicó.
 
 **Inventario**
