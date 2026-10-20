@@ -26,8 +26,8 @@ USERS = [
 
 SERVICES = [
     # name, kind, unit, machine_kind, {mode: price}
-    ("Lavado por carga", "wash", "load", "washer", {Mode.SELF_SERVICE: 60, Mode.DROP_OFF: 70}),
-    ("Secado por carga", "dry", "load", "dryer", {Mode.SELF_SERVICE: 50, Mode.DROP_OFF: 60}),
+    ("Lavado por carga", "wash", "load", "washer", {Mode.SELF_SERVICE: 60, Mode.DROP_OFF: 75}),
+    ("Secado por carga", "dry", "load", "dryer", {Mode.SELF_SERVICE: 55, Mode.DROP_OFF: 70}),
     ("Lavado de tenis", "other", "pair", "none", {Mode.DROP_OFF: 90}),
 ]
 
