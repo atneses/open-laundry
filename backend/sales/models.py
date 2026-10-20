@@ -106,7 +106,7 @@ class ServicePrice(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.service} · {self.get_mode_display()}: {self.price}"
+        return f"{self.get_mode_display()}: {self.price}"
 
     def save(self, *args, **kwargs):
         if not self._state.adding:
