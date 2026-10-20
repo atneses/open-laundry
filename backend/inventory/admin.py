@@ -43,6 +43,12 @@ class ProductAdmin(ModelAdmin):
     # Stock only changes through stock movements.
     readonly_fields = ["stock"]
 
+    def get_readonly_fields(self, request, obj=None):
+        # Once there are movements, the unit gives them meaning and cannot change.
+        if obj is not None and obj.has_movements():
+            return [*self.readonly_fields, "unit"]
+        return self.readonly_fields
+
     def has_module_permission(self, request):
         return has_any_perm(request.user, INVENTORY_PERMISSIONS)
 

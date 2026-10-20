@@ -59,6 +59,28 @@ def test_adjustment_needs_a_reason(detergent, admin_user):
     assert detergent.stock == 0
 
 
+def test_unit_cannot_change_once_there_are_movements(detergent, admin_user):
+    detergent.unit = "L"
+    detergent.save()  # no movements yet: allowed
+
+    record(detergent, "purchase", 5, admin_user)
+    detergent.unit = "ml"
+    with pytest.raises(ValidationError):
+        detergent.save()
+    detergent.refresh_from_db()
+    assert detergent.unit == "L"
+
+
+def test_unit_is_read_only_in_the_admin_once_there_are_movements(
+    admin_client, detergent, admin_user
+):
+    url = reverse("admin:inventory_product_change", args=[detergent.pk])
+    assert "unit" in admin_client.get(url).context["adminform"].form.fields
+
+    record(detergent, "purchase", 5000, admin_user)
+    assert "unit" not in admin_client.get(url).context["adminform"].form.fields
+
+
 def test_only_wash_services_consume_supplies(detergent):
     dry = Service.objects.create(
         name="Dry per load", kind="dry", machine_kind="dryer", uses_machine=True

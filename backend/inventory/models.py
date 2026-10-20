@@ -48,9 +48,23 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        # Stock and movements are numbers in the product's unit; changing the unit
+        # afterwards would silently change their meaning (5000 ml -> 5000 L).
+        if not self._state.adding and self.has_movements():
+            saved_unit = Product.objects.values_list("unit", flat=True).get(pk=self.pk)
+            if saved_unit != self.unit:
+                raise ValidationError(
+                    {"unit": _("The unit cannot change once the product has stock movements.")}
+                )
+        super().save(*args, **kwargs)
+
     def clean(self):
         if self.is_for_sale and self.sale_price is None:
             raise ValidationError({"sale_price": _("A product for sale needs a sale price.")})
+
+    def has_movements(self):
+        return self.pk is not None and self.movements.exists()
 
 
 class LoadConsumption(models.Model):
