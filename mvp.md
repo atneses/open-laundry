@@ -259,7 +259,8 @@ erDiagram
         string mode "self_service | drop_off"
         string program "opcional, para precios por programa a futuro"
         decimal price
-        date valid_from
+        bool is_active "el último agregado es el activo"
+        datetime created_at
         int branch_id FK
     }
     PRODUCT {
@@ -426,12 +427,13 @@ erDiagram
 - **SaleItem:** un servicio **o** un producto. `unit_price` se copia de `ServicePrice` según la modalidad y se conserva aunque el precio cambie.
 
 **Precios y descuentos**
-- **ServicePrice:** hoy un precio fijo por servicio y modalidad (`program` vacío). Para cobrar distinto ciertos programas se agregan filas con `program`; si no hay, se usa el general. Un servicio nuevo es solo dar de alta registros.
+- **ServicePrice:** hoy un precio fijo por servicio y modalidad (`program` vacío). Para cobrar distinto ciertos programas se agregan filas con `program`; si no hay, se usa el general. Un servicio nuevo es solo dar de alta registros. **Los precios no se editan:** para cambiar uno se agrega otro, que pasa a ser el activo, y el anterior queda inactivo como historial (con su fecha de captura). Solo hay un precio activo por servicio, modalidad, programa y sucursal.
 - **Discount:** los crea quien tenga `sales.manage_discounts`. El empleado elige de la lista los vigentes para esa modalidad y servicio (p. ej. "10% martes en autoservicio"). `AppliedDiscount` guarda el monto y quién lo aplicó.
 
 **Inventario**
 - **LoadConsumption:** solo para lavado (el secado no consume). Valor inicial 150–200 ml de detergente y 150–200 ml de suavizante, editable desde el admin.
 - Al iniciar un ciclo con `customer_supplies = false` se genera un `StockMovement(kind=consumption)`. Así se ve el costo de la promoción y salen alertas de stock mínimo. Comparar cada mes el consumo teórico contra las compras ayuda a afinar la medida y detectar mermas.
+- **StockMovement:** `quantity` lleva signo (positivo suma, negativo resta): las compras suman, el consumo y las ventas restan, y los ajustes pueden ir en cualquier sentido. El stock de un producto solo cambia con movimientos; los movimientos no se editan ni se borran.
 
 **Caja y pagos**
 - **CashSession:** uno por turno y empleado; no se puede cobrar sin caja abierta. `expected_cash = opening_float + cash payments of the session` (menos cancelados). `card_total` se cuadra contra el reporte de Mercado Pago Point.
@@ -466,15 +468,16 @@ permisos efectivos = permisos del rol + permisos agregados al usuario
 | Ajustes de inventario (mermas, correcciones) | `inventory.adjust_stock`       |  ✅   |    ❌    |                ✅                |
 | Entregar un encargo con saldo pendiente      | `sales.deliver_with_balance`   |  ✅   |    ❌    |                ✅                |
 | Ver cortes de otros turnos                   | `sales.view_all_cash_sessions` |  ✅   |    ❌    |                ✅                |
-| Precios, servicios, consumo por carga        | `sales.manage_catalog`         |  ✅   |    ❌    |                ✅                |
+| Servicios, precios, productos, consumo/carga | `sales.manage_catalog`         |  ✅   |    ❌    |                ✅                |
 | Alta y configuración de máquinas y cajita    | `machines.manage_machines`     |  ✅   |    ❌    |                ✅                |
 | Reportes                                     | `core.view_reports`            |  ✅   |    ❌    |                ✅                |
-| Gestionar usuarios, roles y permisos         | `core.manage_users`            |  ✅   |    ❌    |        ❌ **solo admin**         |
+| Gestionar usuarios, roles y permisos         | `core.manage_users`            |  ✅   |    ❌    |                ✅                |
 
-- Solo un admin agrega o quita permisos; **gestionar usuarios y permisos no se delega**, para que nadie se dé permisos a sí mismo.
+- Solo quien tiene *Gestionar usuarios, roles y permisos* agrega o quita permisos, y por eso un empleado no puede darse permisos a sí mismo. Ese permiso también se puede dar como extra: quien lo tiene decide a quién confiárselo.
 - Al quitar un permiso, deja de valer en la siguiente acción, sin cerrar sesión. Se registra quién lo otorgó o quitó y cuándo.
 - Si un empleado no tiene el permiso, la acción queda **bloqueada**: la hace un admin o un empleado con ese permiso.
 - **Implementación:** `Group` por rol, `Permission` personalizados con los códigos de la tabla y `user_permissions` para los individuales. Cada endpoint de DRF declara el permiso que exige; el frontend solo oculta botones. **La validación siempre ocurre en el backend.** En el admin, la ficha del usuario muestra los permisos del rol y casillas para los extra.
+- **Los roles se pueden editar:** se crean con los permisos de la tabla y después el admin puede cambiarlos; las actualizaciones del sistema nunca deshacen sus cambios. Cuando una etapa agrega permisos nuevos, se le dan a los roles una sola vez (Admin: todos; Empleado: los de la tabla).
 
 ### Ticket para el cliente
 
@@ -523,8 +526,8 @@ Entrega estimada: 18/10/2026 18:00
 /api/users/{id}/permissions/        agregar / quitar permisos individuales (solo admin)
 /api/customers/                     CRUD + búsqueda por teléfono/nombre
 /api/services/                      catálogo + precios por modalidad
-/api/products/                      CRUD + /low-stock/
-/api/inventory/movements/
+/api/products/                      solo lectura + /low-stock/ (se crean y editan en el admin)
+/api/inventory/movements/           registrar entradas (receive_stock) + historial
 /api/sales/                         crear (con modalidad), pagar, cancelar
 /api/sales/{id}/receipt/            datos del ticket
 /api/drop-off-orders/               listado por estado, cambiar estado, entregar

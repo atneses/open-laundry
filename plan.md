@@ -40,13 +40,10 @@ Las casillas `[ ]` sirven para ir marcando el avance.
   - [2.1 Marca de la lavandería](#21-marca-de-la-lavandería)
   - [2.2 Menú lateral por áreas](#22-menú-lateral-por-áreas)
 - [Etapa 3 – Usuarios, roles y permisos](#etapa-3--usuarios-roles-y-permisos)
-  - [3.1 Sucursal (Branch)](#31-sucursal-branch)
-  - [3.2 Permisos personalizados](#32-permisos-personalizados)
-  - [3.3 Roles](#33-roles)
-  - [3.4 Permisos extra y bitácora](#34-permisos-extra-y-bitácora)
-  - [3.5 Clase de permiso para la API](#35-clase-de-permiso-para-la-api)
-  - [3.6 Endpoints de autenticación](#36-endpoints-de-autenticación)
-  - [3.7 Usuarios en el admin](#37-usuarios-en-el-admin)
+  - [3.1 Permiso para gestionar usuarios](#31-permiso-para-gestionar-usuarios)
+  - [3.2 Roles](#32-roles)
+  - [3.3 Permisos extra y bitácora](#33-permisos-extra-y-bitácora)
+  - [3.4 Usuarios en el admin](#34-usuarios-en-el-admin)
 - [Etapa 4 – Catálogo e inventario](#etapa-4--catálogo-e-inventario)
   - [4.1 Servicios y precios](#41-servicios-y-precios)
   - [4.2 Productos (insumos)](#42-productos-insumos)
@@ -56,18 +53,20 @@ Las casillas `[ ]` sirven para ir marcando el avance.
   - [4.6 Pantallas de admin](#46-pantallas-de-admin)
 - [Etapa 5 – Clientes](#etapa-5--clientes)
   - [5.1 Modelo Customer](#51-modelo-customer)
-  - [5.2 API de clientes](#52-api-de-clientes)
+  - [5.2 Clase de permiso para la API](#52-clase-de-permiso-para-la-api)
+  - [5.3 API de clientes](#53-api-de-clientes)
 - [Etapa 6 – Caja (turnos)](#etapa-6--caja-turnos)
   - [6.1 Modelo CashSession](#61-modelo-cashsession)
   - [6.2 Abrir caja](#62-abrir-caja)
   - [6.3 Cerrar caja (corte)](#63-cerrar-caja-corte)
   - [6.4 Consulta de cortes](#64-consulta-de-cortes)
 - [Etapa 7 – Ventas, pagos y descuentos](#etapa-7--ventas-pagos-y-descuentos)
-  - [7.1 Modelos de venta](#71-modelos-de-venta)
-  - [7.2 Pagos](#72-pagos)
-  - [7.3 Regla de autoservicio](#73-regla-de-autoservicio)
-  - [7.4 Descuentos](#74-descuentos)
-  - [7.5 Cancelaciones](#75-cancelaciones)
+  - [7.1 API del catálogo](#71-api-del-catálogo)
+  - [7.2 Modelos de venta](#72-modelos-de-venta)
+  - [7.3 Pagos](#73-pagos)
+  - [7.4 Regla de autoservicio](#74-regla-de-autoservicio)
+  - [7.5 Descuentos](#75-descuentos)
+  - [7.6 Cancelaciones](#76-cancelaciones)
 - [Etapa 8 – Encargos](#etapa-8--encargos)
   - [8.1 Modelo DropOffOrder](#81-modelo-dropofforder)
   - [8.2 Flujo de estados](#82-flujo-de-estados)
@@ -79,7 +78,8 @@ Las casillas `[ ]` sirven para ir marcando el avance.
   - [9.5 Driver manual](#95-driver-manual)
   - [9.6 Simulador](#96-simulador)
   - [9.7 Consumo de insumos](#97-consumo-de-insumos)
-  - [9.8 Cierre por tiempo](#98-cierre-por-tiempo)
+  - [9.8 API de entradas de inventario](#98-api-de-entradas-de-inventario)
+  - [9.9 Cierre por tiempo](#99-cierre-por-tiempo)
 - [Etapa 10 – Tickets](#etapa-10--tickets)
   - [10.1 Datos del ticket](#101-datos-del-ticket)
 - [Etapa 11 – Reportes](#etapa-11--reportes)
@@ -98,6 +98,7 @@ Las casillas `[ ]` sirven para ir marcando el avance.
   - [12.9 Tablero de máquinas en la caja](#129-tablero-de-máquinas-en-la-caja)
   - [12.10 Vista de impresión](#1210-vista-de-impresión)
   - [12.11 Impresión y reimpresión](#1211-impresión-y-reimpresión)
+  - [12.12 Entradas de inventario en la caja](#1212-entradas-de-inventario-en-la-caja)
 - [Etapa 13 – Despliegue y arranque en el local (MVP)](#etapa-13--despliegue-y-arranque-en-el-local-mvp)
   - [13.1 Servidor](#131-servidor)
   - [13.2 Producción con Docker](#132-producción-con-docker)
@@ -344,81 +345,106 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **Objetivo:** que cada persona entre con su cuenta y solo pueda hacer lo que le corresponde (`mvp.md` §4, *Roles y permisos*).
 
-### 3.1 Sucursal (`Branch`)
-- [ ] **Qué se hace:** el modelo `Branch` ya existe (paso 1.4); crear una migración de datos que dé de alta la sucursal única.
-- **Para qué:** casi todos los datos cuelgan de una sucursal; así queda listo si algún día se abre otra.
-- **Listo cuando:** la sucursal existe después de migrar y aparece en el admin.
+### 3.1 Permiso para gestionar usuarios
+- [x] **Qué se hace:** crear el permiso `core.manage_users` (gestionar usuarios, roles y permisos). Los demás permisos de `mvp.md` §4 los define cada app en su etapa.
+- **Para qué:** que solo quien tenga ese permiso administre al personal.
+- **Listo cuando:** el permiso existe después de migrar.
 
-### 3.2 Permisos personalizados
-- [ ] **Qué se hace:** definir los 15 códigos de permiso de la tabla de `mvp.md` (`sales.charge`, `machines.start_machine`, …, `core.manage_users`) como `Permission` de Django.
-- **Para qué:** cada acción del sistema se protege con un permiso con nombre.
-- **Listo cuando:** los permisos existen en la base de datos después de migrar.
+### 3.2 Roles
+- [x] **Qué se hace:** crear los grupos **Admin** (todos los permisos) y **Empleado** (los permisos por defecto de la tabla de `mvp.md` §4) con una migración de datos. Después el admin puede editarlos, y cada etapa que define permisos agrega una migración que se los da a los roles una sola vez.
+- **Para qué:** asignar un rol completo a un usuario con un solo clic, sin repetir la asignación de permisos en cada etapa.
+- **Listo cuando:** después de migrar, Admin tiene todos los permisos y Empleado no tiene `core.manage_users` (prueba).
 
-### 3.3 Roles
-- [ ] **Qué se hace:** crear con una migración los `Group` **Admin** (todos los permisos) y **Empleado** (los permisos por defecto de la tabla).
-- **Para qué:** asignar un rol completo a un usuario con un solo clic.
-- **Listo cuando:** un usuario del grupo Empleado tiene exactamente los 7 permisos por defecto.
-
-### 3.4 Permisos extra y bitácora
-- [ ] **Qué se hace:** permitir agregar permisos individuales a un empleado (`user_permissions`), **excepto** `core.manage_users`. Crear el modelo `PermissionLog` y registrar quién otorgó o quitó cada permiso.
+### 3.3 Permisos extra y bitácora
+- [x] **Qué se hace:** permitir agregar permisos individuales a un empleado (`user_permissions`). Crear el modelo `PermissionLog` y registrar quién otorgó o quitó cada permiso.
 - **Solo lectura:** el admin de `PermissionLog` usa una clase base de `core` que no permite agregar, editar ni borrar; la reutilizarán las demás bitácoras, ventas, pagos y cortes. Documentar en `CLAUDE.md` cómo usarla.
 - **Para qué:** que el admin delegue tareas sin convertir al empleado en admin, y que quede registro.
-- **Listo cuando:** una prueba confirma que no se puede dar `core.manage_users` a un empleado y que cada cambio queda en la bitácora.
+- **Listo cuando:** una prueba confirma que cada cambio queda en la bitácora.
 
-### 3.5 Clase de permiso para la API
-- [ ] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("sales.deliver_with_balance")`, que se pone en cada endpoint.
-- **Para qué:** que la validación ocurra siempre en el servidor, no solo escondiendo botones.
-- **Listo cuando:** una prueba muestra que un empleado sin el permiso recibe error 403.
-
-### 3.6 Endpoints de autenticación
-- [ ] **Qué se hace:** `/api/auth/token/`, `/api/auth/refresh/` y `/api/auth/me/` (usuario actual + lista de permisos efectivos).
-- **Para qué:** que la caja sepa quién está conectado y qué botones mostrar.
-- **Listo cuando:** `/api/auth/me/` devuelve los permisos correctos para un admin y para un empleado.
-
-### 3.7 Usuarios en el admin
-- [ ] **Qué se hace:** pantalla de usuario en Unfold con rol, estado (activo / inactivo) y casillas de permisos extra. Los usuarios no se borran, se desactivan.
+### 3.4 Usuarios en el admin
+- [x] **Qué se hace:** pantalla de usuario en Unfold con rol, estado (activo / inactivo) y casillas de permisos extra, visible solo con `core.manage_users`. Los usuarios no se borran, se desactivan.
 - **Para qué:** que el admin gestione al personal sin tocar código.
-- **Listo cuando:** se puede crear un empleado, darle un permiso extra y desactivarlo.
+- **Listo cuando:** se puede crear un empleado, darle un permiso extra y desactivarlo; un usuario sin `core.manage_users` no entra a la pantalla (prueba).
 
-**✅ Etapa 3 terminada cuando:** un admin y un empleado entran al admin y a la API, cada uno ve solo lo suyo y las pruebas de permisos pasan.
+**Notas de la implementación:**
+- Los roles se crean en la migración `core/0003_create_roles` (*Admin*: todos los permisos; *Empleado*: ninguno, hasta que las apps definan los suyos). Se editan en el admin, solo con `core.manage_users`, y `migrate` no deshace esos cambios.
+- **Cambio respecto a lo planeado:** al principio los roles se sincronizaban en cada `migrate` y eran de solo lectura. Se cambió porque eso deshacía cualquier cambio que un admin hiciera a un rol.
+- **En cada etapa con permisos nuevos:** agregar una migración de datos que llame a `core.roles.grant_permissions` (Admin: todos los de la app; Empleado: los de la tabla de `mvp.md` §4). Solo agrega, nunca quita.
+- **Cambio respecto a lo planeado:** `core.manage_users` estaba bloqueado como permiso extra (señal y filtro del formulario). Se quitó el bloqueo porque, con los roles editables, quien tiene ese permiso ya podía darlo mediante un rol; ahora se puede dar también como extra.
+- Seguridad adicional: un usuario sin rango de superusuario no ve la casilla de superusuario ni puede editar a un superusuario (evita que alguien se suba de privilegios).
+- Los usuarios no se pueden borrar desde el admin; se desactivan.
+- Todos los textos que ve el usuario se escriben en inglés en el código y se marcan para traducción (`gettext_lazy`); la traducción al español se agrega aparte.
+- La bitácora (`PermissionLog`) se muestra en el área *Bitácoras* del menú.
+
+**Riesgos y pendientes:**
+- **Riesgo – cambios fuera del admin sin bitácora:** si se agregan o quitan permisos desde la consola o el código, no quedan en `PermissionLog` (solo se registran los cambios hechos en el admin).
+- **Pendiente – cambios de rol sin bitácora:** se registran los permisos extra, pero no cuando a un usuario se le cambia el rol (grupo) ni cuando se cambian los permisos de un rol.
+- **Pendiente – acceso al admin:** para que un empleado entre al admin hay que marcarle "Es staff" a mano.
+- **Decisión – permisos extra y roles:** se puede agregar como extra cualquier permiso de la base (incluidos los automáticos de Django: ver/agregar/cambiar/borrar de cada modelo, y `core.manage_users`), y un usuario puede tener varios roles; sus permisos se suman.
+- **Riesgo – roles editables sin protecciones (decisión):** un admin puede quitarle `core.manage_users` al rol Admin (solo el superusuario podría gestionar usuarios), dárselo al rol Empleado o a un empleado como extra (esa persona podría a su vez darse cualquier permiso) o borrar un rol (sus usuarios lo pierden). Por ahora se decidió no bloquearlo.
+- **Riesgo – migración olvidada:** si una etapa crea permisos y no agrega su migración para los roles, ni Admin los recibe; solo el superusuario los tendría hasta que se asignen a mano.
+- **Riesgo – permisos automáticos de Django como extra:** un `ModelAdmin` que no sobrescribe `has_*_permission` usa los permisos automáticos, así que un extra como `machines.change_machine` daría acceso sin el permiso del MVP (`machines.manage_machines`). Hoy solo pasa con `core.change_branch` / `core.delete_branch`. Cada pantalla de admin nueva debe revisar el permiso del MVP en sus `has_*_permission`.
+- **Pendiente – traducciones:** los textos del código están en inglés con `gettext_lazy` (nombres de modelos y campos, títulos del menú y del admin, mensajes, nombre del permiso). Falta agregar su traducción al español en `backend/locale/es_MX/`; mientras tanto, los que Django no traduce por su cuenta se ven en inglés. Los nombres de permisos necesitan un manejo aparte porque se guardan en la base de datos.
+
+**✅ Etapa 3 terminada cuando:** un admin y un empleado entran al admin, cada uno ve solo lo suyo y las pruebas de permisos pasan.
 
 ---
 
 ## Etapa 4 – Catálogo e inventario
 
-**Objetivo:** dar de alta qué se vende, a qué precio, y qué insumos se gastan. Se crean las apps `sales` (servicios y precios) e `inventory` (productos, consumo y movimientos).
+**Objetivo:** dar de alta qué se vende, a qué precio, y qué insumos se gastan. Se crean las apps `sales` (servicios y precios) e `inventory` (productos, consumo y movimientos). Esta etapa es **solo modelos, reglas y admin**: la API del catálogo se hace en la Etapa 7 (7.1) y la de stock bajo en la Etapa 11 (11.3).
 
 ### 4.1 Servicios y precios
-- [ ] **Qué se hace:** crear los modelos `Service` y `ServicePrice` (precio por modalidad: autoservicio / encargo; campo `program` opcional para el futuro).
+- [x] **Qué se hace:** crear los modelos `Service` y `ServicePrice` (precio por modalidad: autoservicio / encargo; campo `program` opcional para el futuro).
 - **Para qué:** tener precios distintos para autoservicio y encargo, y poder agregar servicios nuevos (p. ej. lavado de tenis) sin programar.
 - **Listo cuando:** en el admin se dan de alta "Lavado por carga" y "Secado por carga" con sus dos precios.
 
 ### 4.2 Productos (insumos)
-- [ ] **Qué se hace:** crear el modelo `Product` (detergente, suavizante, bolsas) con stock actual, stock mínimo y si se vende o no.
+- [x] **Qué se hace:** crear el modelo `Product` (detergente, suavizante, bolsas) con stock actual, stock mínimo y si se vende o no.
 - **Para qué:** controlar cuánto insumo hay.
 - **Listo cuando:** existen detergente y suavizante con `is_for_sale = false`.
 
 ### 4.3 Consumo por carga
-- [ ] **Qué se hace:** crear `LoadConsumption` (servicio + producto + cantidad) y cargar 150–200 ml de detergente y de suavizante para "Lavado por carga".
+- [x] **Qué se hace:** crear `LoadConsumption` (servicio + producto + cantidad) y cargar 150–200 ml de detergente y de suavizante para "Lavado por carga".
 - **Para qué:** que el sistema descuente insumos automáticamente en cada lavado.
 - **Listo cuando:** el consumo se puede editar desde el admin.
 
 ### 4.4 Movimientos de inventario
-- [ ] **Qué se hace:** crear `StockMovement` (entrada, consumo, venta, ajuste) y la regla de que cada movimiento actualiza `stock`. Los ajustes requieren `inventory.adjust_stock`.
+- [x] **Qué se hace:** crear `StockMovement` (entrada, consumo, venta, ajuste) y la regla de que cada movimiento actualiza `stock`. Los ajustes requieren `inventory.adjust_stock`.
 - **Para qué:** tener el historial de por qué cambió el stock.
 - **Listo cuando:** registrar una entrada de 5 L sube el stock en 5000 ml, con prueba automática.
 
 ### 4.5 Alertas de stock
-- [ ] **Qué se hace:** endpoint `/api/products/low-stock/` y un filtro en el admin con los productos por debajo del mínimo.
+- [x] **Qué se hace:** un filtro en el admin con los productos por debajo del mínimo.
 - **Para qué:** avisar antes de quedarse sin detergente.
-- **Listo cuando:** al bajar el stock del mínimo, el producto aparece en la alerta.
+- **Listo cuando:** al bajar el stock del mínimo, el producto aparece en el filtro.
 
 ### 4.6 Pantallas de admin
-- [ ] **Qué se hace:** configurar en Unfold las secciones *Catálogo* (servicios, precios) e *Inventario* (productos, movimientos, consumo por carga), con filtros y búsqueda.
+- [x] **Qué se hace:** configurar en Unfold las secciones *Catálogo* (servicios, precios) e *Inventario* (productos, movimientos, consumo por carga), con filtros y búsqueda.
 - **Para qué:** que el admin mantenga el catálogo sin ayuda técnica.
-- **Listo cuando:** se puede cambiar un precio desde el admin y la API devuelve el nuevo.
+- **Listo cuando:** se puede cambiar un precio desde el admin.
 
-**✅ Etapa 4 terminada cuando:** el catálogo y el inventario se administran desde el admin y la API los expone.
+**✅ Etapa 4 terminada cuando:** el catálogo y el inventario se administran desde el admin.
+
+**Notas de la implementación:**
+- Apps `sales` (`Service`, `ServicePrice` y las modalidades `Mode`) e `inventory` (`Product`, `LoadConsumption`, `StockMovement`). Los precios se capturan dentro de la ficha del servicio.
+- **Permisos:** `sales.manage_catalog` (servicios, precios, **productos** y consumo por carga), `inventory.receive_stock` (entradas) e `inventory.adjust_stock` (ajustes). Las migraciones `sales/0002` e `inventory/0003` se los dan a los roles: Admin, todos; Empleado, `receive_stock`.
+- Cada pantalla del admin revisa estos permisos, no los automáticos de Django. Productos y movimientos se ven con cualquiera de los tres; crear o editar productos requiere `manage_catalog`.
+- **Movimientos:** `quantity` lleva signo (compra > 0; consumo y venta < 0; ajuste ≠ 0), validado en el modelo y en la base de datos. `record_stock_movement` (`inventory/services.py`) guarda el movimiento y actualiza el stock con `F()` en una transacción. En el admin, quien tiene `receive_stock` solo puede registrar compras y quien tiene `adjust_stock`, ajustes; el consumo y las ventas los generará el sistema (Etapas 7 y 9). Los movimientos no se editan ni se borran, y el stock del producto es de solo lectura.
+- **Unidad fija:** la unidad de un producto no se puede cambiar una vez que tiene movimientos (solo lectura en el admin y rechazada en `Product.save`); si hace falta otra unidad, se crea otro producto.
+- **Motivo del ajuste:** `StockMovement.reason` es obligatorio en los ajustes (validado en el modelo y en la base de datos), para la bitácora de `mvp.md` §6.
+- `LoadConsumption` solo acepta servicios de lavado. Un producto a la venta necesita precio de venta.
+- **Datos iniciales:** no se cargan por migración; los reales (servicios con sus dos precios, detergente, suavizante y su consumo de 150–200 ml) se capturan en el admin. Para desarrollo, `make seed` (`python manage.py seed_demo`) carga datos ficticios: sucursal, usuarios `demo_admin` / `demo_empleado`, servicios, productos con stock inicial y consumo por carga. Solo crea lo que falta y no corre con `DEBUG` apagado.
+
+**Riesgos y pendientes:**
+- **Riesgo – stock negativo:** no se impide que el stock quede en negativo (p. ej. si el consumo teórico supera lo registrado o faltó capturar una entrada). Se decidió así para no bloquear un lavado; el filtro de stock bajo lo hace visible.
+- **Cambio respecto a lo planeado – precios sin fecha:** se quitó `valid_from` (precios programados a futuro). Ahora el último precio agregado es el activo y los anteriores quedan inactivos como historial, con su fecha `created_at` (`ServicePrice.save`, migración `sales/0003`). Los precios no se editan ni se borran (el modelo solo permite desactivarlos; `update()` y `bulk_update` se lo saltan); un error de captura se corrige agregando otro precio, así que queda en el historial.
+- **Riesgo – borrar un servicio:** borra también sus precios (con su historial) y su consumo por carga (`CASCADE`). Desde la Etapa 7 las ventas protegerán a los servicios ya vendidos; para retirar uno sin perder nada se usa `is_active`.
+- **Riesgo – sucursal del precio:** cada precio pide su sucursal a mano. Con una sola sucursal no importa; con varias, un precio con la sucursal equivocada no se encontraría al cobrar.
+- **Pendiente – precio a cobrar:** al cobrar (Etapa 7) se busca el precio activo por servicio, modalidad, programa y sucursal; si no hay uno por programa, se usa el general.
+- **Pendiente – enlaces del movimiento:** `StockMovement` todavía no tiene `sale` ni `machine_cycle`; se agregan cuando existan esos modelos (Etapas 7 y 9).
+- **Pendiente – traducciones:** los textos nuevos (modelos, campos, menú, permisos) están en inglés con `gettext_lazy`; falta su traducción en `backend/locale/es_MX/`.
+- **Pendiente – nombre del permiso en la base local:** `sales.manage_catalog` cambió de nombre antes del commit. En una base que ya lo tenía (la de desarrollo) sigue el nombre anterior hasta recrearla (`make reset`); en una base nueva sale bien.
 
 ---
 
@@ -430,7 +456,12 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - [ ] **Qué se hace:** crear `Customer` con nombre y teléfono obligatorios (teléfono único por sucursal); dirección, correo y notas opcionales.
 - **Listo cuando:** no se puede crear un cliente sin teléfono ni repetir un teléfono.
 
-### 5.2 API de clientes
+### 5.2 Clase de permiso para la API
+- [ ] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("customers.manage_customers")`, que se pone en cada endpoint. Es la primera etapa con endpoints protegidos por permiso (se movió aquí desde la Etapa 4, que no tiene endpoints).
+- **Para qué:** que la validación ocurra siempre en el servidor, no solo escondiendo botones.
+- **Listo cuando:** una prueba muestra que un usuario sin el permiso recibe error 403 en `/api/customers/`.
+
+### 5.3 API de clientes
 - [ ] **Qué se hace:** `/api/customers/` con alta, edición y **búsqueda por teléfono o nombre**.
 - **Para qué:** en caja se busca al cliente por teléfono mientras se le atiende.
 - **Listo cuando:** buscar los últimos dígitos del teléfono encuentra al cliente.
@@ -469,26 +500,31 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **Objetivo:** las reglas de cobro (ventas, pagos, descuentos y cancelaciones) en el backend, con su API y su consulta en el admin.
 
-### 7.1 Modelos de venta
+### 7.1 API del catálogo
+- [ ] **Qué se hace:** `/api/services/` (servicios activos con su precio por modalidad) y `/api/products/` (productos a la venta), de solo lectura para la caja. El catálogo se sigue editando en el admin (Etapa 4).
+- **Para qué:** que la caja sepa qué puede cobrar y a qué precio.
+- **Listo cuando:** al cambiar un precio en el admin, la API devuelve el nuevo.
+
+### 7.2 Modelos de venta
 - [ ] **Qué se hace:** crear `Sale` (modalidad, estado, subtotal, descuento, total, saldo, turno) y `SaleItem` (servicio o producto, cantidad, precio unitario copiado del catálogo).
 - **Para qué:** que el precio cobrado no cambie aunque después se modifique el catálogo.
 - **Listo cuando:** crear una venta de 3 cargas de lavado en autoservicio calcula el total con el precio de autoservicio.
 
-### 7.2 Pagos
+### 7.3 Pagos
 - [ ] **Qué se hace:** crear `Payment` (efectivo, tarjeta de crédito, tarjeta de débito; monto; referencia del voucher). Una venta puede tener varios pagos; el saldo y el estado se recalculan solos (`pending`, `partially_paid`, `paid`).
 - **Para qué:** permitir anticipos en encargos y pagos mixtos.
 - **Listo cuando:** dos pagos parciales dejan la venta en `paid` con saldo 0.
 
-### 7.3 Regla de autoservicio
+### 7.4 Regla de autoservicio
 - [ ] **Qué se hace:** en autoservicio la venta debe quedar pagada completa antes de poder activar máquinas.
 - **Listo cuando:** una prueba confirma que no se puede activar una máquina con saldo pendiente en autoservicio.
 
-### 7.4 Descuentos
+### 7.5 Descuentos
 - [ ] **Qué se hace:** crear `Discount` (porcentaje o monto fijo, vigencia, modalidad, servicios) y `AppliedDiscount`. La API solo ofrece al empleado los descuentos vigentes que aplican a esa venta; crearlos requiere `sales.manage_discounts`.
 - **Para qué:** que el empleado solo use descuentos autorizados.
 - **Listo cuando:** un descuento vencido o de otra modalidad no aparece ni se puede aplicar.
 
-### 7.5 Cancelaciones
+### 7.6 Cancelaciones
 - [ ] **Qué se hace:** cancelar una venta con motivo obligatorio; queda quién, cuándo y por qué. Los pagos en efectivo cancelados se descuentan del corte.
 - **Listo cuando:** cancelar sin motivo da error, y el corte refleja la cancelación.
 
@@ -550,7 +586,12 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - [ ] **Qué se hace:** al iniciar un ciclo de lavado sin `customer_supplies`, crear los movimientos de consumo según `LoadConsumption`.
 - **Listo cuando:** un lavado baja 150–200 ml de detergente y de suavizante; con `customer_supplies` no baja nada.
 
-### 9.8 Cierre por tiempo
+### 9.8 API de entradas de inventario
+- [ ] **Qué se hace:** `/api/inventory/movements/`: `POST` para registrar una entrada de insumo (requiere `inventory.receive_stock`) y `GET` para el historial de movimientos. Los ajustes (`inventory.adjust_stock`) se siguen haciendo en el admin.
+- **Para qué:** que un empleado sin acceso al admin registre desde la caja los insumos que llegan.
+- **Listo cuando:** registrar una entrada por la API sube el stock; sin `inventory.receive_stock` responde 403 (pruebas).
+
+### 9.9 Cierre por tiempo
 - [ ] **Qué se hace:** tarea periódica (Celery Beat) que pasa a `finished` los ciclos que superen la duración esperada del programa.
 - **Para qué:** que no queden ciclos "en curso" para siempre cuando no hay medidor.
 - **Listo cuando:** un ciclo viejo se cierra solo.
@@ -585,7 +626,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** se puede ver, por ejemplo, "ventas en tarjeta de la semana pasada de un empleado".
 
 ### 11.3 Endpoints de reportes
-- [ ] **Qué se hace:** `/api/reports/daily-sales/`, `/machine-usage/` e `/inventory/`, protegidos con `core.view_reports`.
+- [ ] **Qué se hace:** crear el permiso `core.view_reports` y los endpoints `/api/reports/daily-sales/`, `/machine-usage/` e `/inventory/`, protegidos con él, y `/api/products/low-stock/` con los productos por debajo del mínimo (movido desde la Etapa 4).
 - **Listo cuando:** devuelven los mismos números que el dashboard.
 
 **✅ Etapa 11 terminada cuando:** el admin puede revisar el día y el mes sin pedir ayuda.
@@ -613,7 +654,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** `npm run lint`, `npm run typecheck`, `npm test` y `npm run build` pasan.
 
 ### 12.4 Login en la caja
-- [ ] **Qué se hace:** pantalla de inicio de sesión en React, guardado del token y renovación automática; cierre de sesión.
+- [ ] **Qué se hace:** endpoint `/api/auth/me/` (usuario actual + lista de permisos efectivos) y pantalla de inicio de sesión en React, guardado del token y renovación automática; cierre de sesión.
 - **Para qué:** que cada empleado entre con su cuenta en la PC de caja.
 - **Listo cuando:** un empleado entra, ve su nombre y, al cerrar sesión, vuelve al login.
 
@@ -646,7 +687,11 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - [ ] **Qué se hace:** imprimir automáticamente al cobrar, al recibir un encargo y al entregarlo; botón de reimpresión en el historial.
 - **Listo cuando:** sale el ticket en la POS-8360 de la caja.
 
-**✅ Etapa 12 terminada cuando:** un empleado hace en la caja todo su turno: abrir caja, cobrar, encargos, activar máquinas (manual), imprimir tickets y corte.
+### 12.12 Entradas de inventario en la caja
+- [ ] **Qué se hace:** pantalla para registrar los insumos que llegan (producto y cantidad), con la API de 9.8.
+- **Listo cuando:** un empleado registra una entrada desde la caja y el stock sube.
+
+**✅ Etapa 12 terminada cuando:** un empleado hace en la caja todo su turno: abrir caja, cobrar, encargos, activar máquinas (manual), registrar entradas de inventario, imprimir tickets y corte.
 
 **Riesgos y pendientes:**
 - **Riesgo – dependencias del frontend:** `npm audit` reportaba 7 avisos "high" en dependencias internas de la herramienta de shadcn (`ts-morph` → `fast-glob` → `braces`), que no van en la app del navegador; revisar al retomar.

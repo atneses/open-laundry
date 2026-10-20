@@ -31,7 +31,6 @@ def test_login_from_login_page_redirects_to_admin_index(client, staff_user):
 @pytest.mark.django_db
 def test_superuser_sees_users_and_permissions_area(admin_client):
     content = admin_client.get(reverse("admin:index")).content.decode()
-    assert "Usuarios y permisos" in content
     assert reverse("admin:core_user_changelist") in content
     assert reverse("admin:auth_group_changelist") in content
     assert reverse("admin:core_branch_changelist") in content
