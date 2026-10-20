@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     # Project apps (each new app is added in the plan stage that needs it)
     "core",
+    "customers",
     "sales",
     "inventory",
 ]
@@ -162,8 +163,22 @@ UNFOLD = {
         "show_all_applications": False,
         "navigation": [
             {
-                "title": _("Catalog"),
+                "title": _("Operation"),
                 "separator": False,
+                "items": [
+                    {
+                        "title": _("Customers"),
+                        "icon": "contacts",
+                        "link": reverse_lazy("admin:customers_customer_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "customers.manage_customers"
+                        ),
+                    },
+                ],
+            },
+            {
+                "title": _("Catalog"),
+                "separator": True,
                 "items": [
                     {
                         "title": _("Services and prices"),

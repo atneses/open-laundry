@@ -3,7 +3,8 @@
 import pytest
 from django.core.management import CommandError, call_command
 
-from core.management.commands.seed_demo import PRODUCTS
+from core.management.commands.seed_demo import CUSTOMERS, PRODUCTS
+from customers.models import Customer
 from inventory.models import Product, StockMovement
 from sales.models import ServicePrice
 
@@ -19,6 +20,7 @@ def test_seed_demo_can_run_twice_without_duplicates(settings):
     assert Product.objects.get(name="Detergente").stock == 10000
     # One initial purchase per product.
     assert StockMovement.objects.count() == len(PRODUCTS)
+    assert Customer.objects.count() == len(CUSTOMERS)
 
 
 def test_seed_demo_refuses_to_run_without_debug(settings):
