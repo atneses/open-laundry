@@ -5,6 +5,7 @@ from unfold.admin import ModelAdmin
 
 from sales.admin import MANAGE_CATALOG, CatalogPermissionMixin
 
+from .forms import LoadConsumptionForm, ProductForm, StockMovementForm
 from .models import LoadConsumption, Product, StockMovement
 from .services import record_stock_movement
 
@@ -37,6 +38,7 @@ class LowStockFilter(admin.SimpleListFilter):
 
 @admin.register(Product)
 class ProductAdmin(ModelAdmin):
+    form = ProductForm
     list_display = ["name", "unit", "stock", "min_stock", "is_for_sale", "sale_price"]
     list_filter = [LowStockFilter, "is_for_sale", "branch"]
     search_fields = ["name", "sku"]
@@ -67,6 +69,7 @@ class ProductAdmin(ModelAdmin):
 
 @admin.register(LoadConsumption)
 class LoadConsumptionAdmin(CatalogPermissionMixin, ModelAdmin):
+    form = LoadConsumptionForm
     list_display = ["service", "product", "quantity"]
     list_filter = ["service"]
     list_select_related = ["service", "product"]
@@ -74,6 +77,7 @@ class LoadConsumptionAdmin(CatalogPermissionMixin, ModelAdmin):
 
 @admin.register(StockMovement)
 class StockMovementAdmin(ModelAdmin):
+    form = StockMovementForm
     list_display = ["created_at", "product", "kind", "quantity", "unit_cost", "user"]
     list_filter = ["kind", "product"]
     search_fields = ["product__name"]

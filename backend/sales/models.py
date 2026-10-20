@@ -1,7 +1,10 @@
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
+
+from core.validators import validate_name
 
 
 class Mode(models.TextChoices):
@@ -29,7 +32,7 @@ class Service(models.Model):
         DRYER = "dryer", _("dryer")
         NONE = "none", _("none")
 
-    name = models.CharField(_("name"), max_length=120)
+    name = models.CharField(_("name"), max_length=120, validators=[validate_name])
     kind = models.CharField(_("kind"), max_length=10, choices=Kind.choices)
     unit = models.CharField(_("unit"), max_length=10, choices=Unit.choices, default=Unit.LOAD)
     machine_kind = models.CharField(
@@ -82,7 +85,9 @@ class ServicePrice(models.Model):
         blank=True,
         help_text=_("Leave empty for the general price. Reserved for prices per program."),
     )
-    price = models.DecimalField(_("price"), max_digits=10, decimal_places=2)
+    price = models.DecimalField(
+        _("price"), max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
+    )
     branch = models.ForeignKey(
         "core.Branch",
         verbose_name=_("branch"),

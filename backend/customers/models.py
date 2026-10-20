@@ -1,7 +1,10 @@
 import re
 
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
+
+from core.validators import validate_person_name, validate_phone
 
 
 class Customer(models.Model):
@@ -10,9 +13,9 @@ class Customer(models.Model):
     branch = models.ForeignKey(
         "core.Branch", verbose_name=_("branch"), on_delete=models.PROTECT, related_name="customers"
     )
-    name = models.CharField(_("name"), max_length=120)
+    name = models.CharField(_("name"), max_length=120, validators=[validate_person_name])
     phone = models.CharField(
-        _("phone"), max_length=20, help_text=_("Saved with digits only, without spaces or dashes.")
+        _("phone"), max_length=20, help_text=_("Digits only."), validators=[validate_phone]
     )
     email = models.EmailField(_("email"), blank=True)
     address = models.CharField(_("address"), max_length=255, blank=True)
@@ -28,6 +31,9 @@ class Customer(models.Model):
         ]
         constraints = [
             models.UniqueConstraint(fields=["branch", "phone"], name="unique_phone_per_branch"),
+            models.CheckConstraint(
+                condition=Q(phone__regex=r"^[0-9]+$"), name="customer_phone_digits_only"
+            ),
         ]
 
     def __str__(self):

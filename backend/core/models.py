@@ -2,13 +2,15 @@ from django.contrib.auth.models import AbstractUser, Permission
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from .validators import validate_name, validate_person_name, validate_phone
+
 
 class Branch(models.Model):
     """A laundry location. There is only one today, but most data hangs from it."""
 
-    name = models.CharField(_("name"), max_length=120)
+    name = models.CharField(_("name"), max_length=120, validators=[validate_name])
     address = models.CharField(_("address"), max_length=255, blank=True)
-    phone = models.CharField(_("phone"), max_length=20, blank=True)
+    phone = models.CharField(_("phone"), max_length=20, blank=True, validators=[validate_phone])
 
     class Meta:
         verbose_name = _("branch")
@@ -32,6 +34,13 @@ class User(AbstractUser):
         null=True,
         blank=True,
         related_name="users",
+    )
+    # Redefined only to add the validator; same as AbstractUser otherwise.
+    first_name = models.CharField(
+        _("first name"), max_length=150, blank=True, validators=[validate_person_name]
+    )
+    last_name = models.CharField(
+        _("last name"), max_length=150, blank=True, validators=[validate_person_name]
     )
 
     class Meta:
