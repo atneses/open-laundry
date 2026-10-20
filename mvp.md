@@ -432,6 +432,7 @@ erDiagram
 **Inventario**
 - **LoadConsumption:** solo para lavado (el secado no consume). Valor inicial 150–200 ml de detergente y 150–200 ml de suavizante, editable desde el admin.
 - Al iniciar un ciclo con `customer_supplies = false` se genera un `StockMovement(kind=consumption)`. Así se ve el costo de la promoción y salen alertas de stock mínimo. Comparar cada mes el consumo teórico contra las compras ayuda a afinar la medida y detectar mermas.
+- **StockMovement:** `quantity` lleva signo (positivo suma, negativo resta): las compras suman, el consumo y las ventas restan, y los ajustes pueden ir en cualquier sentido. El stock de un producto solo cambia con movimientos; los movimientos no se editan ni se borran.
 
 **Caja y pagos**
 - **CashSession:** uno por turno y empleado; no se puede cobrar sin caja abierta. `expected_cash = opening_float + cash payments of the session` (menos cancelados). `card_total` se cuadra contra el reporte de Mercado Pago Point.
@@ -466,7 +467,7 @@ permisos efectivos = permisos del rol + permisos agregados al usuario
 | Ajustes de inventario (mermas, correcciones) | `inventory.adjust_stock`       |  ✅   |    ❌    |                ✅                |
 | Entregar un encargo con saldo pendiente      | `sales.deliver_with_balance`   |  ✅   |    ❌    |                ✅                |
 | Ver cortes de otros turnos                   | `sales.view_all_cash_sessions` |  ✅   |    ❌    |                ✅                |
-| Precios, servicios, consumo por carga        | `sales.manage_catalog`         |  ✅   |    ❌    |                ✅                |
+| Servicios, precios, productos, consumo/carga | `sales.manage_catalog`         |  ✅   |    ❌    |                ✅                |
 | Alta y configuración de máquinas y cajita    | `machines.manage_machines`     |  ✅   |    ❌    |                ✅                |
 | Reportes                                     | `core.view_reports`            |  ✅   |    ❌    |                ✅                |
 | Gestionar usuarios, roles y permisos         | `core.manage_users`            |  ✅   |    ❌    |                ✅                |

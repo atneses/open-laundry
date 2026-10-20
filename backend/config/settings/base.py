@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     "drf_spectacular",
     # Project apps (each new app is added in the plan stage that needs it)
     "core",
+    "sales",
+    "inventory",
 ]
 
 MIDDLEWARE = [
@@ -160,8 +162,48 @@ UNFOLD = {
         "show_all_applications": False,
         "navigation": [
             {
-                "title": _("Users and permissions"),
+                "title": _("Catalog"),
                 "separator": False,
+                "items": [
+                    {
+                        "title": _("Services and prices"),
+                        "icon": "local_laundry_service",
+                        "link": reverse_lazy("admin:sales_service_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "sales.manage_catalog"
+                        ),
+                    },
+                ],
+            },
+            {
+                "title": _("Inventory"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Products"),
+                        "icon": "inventory_2",
+                        "link": reverse_lazy("admin:inventory_product_changelist"),
+                        "permission": "inventory.admin.can_view_inventory",
+                    },
+                    {
+                        "title": _("Stock movements"),
+                        "icon": "swap_vert",
+                        "link": reverse_lazy("admin:inventory_stockmovement_changelist"),
+                        "permission": "inventory.admin.can_view_inventory",
+                    },
+                    {
+                        "title": _("Consumption per load"),
+                        "icon": "water_drop",
+                        "link": reverse_lazy("admin:inventory_loadconsumption_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "sales.manage_catalog"
+                        ),
+                    },
+                ],
+            },
+            {
+                "title": _("Users and permissions"),
+                "separator": True,
                 "items": [
                     {
                         "title": _("Users"),

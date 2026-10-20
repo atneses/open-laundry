@@ -395,36 +395,53 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Objetivo:** dar de alta qué se vende, a qué precio, y qué insumos se gastan. Se crean las apps `sales` (servicios y precios) e `inventory` (productos, consumo y movimientos). Esta etapa es **solo modelos, reglas y admin**: la API del catálogo se hace en la Etapa 7 (7.1) y la de stock bajo en la Etapa 11 (11.3).
 
 ### 4.1 Servicios y precios
-- [ ] **Qué se hace:** crear los modelos `Service` y `ServicePrice` (precio por modalidad: autoservicio / encargo; campo `program` opcional para el futuro).
+- [x] **Qué se hace:** crear los modelos `Service` y `ServicePrice` (precio por modalidad: autoservicio / encargo; campo `program` opcional para el futuro).
 - **Para qué:** tener precios distintos para autoservicio y encargo, y poder agregar servicios nuevos (p. ej. lavado de tenis) sin programar.
 - **Listo cuando:** en el admin se dan de alta "Lavado por carga" y "Secado por carga" con sus dos precios.
 
 ### 4.2 Productos (insumos)
-- [ ] **Qué se hace:** crear el modelo `Product` (detergente, suavizante, bolsas) con stock actual, stock mínimo y si se vende o no.
+- [x] **Qué se hace:** crear el modelo `Product` (detergente, suavizante, bolsas) con stock actual, stock mínimo y si se vende o no.
 - **Para qué:** controlar cuánto insumo hay.
 - **Listo cuando:** existen detergente y suavizante con `is_for_sale = false`.
 
 ### 4.3 Consumo por carga
-- [ ] **Qué se hace:** crear `LoadConsumption` (servicio + producto + cantidad) y cargar 150–200 ml de detergente y de suavizante para "Lavado por carga".
+- [x] **Qué se hace:** crear `LoadConsumption` (servicio + producto + cantidad) y cargar 150–200 ml de detergente y de suavizante para "Lavado por carga".
 - **Para qué:** que el sistema descuente insumos automáticamente en cada lavado.
 - **Listo cuando:** el consumo se puede editar desde el admin.
 
 ### 4.4 Movimientos de inventario
-- [ ] **Qué se hace:** crear `StockMovement` (entrada, consumo, venta, ajuste) y la regla de que cada movimiento actualiza `stock`. Los ajustes requieren `inventory.adjust_stock`.
+- [x] **Qué se hace:** crear `StockMovement` (entrada, consumo, venta, ajuste) y la regla de que cada movimiento actualiza `stock`. Los ajustes requieren `inventory.adjust_stock`.
 - **Para qué:** tener el historial de por qué cambió el stock.
 - **Listo cuando:** registrar una entrada de 5 L sube el stock en 5000 ml, con prueba automática.
 
 ### 4.5 Alertas de stock
-- [ ] **Qué se hace:** un filtro en el admin con los productos por debajo del mínimo.
+- [x] **Qué se hace:** un filtro en el admin con los productos por debajo del mínimo.
 - **Para qué:** avisar antes de quedarse sin detergente.
 - **Listo cuando:** al bajar el stock del mínimo, el producto aparece en el filtro.
 
 ### 4.6 Pantallas de admin
-- [ ] **Qué se hace:** configurar en Unfold las secciones *Catálogo* (servicios, precios) e *Inventario* (productos, movimientos, consumo por carga), con filtros y búsqueda.
+- [x] **Qué se hace:** configurar en Unfold las secciones *Catálogo* (servicios, precios) e *Inventario* (productos, movimientos, consumo por carga), con filtros y búsqueda.
 - **Para qué:** que el admin mantenga el catálogo sin ayuda técnica.
 - **Listo cuando:** se puede cambiar un precio desde el admin.
 
 **✅ Etapa 4 terminada cuando:** el catálogo y el inventario se administran desde el admin.
+
+**Notas de la implementación:**
+- Apps `sales` (`Service`, `ServicePrice` y las modalidades `Mode`) e `inventory` (`Product`, `LoadConsumption`, `StockMovement`). Los precios se editan dentro de la ficha del servicio.
+- **Permisos:** `sales.manage_catalog` (servicios, precios, **productos** y consumo por carga), `inventory.receive_stock` (entradas) e `inventory.adjust_stock` (ajustes). Las migraciones `sales/0002` e `inventory/0003` se los dan a los roles: Admin, todos; Empleado, `receive_stock`.
+- Cada pantalla del admin revisa estos permisos, no los automáticos de Django. Productos y movimientos se ven con cualquiera de los tres; crear o editar productos requiere `manage_catalog`.
+- **Movimientos:** `quantity` lleva signo (compra > 0; consumo y venta < 0; ajuste ≠ 0), validado en el modelo y en la base de datos. `record_stock_movement` (`inventory/services.py`) guarda el movimiento y actualiza el stock con `F()` en una transacción. En el admin, quien tiene `receive_stock` solo puede registrar compras y quien tiene `adjust_stock`, ajustes; el consumo y las ventas los generará el sistema (Etapas 7 y 9). Los movimientos no se editan ni se borran, y el stock del producto es de solo lectura.
+- `LoadConsumption` solo acepta servicios de lavado. Un producto a la venta necesita precio de venta.
+- **Datos iniciales:** no se cargaron por migración. "Lavado por carga", "Secado por carga" con sus dos precios, detergente, suavizante y su consumo de 150–200 ml se capturan en el admin.
+
+**Riesgos y pendientes:**
+- **Riesgo – stock negativo:** no se impide que el stock quede en negativo (p. ej. si el consumo teórico supera lo registrado o faltó capturar una entrada). Se decidió así para no bloquear un lavado; el filtro de stock bajo lo hace visible.
+- **Riesgo – historial de precios:** si se edita el precio de una fila en lugar de agregar otra con nueva fecha `valid_from`, se pierde el precio anterior. Las ventas no se afectan porque copiarán el precio (Etapa 7).
+- **Pendiente – precio vigente:** falta la función que elige el precio vigente (por modalidad, sucursal, programa y fecha); se necesita al cobrar (Etapa 7).
+- **Pendiente – enlaces del movimiento:** `StockMovement` todavía no tiene `sale` ni `machine_cycle`; se agregan cuando existan esos modelos (Etapas 7 y 9).
+- **Pendiente – motivo del ajuste:** los ajustes no guardan motivo; `mvp.md` §6 pide bitácora de ajustes de inventario. Por ahora queda quién y cuándo.
+- **Pendiente – traducciones:** los textos nuevos (modelos, campos, menú, permisos) están en inglés con `gettext_lazy`; falta su traducción en `backend/locale/es_MX/`.
+- **Pendiente – nombre del permiso en la base local:** `sales.manage_catalog` cambió de nombre antes del commit. En una base que ya lo tenía (la de desarrollo) sigue el nombre anterior hasta recrearla (`make reset`); en una base nueva sale bien.
 
 ---
 

@@ -58,11 +58,12 @@ def test_role_changes_survive_migrate():
 def test_grant_permissions_only_adds():
     employee_role = Group.objects.get(name=EMPLOYEE_ROLE)
     employee_role.permissions.add(perm("view_branch"))
+    before = set(employee_role.permissions.values_list("codename", flat=True))
 
     grant_permissions(django_apps, EMPLOYEE_ROLE, codes=["core.view_permissionlog"])
 
     codenames = set(employee_role.permissions.values_list("codename", flat=True))
-    assert codenames == {"view_branch", "view_permissionlog"}
+    assert codenames == before | {"view_permissionlog"}
 
 
 def test_roles_admin_requires_manage_users(client, employee, manager):
