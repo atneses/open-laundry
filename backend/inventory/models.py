@@ -9,9 +9,12 @@ class Product(models.Model):
     """A supply (detergent, softener, bags). Its stock only changes through movements."""
 
     class Unit(models.TextChoices):
-        MILLILITER = "ml", _("milliliter")
-        GRAM = "g", _("gram")
-        PIECE = "piece", _("piece")
+        BAG = "bag", _("Bag")
+        GRAM = "g", _("Gram")
+        LITER = "L", _("Litter")
+        MILLILITER = "ml", _("Milliliter")
+        PIECE = "piece", _("Piece")
+        UNIT = "unit", _("Unit")
 
     name = models.CharField(_("name"), max_length=120)
     sku = models.CharField(_("SKU"), max_length=60, blank=True)

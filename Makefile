@@ -5,7 +5,7 @@ CONFIRM_DELETE_DB := read -p "This deletes the database. Type 'yes' to continue:
 	[ "$$answer" = "yes" ] || { echo "Cancelled."; exit 1; }
 
 .DEFAULT_GOAL := help
-.PHONY: help up down rebuild reset resetdb shell makemigrations migrate
+.PHONY: help up down rebuild reset resetdb shell makemigrations migrate seed
 
 help: ## Show the available tasks
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  make %-15s %s\n", $$1, $$2}'
@@ -39,3 +39,6 @@ makemigrations: ## Create migrations in the api container (optional: app=sales)
 
 migrate: ## Apply migrations in the api container (optional: app=sales)
 	$(COMPOSE) exec api python manage.py migrate $(app)
+
+seed: ## Load fictitious demo data (users, catalog and stock); safe to run again
+	$(COMPOSE) exec api python manage.py seed_demo
