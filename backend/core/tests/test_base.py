@@ -52,3 +52,9 @@ def test_admin_login_page_is_in_spanish(client):
     response = client.get("/admin/login/")
     assert response.status_code == 200
     assert "Iniciar sesión" in response.content.decode()
+
+
+def test_root_redirects_to_admin(client):
+    response = client.get("/")
+    assert response.status_code == 302
+    assert response.url == reverse("admin:index")
