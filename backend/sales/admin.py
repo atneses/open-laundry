@@ -1,6 +1,7 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline
 
+from .forms import ServiceForm, ServicePriceForm
 from .models import Service, ServicePrice
 
 MANAGE_CATALOG = "sales.manage_catalog"
@@ -27,6 +28,7 @@ class CatalogPermissionMixin:
 
 class ServicePriceInline(CatalogPermissionMixin, TabularInline):
     model = ServicePrice
+    form = ServicePriceForm
     extra = 0
     fields = ["mode", "program", "price", "branch", "is_active", "created_at"]
     readonly_fields = ["is_active", "created_at"]
@@ -41,6 +43,7 @@ class ServicePriceInline(CatalogPermissionMixin, TabularInline):
 
 @admin.register(Service)
 class ServiceAdmin(CatalogPermissionMixin, ModelAdmin):
+    form = ServiceForm
     list_display = ["name", "kind", "unit", "machine_kind", "is_active"]
     list_filter = ["kind", "machine_kind", "is_active"]
     search_fields = ["name"]

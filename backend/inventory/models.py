@@ -1,8 +1,13 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
+
+from core.validators import validate_code, validate_name
 
 
 class Product(models.Model):
@@ -16,19 +21,36 @@ class Product(models.Model):
         PIECE = "piece", _("Piece")
         UNIT = "unit", _("Unit")
 
-    name = models.CharField(_("name"), max_length=120)
-    sku = models.CharField(_("SKU"), max_length=60, blank=True)
+    name = models.CharField(_("name"), max_length=120, validators=[validate_name])
+    sku = models.CharField(_("SKU"), max_length=60, blank=True, validators=[validate_code])
     unit = models.CharField(_("unit"), max_length=10, choices=Unit.choices)
-    cost = models.DecimalField(_("cost per unit"), max_digits=10, decimal_places=4, default=0)
+    cost = models.DecimalField(
+        _("cost per unit"),
+        max_digits=10,
+        decimal_places=4,
+        default=0,
+        validators=[MinValueValidator(0)],
+    )
     stock = models.DecimalField(_("stock"), max_digits=12, decimal_places=3, default=0)
-    min_stock = models.DecimalField(_("minimum stock"), max_digits=12, decimal_places=3, default=0)
+    min_stock = models.DecimalField(
+        _("minimum stock"),
+        max_digits=12,
+        decimal_places=3,
+        default=0,
+        validators=[MinValueValidator(0)],
+    )
     is_for_sale = models.BooleanField(
         _("for sale"),
         default=False,
         help_text=_("Leave unchecked for supplies used in the loads (detergent, softener)."),
     )
     sale_price = models.DecimalField(
-        _("sale price"), max_digits=10, decimal_places=2, null=True, blank=True
+        _("sale price"),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
     )
     branch = models.ForeignKey(
         "core.Branch", verbose_name=_("branch"), on_delete=models.PROTECT, related_name="products"
@@ -84,6 +106,7 @@ class LoadConsumption(models.Model):
         max_digits=12,
         decimal_places=3,
         help_text=_("In the product's unit, for example 150 ml."),
+        validators=[MinValueValidator(Decimal("0.001"))],
     )
 
     class Meta:
@@ -131,7 +154,12 @@ class StockMovement(models.Model):
         ),
     )
     unit_cost = models.DecimalField(
-        _("unit cost"), max_digits=10, decimal_places=4, null=True, blank=True
+        _("unit cost"),
+        max_digits=10,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
     )
     reason = models.CharField(
         _("reason"),

@@ -1,6 +1,7 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
 
+from .forms import CustomerForm
 from .models import Customer
 
 MANAGE_CUSTOMERS = "customers.manage_customers"
@@ -8,6 +9,7 @@ MANAGE_CUSTOMERS = "customers.manage_customers"
 
 @admin.register(Customer)
 class CustomerAdmin(ModelAdmin):
+    form = CustomerForm
     list_display = ["name", "phone", "email", "created_at"]
     list_filter = ["branch"]
     # Searching the phone also matches its last digits.

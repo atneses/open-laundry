@@ -3,9 +3,10 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group, Permission
 from django.utils.translation import gettext_lazy as _
 from unfold.admin import ModelAdmin
-from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
+from unfold.forms import AdminPasswordChangeForm, UserCreationForm
 
 from .admin_base import ReadOnlyModelAdmin
+from .forms import BranchForm, UserChangeForm
 from .models import Branch, PermissionLog, User
 from .services import log_permission_changes
 
@@ -108,6 +109,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
 
 @admin.register(Branch)
 class BranchAdmin(ModelAdmin):
+    form = BranchForm
     list_display = ["name", "phone"]
     search_fields = ["name"]
 
