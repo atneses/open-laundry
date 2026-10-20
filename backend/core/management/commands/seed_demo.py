@@ -12,6 +12,7 @@ from django.db import transaction
 
 from core.models import Branch
 from core.roles import ADMIN_ROLE, EMPLOYEE_ROLE
+from customers.models import Customer, normalize_phone
 from inventory.models import LoadConsumption, Product, StockMovement
 from inventory.services import record_stock_movement
 from sales.models import Mode, Service, ServicePrice
@@ -42,9 +43,17 @@ PRODUCTS = [
 # service name -> {product name: quantity per load}
 CONSUMPTION = {"Lavado por carga": {"Detergente": 180, "Suavizante": 150}}
 
+# Add or edit demo customers here. Only "name" and "phone" are required; the phone
+# identifies the customer, so a customer is created only if its phone is new.
+CUSTOMERS = [
+    {"name": "Ana López", "phone": "5512345678", "email": "ana@example.com"},
+    {"name": "Luis Hernández", "phone": "5598765432", "notes": "Prefiere suavizante extra"},
+    {"name": "María García", "phone": "5511112222", "address": "Av. Siempre Viva 742"},
+]
+
 
 class Command(BaseCommand):
-    help = "Load fictitious demo data (branch, users, catalog and stock) for development."
+    help = "Load fictitious demo data (branch, users, customers, catalog and stock)."
 
     @transaction.atomic
     def handle(self, *args, **options):
@@ -64,6 +73,11 @@ class Command(BaseCommand):
                     product=products[product_name],
                     defaults={"quantity": quantity},
                 )
+        for data in CUSTOMERS:
+            phone = normalize_phone(data["phone"])
+            Customer.objects.get_or_create(
+                branch=branch, phone=phone, defaults={**data, "phone": phone}
+            )
 
         self.stdout.write(
             self.style.SUCCESS(
