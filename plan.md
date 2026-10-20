@@ -53,20 +53,21 @@ Las casillas `[ ]` sirven para ir marcando el avance.
   - [4.6 Pantallas de admin](#46-pantallas-de-admin)
 - [Etapa 5 – Clientes](#etapa-5--clientes)
   - [5.1 Modelo Customer](#51-modelo-customer)
-  - [5.2 Clase de permiso para la API](#52-clase-de-permiso-para-la-api)
-  - [5.3 API de clientes](#53-api-de-clientes)
+  - [5.2 Clientes en el admin](#52-clientes-en-el-admin)
 - [Etapa 6 – Caja (turnos)](#etapa-6--caja-turnos)
   - [6.1 Modelo CashSession](#61-modelo-cashsession)
-  - [6.2 Abrir caja](#62-abrir-caja)
-  - [6.3 Cerrar caja (corte)](#63-cerrar-caja-corte)
-  - [6.4 Consulta de cortes](#64-consulta-de-cortes)
+  - [6.2 Clase de permiso para la API](#62-clase-de-permiso-para-la-api)
+  - [6.3 Abrir caja](#63-abrir-caja)
+  - [6.4 Cerrar caja (corte)](#64-cerrar-caja-corte)
+  - [6.5 Consulta de cortes](#65-consulta-de-cortes)
 - [Etapa 7 – Ventas, pagos y descuentos](#etapa-7--ventas-pagos-y-descuentos)
   - [7.1 API del catálogo](#71-api-del-catálogo)
-  - [7.2 Modelos de venta](#72-modelos-de-venta)
-  - [7.3 Pagos](#73-pagos)
-  - [7.4 Regla de autoservicio](#74-regla-de-autoservicio)
-  - [7.5 Descuentos](#75-descuentos)
-  - [7.6 Cancelaciones](#76-cancelaciones)
+  - [7.2 API de clientes](#72-api-de-clientes)
+  - [7.3 Modelos de venta](#73-modelos-de-venta)
+  - [7.4 Pagos](#74-pagos)
+  - [7.5 Regla de autoservicio](#75-regla-de-autoservicio)
+  - [7.6 Descuentos](#76-descuentos)
+  - [7.7 Cancelaciones](#77-cancelaciones)
 - [Etapa 8 – Encargos](#etapa-8--encargos)
   - [8.1 Modelo DropOffOrder](#81-modelo-dropofforder)
   - [8.2 Flujo de estados](#82-flujo-de-estados)
@@ -450,23 +451,18 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 5 – Clientes
 
-**Objetivo:** registrar y buscar clientes (modelo, API y admin). Se crea la app `customers`.
+**Objetivo:** registrar y buscar clientes desde el admin. Se crea la app `customers`. Esta etapa es **solo modelo y admin**: la clase de permiso de la API se hace en la Etapa 6 (6.2) y la API de clientes en la Etapa 7 (7.2).
 
 ### 5.1 Modelo `Customer`
 - [ ] **Qué se hace:** crear `Customer` con nombre y teléfono obligatorios (teléfono único por sucursal); dirección, correo y notas opcionales.
 - **Listo cuando:** no se puede crear un cliente sin teléfono ni repetir un teléfono.
 
-### 5.2 Clase de permiso para la API
-- [ ] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("customers.manage_customers")`, que se pone en cada endpoint. Es la primera etapa con endpoints protegidos por permiso (se movió aquí desde la Etapa 4, que no tiene endpoints).
-- **Para qué:** que la validación ocurra siempre en el servidor, no solo escondiendo botones.
-- **Listo cuando:** una prueba muestra que un usuario sin el permiso recibe error 403 en `/api/customers/`.
+### 5.2 Clientes en el admin
+- [ ] **Qué se hace:** pantalla de clientes en Unfold, en el área *Operación* del menú, con búsqueda por teléfono (también por los últimos dígitos) o nombre. Se ve y edita solo con `customers.manage_customers`.
+- **Para qué:** registrar y encontrar clientes mientras no existe la caja.
+- **Listo cuando:** buscar los últimos dígitos del teléfono encuentra al cliente; un usuario sin el permiso recibe 403 (pruebas).
 
-### 5.3 API de clientes
-- [ ] **Qué se hace:** `/api/customers/` con alta, edición y **búsqueda por teléfono o nombre**.
-- **Para qué:** en caja se busca al cliente por teléfono mientras se le atiende.
-- **Listo cuando:** buscar los últimos dígitos del teléfono encuentra al cliente.
-
-**✅ Etapa 5 terminada cuando:** se pueden registrar y buscar clientes desde la API y el admin.
+**✅ Etapa 5 terminada cuando:** se pueden registrar y buscar clientes desde el admin.
 
 ---
 
@@ -478,17 +474,22 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - [ ] **Qué se hace:** crear `CashSession` (apertura, fondo inicial, cierre, efectivo esperado, efectivo contado, diferencia, total de tarjeta, número de ventas y cancelaciones).
 - **Listo cuando:** el modelo está migrado y visible (solo lectura) en el admin.
 
-### 6.2 Abrir caja
+### 6.2 Clase de permiso para la API
+- [ ] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("sales.operate_cash_session")`, que se pone en cada endpoint. Es la primera etapa con endpoints protegidos por permiso (se movió aquí desde la Etapa 5).
+- **Para qué:** que la validación ocurra siempre en el servidor, no solo escondiendo botones.
+- **Listo cuando:** una prueba muestra que un usuario sin el permiso recibe error 403 al abrir caja.
+
+### 6.3 Abrir caja
 - [ ] **Qué se hace:** endpoint para abrir caja con el fondo inicial. Un empleado no puede tener dos cajas abiertas.
 - **Para qué:** cada venta queda ligada al turno de quien la cobró.
 - **Listo cuando:** sin caja abierta, la API no deja cobrar (prueba).
 
-### 6.3 Cerrar caja (corte)
+### 6.4 Cerrar caja (corte)
 - [ ] **Qué se hace:** el empleado captura el efectivo contado y el sistema calcula: efectivo esperado = fondo + pagos en efectivo del turno − cancelaciones; diferencia = contado − esperado; total de tarjeta para cuadrar contra Mercado Pago Point.
 - **Para qué:** detectar faltantes o sobrantes por turno.
 - **Listo cuando:** una prueba con ventas en efectivo, tarjeta y una cancelación da el esperado correcto.
 
-### 6.4 Consulta de cortes
+### 6.5 Consulta de cortes
 - [ ] **Qué se hace:** el empleado ve solo su corte actual; quien tenga `sales.view_all_cash_sessions` ve todos los cortes en el admin.
 - **Listo cuando:** un empleado no puede ver cortes de otros (prueba 403).
 
@@ -505,26 +506,31 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Para qué:** que la caja sepa qué puede cobrar y a qué precio.
 - **Listo cuando:** al cambiar un precio en el admin, la API devuelve el nuevo.
 
-### 7.2 Modelos de venta
+### 7.2 API de clientes
+- [ ] **Qué se hace:** `/api/customers/` con alta, edición y **búsqueda por teléfono o nombre**, protegida con `customers.manage_customers` (movida aquí desde la Etapa 5).
+- **Para qué:** en caja se busca al cliente por teléfono mientras se le atiende; los encargos lo necesitan.
+- **Listo cuando:** buscar los últimos dígitos del teléfono encuentra al cliente; sin el permiso responde 403.
+
+### 7.3 Modelos de venta
 - [ ] **Qué se hace:** crear `Sale` (modalidad, estado, subtotal, descuento, total, saldo, turno) y `SaleItem` (servicio o producto, cantidad, precio unitario copiado del catálogo).
 - **Para qué:** que el precio cobrado no cambie aunque después se modifique el catálogo.
 - **Listo cuando:** crear una venta de 3 cargas de lavado en autoservicio calcula el total con el precio de autoservicio.
 
-### 7.3 Pagos
+### 7.4 Pagos
 - [ ] **Qué se hace:** crear `Payment` (efectivo, tarjeta de crédito, tarjeta de débito; monto; referencia del voucher). Una venta puede tener varios pagos; el saldo y el estado se recalculan solos (`pending`, `partially_paid`, `paid`).
 - **Para qué:** permitir anticipos en encargos y pagos mixtos.
 - **Listo cuando:** dos pagos parciales dejan la venta en `paid` con saldo 0.
 
-### 7.4 Regla de autoservicio
+### 7.5 Regla de autoservicio
 - [ ] **Qué se hace:** en autoservicio la venta debe quedar pagada completa antes de poder activar máquinas.
 - **Listo cuando:** una prueba confirma que no se puede activar una máquina con saldo pendiente en autoservicio.
 
-### 7.5 Descuentos
+### 7.6 Descuentos
 - [ ] **Qué se hace:** crear `Discount` (porcentaje o monto fijo, vigencia, modalidad, servicios) y `AppliedDiscount`. La API solo ofrece al empleado los descuentos vigentes que aplican a esa venta; crearlos requiere `sales.manage_discounts`.
 - **Para qué:** que el empleado solo use descuentos autorizados.
 - **Listo cuando:** un descuento vencido o de otra modalidad no aparece ni se puede aplicar.
 
-### 7.6 Cancelaciones
+### 7.7 Cancelaciones
 - [ ] **Qué se hace:** cancelar una venta con motivo obligatorio; queda quién, cuándo y por qué. Los pagos en efectivo cancelados se descuentan del corte.
 - **Listo cuando:** cancelar sin motivo da error, y el corte refleja la cancelación.
 
