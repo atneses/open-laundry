@@ -1,3 +1,8 @@
+# Reglas de CLAUDE
+Respuestas lo menos verbosas posible: DEBES proporcionar respuestas cortas pero sin omitir nada importante.
+
+Hacer únicamente lo que se pidió. Si detectas algún potencias riesgo, preguntar si se debe tomar en cuenta en la implementación.
+
 # Reglas del proyecto: Sistema de Gestión de Lavandería
 
 Lee esto antes de trabajar en el proyecto. Para el **qué** y el **porqué** del sistema, ver [`mvp.md`](mvp.md); para el **orden de trabajo**, [`plan.md`](plan.md).
