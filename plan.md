@@ -431,6 +431,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Permisos:** `sales.manage_catalog` (servicios, precios, **productos** y consumo por carga), `inventory.receive_stock` (entradas) e `inventory.adjust_stock` (ajustes). Las migraciones `sales/0002` e `inventory/0003` se los dan a los roles: Admin, todos; Empleado, `receive_stock`.
 - Cada pantalla del admin revisa estos permisos, no los automáticos de Django. Productos y movimientos se ven con cualquiera de los tres; crear o editar productos requiere `manage_catalog`.
 - **Movimientos:** `quantity` lleva signo (compra > 0; consumo y venta < 0; ajuste ≠ 0), validado en el modelo y en la base de datos. `record_stock_movement` (`inventory/services.py`) guarda el movimiento y actualiza el stock con `F()` en una transacción. En el admin, quien tiene `receive_stock` solo puede registrar compras y quien tiene `adjust_stock`, ajustes; el consumo y las ventas los generará el sistema (Etapas 7 y 9). Los movimientos no se editan ni se borran, y el stock del producto es de solo lectura.
+- **Motivo del ajuste:** `StockMovement.reason` es obligatorio en los ajustes (validado en el modelo y en la base de datos), para la bitácora de `mvp.md` §6.
 - `LoadConsumption` solo acepta servicios de lavado. Un producto a la venta necesita precio de venta.
 - **Datos iniciales:** no se cargaron por migración. "Lavado por carga", "Secado por carga" con sus dos precios, detergente, suavizante y su consumo de 150–200 ml se capturan en el admin.
 
@@ -439,7 +440,6 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Cambio respecto a lo planeado – precios sin fecha:** se quitó `valid_from` (precios programados a futuro). Ahora el último precio agregado es el activo y los anteriores quedan inactivos como historial, con su fecha `created_at` (`ServicePrice.save`, migración `sales/0003`). Los precios no se editan ni se borran (el modelo solo permite desactivarlos; `update()` y `bulk_update` se lo saltan); un error de captura se corrige agregando otro precio, así que queda en el historial.
 - **Pendiente – precio a cobrar:** al cobrar (Etapa 7) se busca el precio activo por servicio, modalidad, programa y sucursal; si no hay uno por programa, se usa el general.
 - **Pendiente – enlaces del movimiento:** `StockMovement` todavía no tiene `sale` ni `machine_cycle`; se agregan cuando existan esos modelos (Etapas 7 y 9).
-- **Pendiente – motivo del ajuste:** los ajustes no guardan motivo; `mvp.md` §6 pide bitácora de ajustes de inventario. Por ahora queda quién y cuándo.
 - **Pendiente – traducciones:** los textos nuevos (modelos, campos, menú, permisos) están en inglés con `gettext_lazy`; falta su traducción en `backend/locale/es_MX/`.
 - **Pendiente – nombre del permiso en la base local:** `sales.manage_catalog` cambió de nombre antes del commit. En una base que ya lo tenía (la de desarrollo) sigue el nombre anterior hasta recrearla (`make reset`); en una base nueva sale bien.
 

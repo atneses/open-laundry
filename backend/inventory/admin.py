@@ -73,7 +73,7 @@ class StockMovementAdmin(ModelAdmin):
     search_fields = ["product__name"]
     list_select_related = ["product", "user"]
     date_hierarchy = "created_at"
-    fields = ["product", "kind", "quantity", "unit_cost"]
+    fields = ["product", "kind", "quantity", "unit_cost", "reason"]
 
     def has_module_permission(self, request):
         return has_any_perm(request.user, INVENTORY_PERMISSIONS)

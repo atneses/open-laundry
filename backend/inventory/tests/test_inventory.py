@@ -20,9 +20,9 @@ def detergent(branch):
     return Product.objects.create(name="Detergent", unit="ml", min_stock=1000, branch=branch)
 
 
-def record(product, kind, quantity, user):
+def record(product, kind, quantity, user, reason=""):
     return record_stock_movement(
-        StockMovement(product=product, kind=kind, quantity=quantity, user=user)
+        StockMovement(product=product, kind=kind, quantity=quantity, user=user, reason=reason)
     )
 
 
@@ -34,7 +34,7 @@ def test_purchase_of_5_liters_raises_stock_by_5000_ml(detergent, admin_user):
 
 def test_movements_add_up(detergent, admin_user):
     record(detergent, "purchase", 5000, admin_user)
-    record(detergent, "adjustment", -300, admin_user)
+    record(detergent, "adjustment", -300, admin_user, reason="Spilled")
     detergent.refresh_from_db()
     assert detergent.stock == Decimal("4700")
     assert detergent.movements.count() == 2
@@ -50,6 +50,13 @@ def test_quantity_sign_must_match_kind(detergent, admin_user, kind, quantity):
     detergent.refresh_from_db()
     assert detergent.stock == 0
     assert not detergent.movements.exists()
+
+
+def test_adjustment_needs_a_reason(detergent, admin_user):
+    with pytest.raises(ValidationError):
+        record(detergent, "adjustment", -300, admin_user, reason="  ")
+    detergent.refresh_from_db()
+    assert detergent.stock == 0
 
 
 def test_only_wash_services_consume_supplies(detergent):

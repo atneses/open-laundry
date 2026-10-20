@@ -11,7 +11,7 @@ class Product(models.Model):
     class Unit(models.TextChoices):
         BAG = "bag", _("Bag")
         GRAM = "g", _("Gram")
-        LITER = "L", _("Litter")
+        LITER = "L", _("Liter")
         MILLILITER = "ml", _("Milliliter")
         PIECE = "piece", _("Piece")
         UNIT = "unit", _("Unit")
@@ -119,6 +119,12 @@ class StockMovement(models.Model):
     unit_cost = models.DecimalField(
         _("unit cost"), max_digits=10, decimal_places=4, null=True, blank=True
     )
+    reason = models.CharField(
+        _("reason"),
+        max_length=255,
+        blank=True,
+        help_text=_("Required for adjustments: why the stock changed (spill, count, error)."),
+    )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name=_("user"),
@@ -143,6 +149,10 @@ class StockMovement(models.Model):
                 | (Q(kind="adjustment") & ~Q(quantity=0)),
                 name="stock_movement_quantity_sign_matches_kind",
             ),
+            models.CheckConstraint(
+                condition=~Q(kind="adjustment") | ~Q(reason=""),
+                name="stock_adjustment_has_reason",
+            ),
         ]
 
     def __str__(self):
@@ -157,3 +167,5 @@ class StockMovement(models.Model):
             raise ValidationError({"quantity": _("This kind of movement removes stock.")})
         if self.kind == self.Kind.ADJUSTMENT and self.quantity == 0:
             raise ValidationError({"quantity": _("An adjustment cannot be zero.")})
+        if self.kind == self.Kind.ADJUSTMENT and not self.reason.strip():
+            raise ValidationError({"reason": _("An adjustment needs a reason.")})
