@@ -434,7 +434,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Unidad fija:** la unidad de un producto no se puede cambiar una vez que tiene movimientos (solo lectura en el admin y rechazada en `Product.save`); si hace falta otra unidad, se crea otro producto.
 - **Motivo del ajuste:** `StockMovement.reason` es obligatorio en los ajustes (validado en el modelo y en la base de datos), para la bitácora de `mvp.md` §6.
 - `LoadConsumption` solo acepta servicios de lavado. Un producto a la venta necesita precio de venta.
-- **Datos iniciales:** no se cargaron por migración. "Lavado por carga", "Secado por carga" con sus dos precios, detergente, suavizante y su consumo de 150–200 ml se capturan en el admin.
+- **Datos iniciales:** no se cargan por migración; los reales (servicios con sus dos precios, detergente, suavizante y su consumo de 150–200 ml) se capturan en el admin. Para desarrollo, `make seed` (`python manage.py seed_demo`) carga datos ficticios: sucursal, usuarios `demo_admin` / `demo_empleado`, servicios, productos con stock inicial y consumo por carga. Solo crea lo que falta y no corre con `DEBUG` apagado.
 
 **Riesgos y pendientes:**
 - **Riesgo – stock negativo:** no se impide que el stock quede en negativo (p. ej. si el consumo teórico supera lo registrado o faltó capturar una entrada). Se decidió así para no bloquear un lavado; el filtro de stock bajo lo hace visible.
