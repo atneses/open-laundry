@@ -454,15 +454,27 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Objetivo:** registrar y buscar clientes desde el admin. Se crea la app `customers`. Esta etapa es **solo modelo y admin**: la clase de permiso de la API se hace en la Etapa 6 (6.2) y la API de clientes en la Etapa 7 (7.2).
 
 ### 5.1 Modelo `Customer`
-- [ ] **Qué se hace:** crear `Customer` con nombre y teléfono obligatorios (teléfono único por sucursal); dirección, correo y notas opcionales.
+- [x] **Qué se hace:** crear `Customer` con nombre y teléfono obligatorios (teléfono único por sucursal); dirección, correo y notas opcionales.
 - **Listo cuando:** no se puede crear un cliente sin teléfono ni repetir un teléfono.
 
 ### 5.2 Clientes en el admin
-- [ ] **Qué se hace:** pantalla de clientes en Unfold, en el área *Operación* del menú, con búsqueda por teléfono (también por los últimos dígitos) o nombre. Se ve y edita solo con `customers.manage_customers`.
+- [x] **Qué se hace:** pantalla de clientes en Unfold, en el área *Operación* del menú, con búsqueda por teléfono (también por los últimos dígitos) o nombre. Se ve y edita solo con `customers.manage_customers`.
 - **Para qué:** registrar y encontrar clientes mientras no existe la caja.
 - **Listo cuando:** buscar los últimos dígitos del teléfono encuentra al cliente; un usuario sin el permiso recibe 403 (pruebas).
 
 **✅ Etapa 5 terminada cuando:** se pueden registrar y buscar clientes desde el admin.
+
+**Notas de la implementación:**
+- App `customers` con `Customer` (sucursal, nombre, teléfono, correo, dirección, notas, fecha). Teléfono único por sucursal con una restricción en la base de datos.
+- **Teléfono normalizado:** se guarda solo con dígitos (`Customer.save`), así "55 1234-5678" y "5512345678" cuentan como el mismo y no se duplican.
+- **Permiso:** `customers.manage_customers`; la migración `customers/0002` se lo da a Admin y a Empleado (mvp §4). La pantalla del admin revisa este permiso, no los automáticos de Django.
+- Nueva área *Operación* en el menú lateral, primera según `mvp.md` §2.
+
+**Riesgos y pendientes:**
+- **Riesgo – formato del teléfono:** no se valida la longitud (p. ej. 10 dígitos en México) ni la lada; se supuso así para no rechazar números válidos. Falta confirmar con el negocio.
+- **Riesgo – borrar un cliente:** hoy se puede borrar; desde la Etapa 7 las ventas lo protegerán (`PROTECT`).
+- **Pendiente – uso por empleados:** el rol Empleado tiene `manage_customers`, pero un empleado normal no entra al admin (`is_staff`); registrará clientes desde la caja (API en 7.2, pantalla en la Etapa 12).
+- **Pendiente – traducciones:** los textos nuevos están en inglés con `gettext_lazy`.
 
 ---
 
