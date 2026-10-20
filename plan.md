@@ -1,6 +1,6 @@
 # Plan de implementación: Sistema de Gestión de Lavandería
 
-> Basado en `mvp.md` · Última actualización: 2026-10-18
+> Basado en `mvp.md` · Última actualización: 2026-10-20
 
 Este plan divide la construcción del sistema en **etapas** y cada etapa en **pasos pequeños**. Cada paso dice:
 
@@ -8,129 +8,30 @@ Este plan divide la construcción del sistema en **etapas** y cada etapa en **pa
 - **Para qué:** por qué hace falta.
 - **Listo cuando:** cómo comprobar que quedó bien.
 
-Las casillas `[ ]` sirven para ir marcando el avance.
+Las casillas `[ ]` sirven para ir marcando el avance. Las reglas de trabajo (ramas, pruebas, migraciones, secretos, mínimo indispensable, riesgos y pendientes) están en `CLAUDE.md`.
 
 ---
 
 ## Índice
 
 - [Resumen de etapas](#resumen-de-etapas)
-- [Forma de trabajo (aplica a todas las etapas)](#forma-de-trabajo-aplica-a-todas-las-etapas)
 - [Etapa 0 – Preparación en el local](#etapa-0--preparación-en-el-local)
-  - [0.1 Datos de la configuración de Aitare](#01-datos-de-la-configuración-de-aitare)
-  - [0.2 Conexión física de los relés](#02-conexión-física-de-los-relés)
-  - [0.3 Configuración actual de las máquinas](#03-configuración-actual-de-las-máquinas)
-  - [0.4 Seguridad de las máquinas](#04-seguridad-de-las-máquinas)
-  - [0.5 Material para la cajita](#05-material-para-la-cajita)
-  - [0.6 Red WiFi del local](#06-red-wifi-del-local)
-  - [0.7 Manual de la secadora](#07-manual-de-la-secadora)
-  - [0.8 Caja: PC e impresora](#08-caja-pc-e-impresora)
-  - [0.9 Cuentas externas](#09-cuentas-externas)
-  - [0.10 (Opcional) Medidor de consumo de prueba](#010-opcional-medidor-de-consumo-de-prueba)
 - [Etapa 1 – Base del proyecto](#etapa-1--base-del-proyecto)
-  - [1.1 Estructura del repositorio](#11-estructura-del-repositorio)
-  - [1.2 Proyecto Django](#12-proyecto-django)
-  - [1.3 Apps de Django](#13-apps-de-django)
-  - [1.4 Usuario personalizado (User)](#14-usuario-personalizado-user)
-  - [1.5 Docker para desarrollo](#15-docker-para-desarrollo)
-  - [1.6 Django Admin con Unfold](#16-django-admin-con-unfold)
-  - [1.7 API base](#17-api-base)
-  - [1.8 Pruebas y revisión de estilo](#18-pruebas-y-revisión-de-estilo)
 - [Etapa 2 – Personalización del admin (Unfold)](#etapa-2--personalización-del-admin-unfold)
-  - [2.1 Marca de la lavandería](#21-marca-de-la-lavandería)
-  - [2.2 Menú lateral por áreas](#22-menú-lateral-por-áreas)
 - [Etapa 3 – Usuarios, roles y permisos](#etapa-3--usuarios-roles-y-permisos)
-  - [3.1 Permiso para gestionar usuarios](#31-permiso-para-gestionar-usuarios)
-  - [3.2 Roles](#32-roles)
-  - [3.3 Permisos extra y bitácora](#33-permisos-extra-y-bitácora)
-  - [3.4 Usuarios en el admin](#34-usuarios-en-el-admin)
 - [Etapa 4 – Catálogo e inventario](#etapa-4--catálogo-e-inventario)
-  - [4.1 Servicios y precios](#41-servicios-y-precios)
-  - [4.2 Productos (insumos)](#42-productos-insumos)
-  - [4.3 Consumo por carga](#43-consumo-por-carga)
-  - [4.4 Movimientos de inventario](#44-movimientos-de-inventario)
-  - [4.5 Alertas de stock](#45-alertas-de-stock)
-  - [4.6 Pantallas de admin](#46-pantallas-de-admin)
 - [Etapa 5 – Clientes](#etapa-5--clientes)
-  - [5.1 Modelo Customer](#51-modelo-customer)
-  - [5.2 Clientes en el admin](#52-clientes-en-el-admin)
 - [Etapa 6 – Caja (turnos)](#etapa-6--caja-turnos)
-  - [6.1 Modelo CashSession](#61-modelo-cashsession)
-  - [6.2 Clase de permiso para la API](#62-clase-de-permiso-para-la-api)
-  - [6.3 Abrir caja](#63-abrir-caja)
-  - [6.4 Cerrar caja (corte)](#64-cerrar-caja-corte)
-  - [6.5 Consulta de cortes](#65-consulta-de-cortes)
 - [Etapa 7 – Ventas, pagos y descuentos](#etapa-7--ventas-pagos-y-descuentos)
-  - [7.1 API del catálogo](#71-api-del-catálogo)
-  - [7.2 API de clientes](#72-api-de-clientes)
-  - [7.3 Modelos de venta](#73-modelos-de-venta)
-  - [7.4 Pagos](#74-pagos)
-  - [7.5 Regla de autoservicio](#75-regla-de-autoservicio)
-  - [7.6 Descuentos](#76-descuentos)
-  - [7.7 Cancelaciones](#77-cancelaciones)
 - [Etapa 8 – Encargos](#etapa-8--encargos)
-  - [8.1 Modelo DropOffOrder](#81-modelo-dropofforder)
-  - [8.2 Flujo de estados](#82-flujo-de-estados)
 - [Etapa 9 – Máquinas y ciclos (modo manual y simulador)](#etapa-9--máquinas-y-ciclos-modo-manual-y-simulador)
-  - [9.1 Celery y Redis](#91-celery-y-redis)
-  - [9.2 Modelos](#92-modelos)
-  - [9.3 Ciclos generados por la venta](#93-ciclos-generados-por-la-venta)
-  - [9.4 Interfaz MachineDriver](#94-interfaz-machinedriver)
-  - [9.5 Driver manual](#95-driver-manual)
-  - [9.6 Simulador](#96-simulador)
-  - [9.7 Consumo de insumos](#97-consumo-de-insumos)
-  - [9.8 API de entradas de inventario](#98-api-de-entradas-de-inventario)
-  - [9.9 Cierre por tiempo](#99-cierre-por-tiempo)
 - [Etapa 10 – Tickets](#etapa-10--tickets)
-  - [10.1 Datos del ticket](#101-datos-del-ticket)
 - [Etapa 11 – Reportes](#etapa-11--reportes)
-  - [11.1 Indicadores del dashboard](#111-indicadores-del-dashboard)
-  - [11.2 Consultas con filtros](#112-consultas-con-filtros)
-  - [11.3 Endpoints de reportes](#113-endpoints-de-reportes)
 - [Etapa 12 – Caja (React)](#etapa-12--caja-react)
-  - [12.1 Proyecto React](#121-proyecto-react)
-  - [12.2 Cliente de la API generado](#122-cliente-de-la-api-generado)
-  - [12.3 Pruebas y CI del frontend](#123-pruebas-y-ci-del-frontend)
-  - [12.4 Login en la caja](#124-login-en-la-caja)
-  - [12.5 Búsqueda y alta rápida en la caja](#125-búsqueda-y-alta-rápida-en-la-caja)
-  - [12.6 Abrir y cerrar caja](#126-abrir-y-cerrar-caja)
-  - [12.7 Pantalla de punto de venta](#127-pantalla-de-punto-de-venta)
-  - [12.8 Tablero de encargos](#128-tablero-de-encargos)
-  - [12.9 Tablero de máquinas en la caja](#129-tablero-de-máquinas-en-la-caja)
-  - [12.10 Vista de impresión](#1210-vista-de-impresión)
-  - [12.11 Impresión y reimpresión](#1211-impresión-y-reimpresión)
-  - [12.12 Entradas de inventario en la caja](#1212-entradas-de-inventario-en-la-caja)
 - [Etapa 13 – Despliegue y arranque en el local (MVP)](#etapa-13--despliegue-y-arranque-en-el-local-mvp)
-  - [13.1 Servidor](#131-servidor)
-  - [13.2 Producción con Docker](#132-producción-con-docker)
-  - [13.3 Respaldos](#133-respaldos)
-  - [13.4 Revisión automática (CI) y despliegue automático](#134-revisión-automática-ci-y-despliegue-automático)
-  - [13.5 Datos iniciales](#135-datos-iniciales)
-  - [13.6 Capacitación](#136-capacitación)
-  - [13.7 Periodo de prueba](#137-periodo-de-prueba)
 - [Etapa 14 – Control de máquinas con la cajita](#etapa-14--control-de-máquinas-con-la-cajita)
-  - [14.1 Broker MQTT](#141-broker-mqtt)
-  - [14.2 Respaldo del programa de Aitare](#142-respaldo-del-programa-de-aitare)
-  - [14.3 Identificar los pines de los relés](#143-identificar-los-pines-de-los-relés)
-  - [14.4 Programa de la cajita](#144-programa-de-la-cajita)
-  - [14.5 Prueba en mesa](#145-prueba-en-mesa)
-  - [14.6 Escucha MQTT en el backend](#146-escucha-mqtt-en-el-backend)
-  - [14.7 RelayBoardDriver](#147-relayboarddriver)
-  - [14.8 Pantallas](#148-pantallas)
-  - [14.9 Configurar una lavadora en modo de pago](#149-configurar-una-lavadora-en-modo-de-pago)
-  - [14.10 Prueba real con una lavadora](#1410-prueba-real-con-una-lavadora)
-  - [14.11 Extender a las 6 máquinas](#1411-extender-a-las-6-máquinas)
-  - [14.12 Procedimiento de respaldo](#1412-procedimiento-de-respaldo)
-  - [14.13 Observación](#1413-observación)
 - [Etapa 15 – Medidores de consumo (opcional)](#etapa-15--medidores-de-consumo-opcional)
-  - [15.1 Calibración](#151-calibración)
-  - [15.2 Conexión](#152-conexión)
-  - [15.3 Lógica de estados](#153-lógica-de-estados)
-  - [15.4 Conciliación](#154-conciliación)
 - [Etapa 16 – Mercado Pago Point](#etapa-16--mercado-pago-point)
-  - [16.1 Vincular la terminal](#161-vincular-la-terminal)
-  - [16.2 Integración](#162-integración)
-  - [16.3 Respaldo](#163-respaldo)
 - [Después del plan (Fase 3 en mvp.md)](#después-del-plan-fase-3-en-mvpmd)
 
 ---
@@ -183,20 +84,6 @@ flowchart TD
 Primero se construyen el **backend y el admin** (Etapas 1 a 11): todas las reglas de negocio, la API y las pantallas de administración con Unfold. Después, la **caja en React** (Etapa 12) usa esa API ya probada.
 
 La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local que no bloquean el desarrollo. Solo la Etapa 14 necesita que la Etapa 0 esté terminada.
-
----
-
-## Forma de trabajo (aplica a todas las etapas)
-
-- [ ] **Una rama por etapa o funcionalidad** (p. ej. `feature/sales`), con *pull request* hacia `main`.
-  - *Para qué:* revisar cada cambio antes de mezclarlo y poder deshacerlo.
-- [ ] **Pruebas automáticas** con `pytest` + `pytest-django` en el backend y `vitest` en el frontend. Cada regla de negocio importante (cobro, corte de caja, permisos, ciclos) lleva su prueba.
-  - *Para qué:* que un cambio nuevo no rompa algo que ya funcionaba.
-- [ ] **Revisiones antes de terminar:** lint, pruebas y migraciones se corren a mano (comandos en `CLAUDE.md`).
-- [ ] **Migraciones de base de datos** siempre en el repositorio; nunca se edita la base a mano.
-- [ ] **Secretos** (contraseñas, claves) solo en `.env`, que no se sube a git. En el repositorio va un `.env.example` sin valores reales.
-- [ ] **Primero lo mínimo indispensable:** cada funcionalidad se construye primero en su versión mínima que cumple el "Listo cuando"; las mejoras se proponen y se anotan como pendientes (ver `CLAUDE.md`).
-- [ ] **Al cerrar cada etapa:** completar la sección **"Riesgos y pendientes"** de la etapa y actualizar `mvp.md` si cambió alguna decisión.
 
 ---
 
@@ -301,14 +188,10 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** un *pull request* de prueba muestra la revisión en verde.
 
 **Notas de la implementación:**
-- **Todo el código está en inglés** (apps, modelos, campos, pruebas, comentarios); los textos que ve el usuario, en español.
 - El modelo `Branch` (sucursal) se creó en el paso 1.4 (y no en el 3.1) porque el usuario necesita apuntar a una sucursal desde la primera migración.
-- Unfold no trae traducción al español; se agregó una propia en `backend/locale/es_MX/`.
-- La base de datos no publica su puerto en la PC (había otro PostgreSQL usando el 5432); se accede con `docker compose exec db psql -U laundry`.
-- Para empezar con lo mínimo **se quitó lo que todavía no se usa** (apps vacías, carpetas `static/` y `templates/`, Celery y Redis, la CI, la configuración de producción y un primer esqueleto de la caja en React); cada cosa se agrega en la etapa que la usa.
 
 **Riesgos y pendientes:**
-- **Pendiente – traducción de Unfold incompleta:** se tradujeron 157 textos de la interfaz principal; los de complementos no usados (importar/exportar, historial, editor de texto) siguen en inglés.
+- **Pendiente – traducciones (todas las etapas):** los textos propios (modelos, campos, menú, mensajes, permisos) están en inglés con `gettext_lazy`; falta su traducción en `backend/locale/es_MX/`, y mientras tanto los que Django no traduce se ven en inglés. Los nombres de permisos necesitan un manejo aparte porque se guardan en la base de datos. De Unfold, que no trae español, se tradujeron 157 textos de la interfaz principal; los de complementos no usados (importar/exportar, historial, editor de texto) siguen en inglés.
 
 **✅ Etapa 1 terminada cuando:** `docker compose up` levanta la base de datos, la API y el admin, y las pruebas y el lint pasan.
 
@@ -330,8 +213,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **Notas de la implementación:**
 - La marca provisional usa el ícono de lavandería de Material Symbols (`SITE_SYMBOL`), un *favicon* SVG de una lavadora (`backend/static/favicon.svg`) y el azul que ya tenía el admin.
-- El menú se define en `UNFOLD["SIDEBAR"]` (`config/settings/base.py`); cada opción revisa el permiso de vista del modelo.
-- **Corrección:** el formulario de login de Unfold no envía el campo `next`; al entrar directo por `/admin/login/` se llegaba a `/accounts/profile/` (404). Se agregó `LOGIN_REDIRECT_URL` hacia el inicio del admin, con su prueba.
+- `LOGIN_REDIRECT_URL` apunta al inicio del admin, porque el login de Unfold no envía `next` (con prueba).
 - La página de inicio sigue mostrando la lista estándar de modelos de Django; el dashboard propio se hace en el paso 11.1.
 
 **Riesgos y pendientes:**
@@ -369,12 +251,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **Notas de la implementación:**
 - Los roles se crean en la migración `core/0003_create_roles` (*Admin*: todos los permisos; *Empleado*: ninguno, hasta que las apps definan los suyos). Se editan en el admin, solo con `core.manage_users`, y `migrate` no deshace esos cambios.
-- **Cambio respecto a lo planeado:** al principio los roles se sincronizaban en cada `migrate` y eran de solo lectura. Se cambió porque eso deshacía cualquier cambio que un admin hiciera a un rol.
-- **En cada etapa con permisos nuevos:** agregar una migración de datos que llame a `core.roles.grant_permissions` (Admin: todos los de la app; Empleado: los de la tabla de `mvp.md` §4). Solo agrega, nunca quita.
-- **Cambio respecto a lo planeado:** `core.manage_users` estaba bloqueado como permiso extra (señal y filtro del formulario). Se quitó el bloqueo porque, con los roles editables, quien tiene ese permiso ya podía darlo mediante un rol; ahora se puede dar también como extra.
 - Seguridad adicional: un usuario sin rango de superusuario no ve la casilla de superusuario ni puede editar a un superusuario (evita que alguien se suba de privilegios).
-- Los usuarios no se pueden borrar desde el admin; se desactivan.
-- Todos los textos que ve el usuario se escriben en inglés en el código y se marcan para traducción (`gettext_lazy`); la traducción al español se agrega aparte.
 - La bitácora (`PermissionLog`) se muestra en el área *Bitácoras* del menú.
 
 **Riesgos y pendientes:**
@@ -385,7 +262,6 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Riesgo – roles editables sin protecciones (decisión):** un admin puede quitarle `core.manage_users` al rol Admin (solo el superusuario podría gestionar usuarios), dárselo al rol Empleado o a un empleado como extra (esa persona podría a su vez darse cualquier permiso) o borrar un rol (sus usuarios lo pierden). Por ahora se decidió no bloquearlo.
 - **Riesgo – migración olvidada:** si una etapa crea permisos y no agrega su migración para los roles, ni Admin los recibe; solo el superusuario los tendría hasta que se asignen a mano.
 - **Riesgo – permisos automáticos de Django como extra:** un `ModelAdmin` que no sobrescribe `has_*_permission` usa los permisos automáticos, así que un extra como `machines.change_machine` daría acceso sin el permiso del MVP (`machines.manage_machines`). Hoy solo pasa con `core.change_branch` / `core.delete_branch`. Cada pantalla de admin nueva debe revisar el permiso del MVP en sus `has_*_permission`.
-- **Pendiente – traducciones:** los textos del código están en inglés con `gettext_lazy` (nombres de modelos y campos, títulos del menú y del admin, mensajes, nombre del permiso). Falta agregar su traducción al español en `backend/locale/es_MX/`; mientras tanto, los que Django no traduce por su cuenta se ven en inglés. Los nombres de permisos necesitan un manejo aparte porque se guardan en la base de datos.
 
 **✅ Etapa 3 terminada cuando:** un admin y un empleado entran al admin, cada uno ve solo lo suyo y las pruebas de permisos pasan.
 
@@ -425,12 +301,10 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Para qué:** que el admin mantenga el catálogo sin ayuda técnica.
 - **Listo cuando:** se puede cambiar un precio desde el admin.
 
-**✅ Etapa 4 terminada cuando:** el catálogo y el inventario se administran desde el admin.
-
 **Notas de la implementación:**
 - Apps `sales` (`Service`, `ServicePrice` y las modalidades `Mode`) e `inventory` (`Product`, `LoadConsumption`, `StockMovement`). Los precios se capturan dentro de la ficha del servicio.
-- **Permisos:** `sales.manage_catalog` (servicios, precios, **productos** y consumo por carga), `inventory.receive_stock` (entradas) e `inventory.adjust_stock` (ajustes). Las migraciones `sales/0002` e `inventory/0003` se los dan a los roles: Admin, todos; Empleado, `receive_stock`.
-- Cada pantalla del admin revisa estos permisos, no los automáticos de Django. Productos y movimientos se ven con cualquiera de los tres; crear o editar productos requiere `manage_catalog`.
+- **Permisos:** `sales.manage_catalog` (servicios, precios, **productos** y consumo por carga), `inventory.receive_stock` (entradas) e `inventory.adjust_stock` (ajustes). Las migraciones `sales/0002` e `inventory/0003` se los dan a los roles: Admin, todos; Empleado, `receive_stock`. Productos y movimientos se ven con cualquiera de los tres; crear o editar productos requiere `manage_catalog`.
+- **Precios sin fecha:** el último precio agregado es el activo y los anteriores quedan inactivos como historial, con su fecha `created_at` (`ServicePrice.save`). Los precios no se editan ni se borran, solo se desactivan; un error de captura se corrige agregando otro precio.
 - **Movimientos:** `quantity` lleva signo (compra > 0; consumo y venta < 0; ajuste ≠ 0), validado en el modelo y en la base de datos. `record_stock_movement` (`inventory/services.py`) guarda el movimiento y actualiza el stock con `F()` en una transacción. En el admin, quien tiene `receive_stock` solo puede registrar compras y quien tiene `adjust_stock`, ajustes; el consumo y las ventas los generará el sistema (Etapas 7 y 9). Los movimientos no se editan ni se borran, y el stock del producto es de solo lectura.
 - **Unidad fija:** la unidad de un producto no se puede cambiar una vez que tiene movimientos (solo lectura en el admin y rechazada en `Product.save`); si hace falta otra unidad, se crea otro producto.
 - **Motivo del ajuste:** `StockMovement.reason` es obligatorio en los ajustes (validado en el modelo y en la base de datos), para la bitácora de `mvp.md` §6.
@@ -439,13 +313,13 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **Riesgos y pendientes:**
 - **Riesgo – stock negativo:** no se impide que el stock quede en negativo (p. ej. si el consumo teórico supera lo registrado o faltó capturar una entrada). Se decidió así para no bloquear un lavado; el filtro de stock bajo lo hace visible.
-- **Cambio respecto a lo planeado – precios sin fecha:** se quitó `valid_from` (precios programados a futuro). Ahora el último precio agregado es el activo y los anteriores quedan inactivos como historial, con su fecha `created_at` (`ServicePrice.save`, migración `sales/0003`). Los precios no se editan ni se borran (el modelo solo permite desactivarlos; `update()` y `bulk_update` se lo saltan); un error de captura se corrige agregando otro precio, así que queda en el historial.
+- **Riesgo – precios editados por código:** `update()` y `bulk_update` se saltan la regla de que los precios no se editan.
 - **Riesgo – borrar un servicio:** borra también sus precios (con su historial) y su consumo por carga (`CASCADE`). Desde la Etapa 7 las ventas protegerán a los servicios ya vendidos; para retirar uno sin perder nada se usa `is_active`.
 - **Riesgo – sucursal del precio:** cada precio pide su sucursal a mano. Con una sola sucursal no importa; con varias, un precio con la sucursal equivocada no se encontraría al cobrar.
 - **Pendiente – precio a cobrar:** al cobrar (Etapa 7) se busca el precio activo por servicio, modalidad, programa y sucursal; si no hay uno por programa, se usa el general.
 - **Pendiente – enlaces del movimiento:** `StockMovement` todavía no tiene `sale` ni `machine_cycle`; se agregan cuando existan esos modelos (Etapas 7 y 9).
-- **Pendiente – traducciones:** los textos nuevos (modelos, campos, menú, permisos) están en inglés con `gettext_lazy`; falta su traducción en `backend/locale/es_MX/`.
-- **Pendiente – nombre del permiso en la base local:** `sales.manage_catalog` cambió de nombre antes del commit. En una base que ya lo tenía (la de desarrollo) sigue el nombre anterior hasta recrearla (`make reset`); en una base nueva sale bien.
+
+**✅ Etapa 4 terminada cuando:** el catálogo y el inventario se administran desde el admin.
 
 ---
 
@@ -462,19 +336,17 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Para qué:** registrar y encontrar clientes mientras no existe la caja.
 - **Listo cuando:** buscar los últimos dígitos del teléfono encuentra al cliente; un usuario sin el permiso recibe 403 (pruebas).
 
-**✅ Etapa 5 terminada cuando:** se pueden registrar y buscar clientes desde el admin.
-
 **Notas de la implementación:**
 - App `customers` con `Customer` (sucursal, nombre, teléfono, correo, dirección, notas, fecha). Teléfono único por sucursal con una restricción en la base de datos.
-- **Teléfono normalizado:** se guarda solo con dígitos (`Customer.save`), así "55 1234-5678" y "5512345678" cuentan como el mismo y no se duplican.
-- **Permiso:** `customers.manage_customers`; la migración `customers/0002` se lo da a Admin y a Empleado (mvp §4). La pantalla del admin revisa este permiso, no los automáticos de Django.
+- **Teléfono solo con dígitos**, de cualquier longitud: el modelo rechaza espacios, guiones y letras, y la base de datos lo exige con una restricción. Así "55 1234-5678" no esquiva el teléfono único.
+- **Permiso:** `customers.manage_customers`; la migración `customers/0002` se lo da a Admin y a Empleado (mvp §4).
 - Nueva área *Operación* en el menú lateral, primera según `mvp.md` §2.
 
 **Riesgos y pendientes:**
-- **Riesgo – formato del teléfono:** no se valida la longitud (p. ej. 10 dígitos en México) ni la lada; se supuso así para no rechazar números válidos. Falta confirmar con el negocio.
 - **Riesgo – borrar un cliente:** hoy se puede borrar; desde la Etapa 7 las ventas lo protegerán (`PROTECT`).
 - **Pendiente – uso por empleados:** el rol Empleado tiene `manage_customers`, pero un empleado normal no entra al admin (`is_staff`); registrará clientes desde la caja (API en 7.2, pantalla en la Etapa 12).
-- **Pendiente – traducciones:** los textos nuevos están en inglés con `gettext_lazy`.
+
+**✅ Etapa 5 terminada cuando:** se pueden registrar y buscar clientes desde el admin.
 
 ---
 
