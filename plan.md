@@ -271,7 +271,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 4 – Catálogo e inventario
 
-**Objetivo:** dar de alta qué se vende, a qué precio, y qué insumos se gastan. Se crean las apps `sales` (servicios y precios) e `inventory` (productos, consumo y movimientos). Esta etapa es **solo modelos, reglas y admin**: la API del catálogo se hace en la Etapa 7 (7.1) y la de stock bajo en la Etapa 11 (11.3).
+**Objetivo:** dar de alta qué se vende, a qué precio, y qué insumos se gastan. Se crean las apps `sales` (servicios y precios) e `inventory` (productos, consumo y movimientos). Esta etapa es **solo modelos, reglas y admin**: la API del catálogo se hace en la Etapa 7 (7.3) y la de stock bajo en la Etapa 11 (11.3).
 
 ### 4.1 Servicios y precios
 - [x] **Qué se hace:** crear los modelos `Service` y `ServicePrice` (precio por modalidad: autoservicio / encargo; campo `program` opcional para el futuro).
@@ -327,7 +327,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 5 – Clientes
 
-**Objetivo:** registrar y buscar clientes desde el admin. Se crea la app `customers`. Esta etapa es **solo modelo y admin**: la clase de permiso de la API se hace en la Etapa 6 (6.2) y la API de clientes en la Etapa 7 (7.2).
+**Objetivo:** registrar y buscar clientes desde el admin. Se crea la app `customers`. Esta etapa es **solo modelo y admin**: la clase de permiso de la API y la API de clientes se hacen en la Etapa 7 (7.1 y 7.4).
 
 ### 5.1 Modelo `Customer`
 - [x] **Qué se hace:** crear `Customer` con nombre y teléfono obligatorios (teléfono único por sucursal); dirección, correo y notas opcionales.
@@ -346,7 +346,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **Riesgos y pendientes:**
 - **Riesgo – borrar un cliente:** hoy se puede borrar; desde la Etapa 7 las ventas lo protegerán (`PROTECT`).
-- **Pendiente – uso por empleados:** el rol Empleado tiene `manage_customers`, pero un empleado normal no entra al admin (`is_staff`); registrará clientes desde la caja (API en 7.2, pantalla en la Etapa 12).
+- **Pendiente – uso por empleados:** el rol Empleado tiene `manage_customers`, pero un empleado normal no entra al admin (`is_staff`); registrará clientes desde la caja (API en 7.4, pantalla en la Etapa 12).
 
 **✅ Etapa 5 terminada cuando:** se pueden registrar y buscar clientes desde el admin.
 
@@ -354,73 +354,78 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 6 – Caja (turnos)
 
-**Objetivo:** que cada empleado abra y cierre su caja, y que el efectivo cuadre.
+**Objetivo:** las reglas del turno de caja: abrir con un fondo, una caja abierta por empleado y el corte con su diferencia. Esta etapa es **solo modelo, servicios, admin y pruebas**: la API de caja se hace en la Etapa 7 (7.2), junto con el cobro.
 
 ### 6.1 Modelo `CashSession`
-- [ ] **Qué se hace:** crear `CashSession` (apertura, fondo inicial, cierre, efectivo esperado, efectivo contado, diferencia, total de tarjeta, número de ventas y cancelaciones).
+- [ ] **Qué se hace:** crear `CashSession` (apertura, fondo inicial, cierre, efectivo esperado, efectivo contado, diferencia, total de tarjeta, número de ventas y cancelaciones) y los permisos `sales.operate_cash_session` y `sales.view_all_cash_sessions`, con su migración para los roles.
 - **Listo cuando:** el modelo está migrado y visible (solo lectura) en el admin.
 
-### 6.2 Clase de permiso para la API
-- [ ] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("sales.operate_cash_session")`, que se pone en cada endpoint. Es la primera etapa con endpoints protegidos por permiso (se movió aquí desde la Etapa 5).
-- **Para qué:** que la validación ocurra siempre en el servidor, no solo escondiendo botones.
-- **Listo cuando:** una prueba muestra que un usuario sin el permiso recibe error 403 al abrir caja.
-
-### 6.3 Abrir caja
-- [ ] **Qué se hace:** endpoint para abrir caja con el fondo inicial. Un empleado no puede tener dos cajas abiertas.
+### 6.2 Abrir caja
+- [ ] **Qué se hace:** servicio para abrir caja con el fondo inicial. Un empleado no puede tener dos cajas abiertas.
 - **Para qué:** cada venta queda ligada al turno de quien la cobró.
-- **Listo cuando:** sin caja abierta, la API no deja cobrar (prueba).
+- **Listo cuando:** abrir una segunda caja con la primera abierta da error (prueba).
 
-### 6.4 Cerrar caja (corte)
-- [ ] **Qué se hace:** el empleado captura el efectivo contado y el sistema calcula: efectivo esperado = fondo + pagos en efectivo del turno − cancelaciones; diferencia = contado − esperado; total de tarjeta para cuadrar contra Mercado Pago Point.
+### 6.3 Cerrar caja (corte)
+- [ ] **Qué se hace:** servicio de cierre: el empleado captura el efectivo contado y el sistema calcula: efectivo esperado = fondo + pagos en efectivo del turno − cancelaciones; diferencia = contado − esperado; total de tarjeta para cuadrar contra Mercado Pago Point.
 - **Para qué:** detectar faltantes o sobrantes por turno.
-- **Listo cuando:** una prueba con ventas en efectivo, tarjeta y una cancelación da el esperado correcto.
+- **Listo cuando:** una prueba de un turno sin ventas da esperado = fondo y la diferencia correcta. La prueba con ventas en efectivo, tarjeta y una cancelación se hace en la Etapa 7 (7.6 y 7.9).
 
-### 6.5 Consulta de cortes
-- [ ] **Qué se hace:** el empleado ve solo su corte actual; quien tenga `sales.view_all_cash_sessions` ve todos los cortes en el admin.
-- **Listo cuando:** un empleado no puede ver cortes de otros (prueba 403).
+### 6.4 Cortes en el admin
+- [ ] **Qué se hace:** consulta de cortes en Unfold, en el área *Operación*, de solo lectura, visible con `sales.view_all_cash_sessions`.
+- **Listo cuando:** un usuario sin el permiso recibe 403 en la pantalla de cortes (prueba).
 
-**✅ Etapa 6 terminada cuando:** se abre caja, se cobra (en la siguiente etapa) y el corte cuadra.
+**✅ Etapa 6 terminada cuando:** las reglas de abrir y cerrar caja y el cálculo del corte pasan sus pruebas.
 
 ---
 
 ## Etapa 7 – Ventas, pagos y descuentos
 
-**Objetivo:** las reglas de cobro (ventas, pagos, descuentos y cancelaciones) en el backend, con su API y su consulta en el admin.
+**Objetivo:** las reglas de cobro (ventas, pagos, descuentos y cancelaciones) en el backend, con su API y su consulta en el admin, y la API de caja y de los datos que usa la caja.
 
-### 7.1 API del catálogo
+### 7.1 Clase de permiso para la API
+- [ ] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("sales.operate_cash_session")`, que se pone en cada endpoint. Es la primera etapa con endpoints protegidos por permiso (se movió aquí desde la Etapa 6).
+- **Para qué:** que la validación ocurra siempre en el servidor, no solo escondiendo botones.
+- **Listo cuando:** una prueba muestra que un usuario sin el permiso recibe error 403.
+
+### 7.2 API de caja
+- [ ] **Qué se hace:** `/api/cash-sessions/` para abrir y cerrar caja, ver el corte actual y el historial, usando los servicios de la Etapa 6 y protegida con `sales.operate_cash_session`. El empleado ve solo sus cortes; con `sales.view_all_cash_sessions` se ven todos (movida aquí desde la Etapa 6).
+- **Para qué:** que el empleado abra y cierre su turno desde la caja.
+- **Listo cuando:** sin el permiso responde 403, y un empleado no puede ver cortes de otros (pruebas).
+
+### 7.3 API del catálogo
 - [ ] **Qué se hace:** `/api/services/` (servicios activos con su precio por modalidad) y `/api/products/` (productos a la venta), de solo lectura para la caja. El catálogo se sigue editando en el admin (Etapa 4).
 - **Para qué:** que la caja sepa qué puede cobrar y a qué precio.
 - **Listo cuando:** al cambiar un precio en el admin, la API devuelve el nuevo.
 
-### 7.2 API de clientes
+### 7.4 API de clientes
 - [ ] **Qué se hace:** `/api/customers/` con alta, edición y **búsqueda por teléfono o nombre**, protegida con `customers.manage_customers` (movida aquí desde la Etapa 5).
 - **Para qué:** en caja se busca al cliente por teléfono mientras se le atiende; los encargos lo necesitan.
 - **Listo cuando:** buscar los últimos dígitos del teléfono encuentra al cliente; sin el permiso responde 403.
 
-### 7.3 Modelos de venta
-- [ ] **Qué se hace:** crear `Sale` (modalidad, estado, subtotal, descuento, total, saldo, turno) y `SaleItem` (servicio o producto, cantidad, precio unitario copiado del catálogo).
+### 7.5 Modelos de venta
+- [ ] **Qué se hace:** crear `Sale` (modalidad, estado, subtotal, descuento, total, saldo, turno) y `SaleItem` (servicio o producto, cantidad, precio unitario copiado del catálogo). No se puede cobrar sin caja abierta.
 - **Para qué:** que el precio cobrado no cambie aunque después se modifique el catálogo.
-- **Listo cuando:** crear una venta de 3 cargas de lavado en autoservicio calcula el total con el precio de autoservicio.
+- **Listo cuando:** crear una venta de 3 cargas de lavado en autoservicio calcula el total con el precio de autoservicio, y sin caja abierta la venta se rechaza (pruebas).
 
-### 7.4 Pagos
+### 7.6 Pagos
 - [ ] **Qué se hace:** crear `Payment` (efectivo, tarjeta de crédito, tarjeta de débito; monto; referencia del voucher). Una venta puede tener varios pagos; el saldo y el estado se recalculan solos (`pending`, `partially_paid`, `paid`).
 - **Para qué:** permitir anticipos en encargos y pagos mixtos.
-- **Listo cuando:** dos pagos parciales dejan la venta en `paid` con saldo 0.
+- **Listo cuando:** dos pagos parciales dejan la venta en `paid` con saldo 0, y el corte del turno suma bien los pagos en efectivo y con tarjeta (pruebas).
 
-### 7.5 Regla de autoservicio
+### 7.7 Regla de autoservicio
 - [ ] **Qué se hace:** en autoservicio la venta debe quedar pagada completa antes de poder activar máquinas.
 - **Listo cuando:** una prueba confirma que no se puede activar una máquina con saldo pendiente en autoservicio.
 
-### 7.6 Descuentos
+### 7.8 Descuentos
 - [ ] **Qué se hace:** crear `Discount` (porcentaje o monto fijo, vigencia, modalidad, servicios) y `AppliedDiscount`. La API solo ofrece al empleado los descuentos vigentes que aplican a esa venta; crearlos requiere `sales.manage_discounts`.
 - **Para qué:** que el empleado solo use descuentos autorizados.
 - **Listo cuando:** un descuento vencido o de otra modalidad no aparece ni se puede aplicar.
 
-### 7.7 Cancelaciones
+### 7.9 Cancelaciones
 - [ ] **Qué se hace:** cancelar una venta con motivo obligatorio; queda quién, cuándo y por qué. Los pagos en efectivo cancelados se descuentan del corte.
 - **Listo cuando:** cancelar sin motivo da error, y el corte refleja la cancelación.
 
-**✅ Etapa 7 terminada cuando:** la API permite cobrar ventas en efectivo y tarjeta, con y sin descuento, y cancelarlas, con pruebas de cada regla.
+**✅ Etapa 7 terminada cuando:** la API permite abrir y cerrar caja, cobrar ventas en efectivo y tarjeta, con y sin descuento, y cancelarlas, con pruebas de cada regla.
 
 ---
 

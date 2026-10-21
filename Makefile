@@ -42,3 +42,6 @@ migrate: ## Apply migrations in the api container (optional: app=sales)
 
 seed: ## Load fictitious demo data (users, catalog and stock); safe to run again
 	$(COMPOSE) exec api python manage.py seed_demo
+
+test: ## Run the backend tests (optional: args="core/tests -k phone")
+	$(COMPOSE) exec api pytest $(args)
