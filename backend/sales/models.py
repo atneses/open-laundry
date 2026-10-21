@@ -10,27 +10,27 @@ from core.validators import validate_name
 class Mode(models.TextChoices):
     """How a service is sold: the customer does it or the laundry does it."""
 
-    SELF_SERVICE = "self_service", _("self-service")
-    DROP_OFF = "drop_off", _("drop-off")
+    SELF_SERVICE = "self_service", _("Self-service")
+    DROP_OFF = "drop_off", _("Drop-off")
 
 
 class Service(models.Model):
     """Something the laundry sells, such as "Wash per load" or "Sneaker wash"."""
 
     class Kind(models.TextChoices):
-        WASH = "wash", _("wash")
-        DRY = "dry", _("dry")
-        OTHER = "other", _("other")
+        WASH = "wash", _("Wash")
+        DRY = "dry", _("Dry")
+        OTHER = "other", _("Other")
 
     class Unit(models.TextChoices):
-        LOAD = "load", _("load")
-        PIECE = "piece", _("piece")
-        PAIR = "pair", _("pair")
+        LOAD = "load", _("Load")
+        PIECE = "piece", _("Piece")
+        PAIR = "pair", _("Pair")
 
     class MachineKind(models.TextChoices):
-        WASHER = "washer", _("washer")
-        DRYER = "dryer", _("dryer")
-        NONE = "none", _("none")
+        WASHER = "washer", _("Washer")
+        DRYER = "dryer", _("Dryer")
+        NONE = "none", _("None")
 
     name = models.CharField(_("name"), max_length=120, validators=[validate_name])
     kind = models.CharField(_("kind"), max_length=10, choices=Kind.choices)

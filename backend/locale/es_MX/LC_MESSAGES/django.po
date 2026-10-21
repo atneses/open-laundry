@@ -1,494 +1,468 @@
-# Spanish translation of django-unfold strings (the package ships none).
+# Spanish (Mexico) translation of the project strings. Kept with makemessages;
+# Unfold's strings live in locale_unfold/.
 msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Language: es_MX\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-msgid "Select record"
-msgstr "Seleccionar registro"
-
-msgid "Select action"
-msgstr "Seleccionar acción"
-
-msgid "Save"
-msgstr "Guardar"
-
-msgid "Collapse"
-msgstr "Contraer"
-
-msgid "Name"
-msgstr "Nombre"
-
-msgid "Value"
-msgstr "Valor"
-
-msgid "Default"
-msgstr "Predeterminado"
-
-msgid "Code"
-msgstr "Código"
-
-msgid "Current file"
-msgstr "Archivo actual"
-
-msgid "Reset to default"
-msgstr "Restablecer valor predeterminado"
-
-msgid "All"
-msgstr "Todos"
-
-#, python-format
-msgid " By %(filter_title)s "
-msgstr " Por %(filter_title)s "
-
-msgid "Yes"
-msgstr "Sí"
-
-msgid "No"
-msgstr "No"
-
-msgid "From"
-msgstr "Desde"
-
-msgid "To"
-msgstr "Hasta"
-
-msgid "Date from"
-msgstr "Fecha desde"
-
-msgid "Time"
-msgstr "Hora"
-
-msgid "Date to"
-msgstr "Fecha hasta"
-
-msgid "Not enough data."
-msgstr "No hay suficientes datos."
-
-msgid "Add new item"
-msgstr "Agregar elemento"
-
-msgid "Edit"
-msgstr "Editar"
-
-msgid "Export"
-msgstr "Exportar"
-
-msgid "Import"
-msgstr "Importar"
-
-msgid "Submit"
-msgstr "Enviar"
-
-msgid "Delete"
-msgstr "Eliminar"
-
-msgid "Update"
-msgstr "Actualizar"
-
-msgid "New"
-msgstr "Nuevo"
-
-msgid "Date/time"
-msgstr "Fecha y hora"
-
-msgid "Action"
-msgstr "Acción"
-
-msgid "Comment"
-msgstr "Comentario"
-
-msgid "previous"
-msgstr "anterior"
-
-msgid "next"
-msgstr "siguiente"
-
-msgid "Changed by"
-msgstr "Modificado por"
-
-msgid "Changes"
-msgstr "Cambios"
-
-msgid "Field"
-msgstr "Campo"
-
-msgid "Old value"
-msgstr "Valor anterior"
-
-msgid "New value"
-msgstr "Valor nuevo"
-
-msgid "Revert"
-msgstr "Revertir"
-
-msgid "Change History"
-msgstr "Historial de cambios"
-
-msgid "Close"
-msgstr "Cerrar"
-
-msgid "Select action to run"
-msgstr "Selecciona una acción para ejecutar"
-
-msgid "Items must be selected in order to perform actions on them. No items have been changed."
-msgstr "Debes seleccionar elementos para aplicarles una acción. No se modificó ningún elemento."
-
-msgid "Select value"
-msgstr "Seleccionar valor"
-
-msgid "Run the selected action"
-msgstr "Ejecutar la acción seleccionada"
-
-msgid "Run"
-msgstr "Ejecutar"
-
-msgid "Click here to select the objects across all pages"
-msgstr "Haz clic aquí para seleccionar los objetos de todas las páginas"
-
-#, python-format
-msgid "Select all %(total_count)s %(module_name)s"
-msgstr "Seleccionar los %(total_count)s %(module_name)s"
-
-msgid "Clear selection"
-msgstr "Limpiar selección"
-
-msgid "Django site admin"
+#: config/settings/base.py:131
+msgid "Administration"
 msgstr "Administración"
 
-#, python-format
-msgid "Models in the %(name)s application"
-msgstr "Modelos de la aplicación %(name)s"
-
-msgid "You don’t have permission to view or edit anything."
-msgstr "No tienes permiso para ver ni editar nada."
-
-msgid "After you've created a user, you’ll be able to edit more user options."
-msgstr "Después de crear el usuario podrás editar más opciones."
-
-#, python-format
-msgid "Enter a new password for the user <strong>%(username)s</strong>."
-msgstr "Escribe una contraseña nueva para el usuario <strong>%(username)s</strong>."
-
-msgid "Change password"
-msgstr "Cambiar contraseña"
-
-msgid "History"
-msgstr "Historial"
-
-msgid "View on site"
-msgstr "Ver en el sitio"
-
-msgid "Objects"
-msgstr "Objetos"
-
-msgid "Summary"
-msgstr "Resumen"
-
-msgid "Welcome back to"
-msgstr "Bienvenido de nuevo a"
-
-#, python-format
-msgid "You are authenticated as %(username)s, but are not authorized to access this page. Would you like to login to a different account?"
-msgstr "Iniciaste sesión como %(username)s, pero no tienes acceso a esta página. ¿Quieres entrar con otra cuenta?"
-
-msgid "Log in"
-msgstr "Iniciar sesión"
-
-msgid "Forgotten your password or username?"
-msgstr "¿Olvidaste tu contraseña o tu usuario?"
-
-msgid "Show all"
-msgstr "Mostrar todo"
-
-msgid "Type to search"
-msgstr "Escribe para buscar"
-
-msgid "Save and continue editing"
-msgstr "Guardar y seguir editando"
-
-msgid "Save and view"
-msgstr "Guardar y ver"
-
-msgid "Save and add another"
-msgstr "Guardar y agregar otro"
-
-msgid "Save as new"
-msgstr "Guardar como nuevo"
-
-msgid "You have been successfully logged out from the administration"
-msgstr "Cerraste sesión correctamente"
-
-msgid "Thanks for spending some quality time with the web site today."
-msgstr "Gracias por usar el sistema."
-
-msgid "Log in again"
-msgstr "Iniciar sesión de nuevo"
-
-msgid "Your password was changed."
-msgstr "Tu contraseña se cambió."
-
-msgid "Please enter your old password, for security’s sake, and then enter your new password twice so we can verify you typed it in correctly."
-msgstr "Por seguridad, escribe tu contraseña actual y después la nueva dos veces para verificar que esté bien escrita."
-
-msgid "No data"
-msgstr "Sin datos"
-
-msgid "View site"
-msgstr "Ver sitio"
-
-msgid "Log out"
-msgstr "Cerrar sesión"
-
-#, python-format
-msgid "Add %(name)s"
-msgstr "Agregar %(name)s"
-
-msgid "All applications"
-msgstr "Todas las aplicaciones"
-
-msgid "View"
-msgstr "Ver"
-
-msgid "Change"
-msgstr "Modificar"
-
-msgid "Add"
-msgstr "Agregar"
-
-msgid "Unknown"
-msgstr "Desconocido"
-
-msgid "True"
-msgstr "Sí"
-
-msgid "False"
-msgstr "No"
-
-msgid "Apply Filters"
-msgstr "Aplicar filtros"
-
-msgid "Hide counts"
-msgstr "Ocultar conteos"
-
-msgid "Show counts"
-msgstr "Mostrar conteos"
-
-msgid "Clear all filters"
-msgstr "Quitar todos los filtros"
-
-msgid "Filters"
-msgstr "Filtros"
-
-msgid "Toggle sorting"
-msgstr "Cambiar orden"
-
-msgid "Remove from sorting"
-msgstr "Quitar del orden"
-
-#, python-format
-msgid "Sorting priority: %(priority_number)s"
-msgstr "Prioridad de orden: %(priority_number)s"
-
-msgid "Navigate"
-msgstr "Navegar"
-
-msgid "Select"
-msgstr "Seleccionar"
-
-msgid "Clear"
-msgstr "Limpiar"
-
-msgid "Recent searches"
-msgstr "Búsquedas recientes"
-
-msgid "Nothing matched your search"
-msgstr "No hay resultados para tu búsqueda"
-
-msgid "No, take me back"
-msgstr "No, regresar"
-
-msgid "Yes, I’m sure"
-msgstr "Sí, estoy seguro"
-
-msgid "Cancel"
-msgstr "Cancelar"
-
-msgid "Record picture"
-msgstr "Imagen del registro"
-
-msgid "This item will be deleted."
-msgstr "Este elemento se eliminará."
-
-msgid "Click to cancel"
-msgstr "Haz clic para cancelar"
-
-msgid "No results found"
-msgstr "No se encontraron resultados"
-
-msgid "This page yielded into no results."
-msgstr "Esta página no tiene resultados."
-
-msgid "Reset filters"
-msgstr "Restablecer filtros"
-
-msgid "Image preview"
-msgstr "Vista previa de la imagen"
-
-msgid "Click to download"
-msgstr "Haz clic para descargar"
-
-msgid "Go back"
-msgstr "Regresar"
-
-msgid "Recent actions"
-msgstr "Acciones recientes"
-
-msgid "Unknown content"
-msgstr "Contenido desconocido"
-
-msgid "Previous"
-msgstr "Anterior"
-
-msgid "Next"
-msgstr "Siguiente"
-
-msgid "Search apps and models..."
-msgstr "Buscar aplicaciones y modelos..."
-
-msgid "Available shortcuts"
-msgstr "Atajos disponibles"
-
-msgid "Global shortcuts"
-msgstr "Atajos generales"
-
-msgid "Open command tool"
-msgstr "Abrir buscador de comandos"
-
-msgid "Open shortcuts list"
-msgstr "Abrir lista de atajos"
-
-msgid "Toggle sidebar"
-msgstr "Mostrar u ocultar menú lateral"
-
-msgid "Toggle dark/light mode"
-msgstr "Cambiar modo claro/oscuro"
-
-msgid "Changelist shortcuts"
-msgstr "Atajos de listados"
-
-msgid "Toggle filter"
-msgstr "Mostrar u ocultar filtros"
-
-msgid "Create new record"
-msgstr "Crear registro"
-
-msgid "Command tool shortcuts"
-msgstr "Atajos del buscador de comandos"
-
-msgid "Open selection"
-msgstr "Abrir selección"
-
-msgid "Open selection in new tab"
-msgstr "Abrir selección en una pestaña nueva"
-
-msgid "Django administration"
-msgstr "Administración"
-
-msgid "Home"
-msgstr "Inicio"
-
-msgid "General"
-msgstr "General"
-
-msgid "Light"
-msgstr "Claro"
-
-msgid "Dark"
-msgstr "Oscuro"
-
-msgid "System"
-msgstr "Sistema"
-
-msgid "Return to site"
-msgstr "Volver al sitio"
-
-#, python-format
-msgid "%(full_result_count)s total"
-msgstr "%(full_result_count)s en total"
-
-msgid "Choose file to upload"
-msgstr "Elegir archivo"
-
-msgid "Toggle password visibility"
-msgstr "Mostrar u ocultar contraseña"
-
-#, python-format
-msgid "Change selected %(model)s"
-msgstr "Modificar %(model)s seleccionado"
-
-#, python-format
-msgid "Add another %(model)s"
-msgstr "Agregar otro %(model)s"
-
-#, python-format
-msgid "View selected %(model)s"
-msgstr "Ver %(model)s seleccionado"
-
-#, python-format
-msgid "Delete selected %(model)s"
-msgstr "Eliminar %(model)s seleccionado"
-
-msgid "Add row"
-msgstr "Agregar fila"
-
-msgid "Welcome"
-msgstr "Bienvenido"
-
-msgid "Select all objects on this page for an action"
-msgstr "Seleccionar todos los objetos de esta página"
-
-msgid "Date"
-msgstr "Fecha"
-
-msgid "Select currency"
-msgstr "Seleccionar moneda"
-
-msgid "Group"
-msgstr "Grupo"
-
+#: config/settings/base.py:167
+msgid "Operation"
+msgstr "Operación"
+
+#: config/settings/base.py:171 customers/apps.py:8
+msgid "Customers"
+msgstr "Clientes"
+
+#: config/settings/base.py:181
+msgid "Catalog"
+msgstr "Catálogo"
+
+#: config/settings/base.py:185
+msgid "Services and prices"
+msgstr "Servicios y precios"
+
+#: config/settings/base.py:195 inventory/apps.py:8
+msgid "Inventory"
+msgstr "Inventario"
+
+#: config/settings/base.py:199
+msgid "Products"
+msgstr "Productos"
+
+#: config/settings/base.py:205
+msgid "Stock movements"
+msgstr "Movimientos de inventario"
+
+#: config/settings/base.py:211
+msgid "Consumption per load"
+msgstr "Consumo por carga"
+
+#: config/settings/base.py:221
+msgid "Users and permissions"
+msgstr "Usuarios y permisos"
+
+#: config/settings/base.py:225
+msgid "Users"
+msgstr "Usuarios"
+
+#: config/settings/base.py:231
+msgid "Roles"
+msgstr "Roles"
+
+#: config/settings/base.py:237
+msgid "Branches"
+msgstr "Sucursales"
+
+#: config/settings/base.py:245
+msgid "Logs"
+msgstr "Bitácoras"
+
+#: config/settings/base.py:249
 msgid "Permissions"
 msgstr "Permisos"
 
-msgid "User"
-msgstr "Usuario"
+#: core/admin.py:51
+msgid "Personal info"
+msgstr "Información personal"
 
-msgid "Object"
-msgstr "Objeto"
+#: core/admin.py:53
+msgid "Role and permissions"
+msgstr "Rol y permisos"
 
-msgid "Object permissions"
-msgstr "Permisos del objeto"
+#: core/admin.py:56
+msgid "Important dates"
+msgstr "Fechas importantes"
 
-msgid "Group permissions"
-msgstr "Permisos del grupo"
+#: core/admin.py:60
+msgid "role"
+msgstr "rol"
 
-msgid "User permissions"
-msgstr "Permisos del usuario"
+#: core/apps.py:8
+msgid "General settings"
+msgstr "Configuración general"
 
-msgid "Manage group"
-msgstr "Administrar grupo"
+#: core/models.py:11 customers/models.py:16 inventory/models.py:24
+#: sales/models.py:35
+msgid "name"
+msgstr "nombre"
 
-msgid "Manage user"
-msgstr "Administrar usuario"
+#: core/models.py:12 customers/models.py:21
+msgid "address"
+msgstr "dirección"
 
-#, python-format
-msgid "%(counter)s result"
-msgid_plural "%(counter)s results"
-msgstr[0] "%(counter)s resultado"
-msgstr[1] "%(counter)s resultados"
+#: core/models.py:13 customers/models.py:18
+msgid "phone"
+msgstr "teléfono"
 
-msgid "Please correct the error below."
-msgid_plural "Please correct the errors below."
-msgstr[0] "Corrige el error de abajo."
-msgstr[1] "Corrige los errores de abajo."
+#: core/models.py:16 core/models.py:32 customers/models.py:14
+#: inventory/models.py:56 sales/models.py:93
+msgid "branch"
+msgstr "sucursal"
+
+#: core/models.py:17
+msgid "branches"
+msgstr "sucursales"
+
+#: core/models.py:40
+msgid "first name"
+msgstr "nombre"
+
+#: core/models.py:43
+msgid "last name"
+msgstr "apellidos"
+
+#: core/models.py:47 core/models.py:63 inventory/models.py:172
+msgid "user"
+msgstr "usuario"
+
+#: core/models.py:48
+msgid "users"
+msgstr "usuarios"
+
+#: core/models.py:50
+msgid "Can manage users, roles and permissions"
+msgstr "Puede gestionar usuarios, roles y permisos"
+
+#: core/models.py:58
+msgid "Granted"
+msgstr "Otorgado"
+
+#: core/models.py:59
+msgid "Revoked"
+msgstr "Revocado"
+
+#: core/models.py:69
+msgid "permission"
+msgstr "permiso"
+
+#: core/models.py:73
+msgid "action"
+msgstr "acción"
+
+#: core/models.py:76
+msgid "performed by"
+msgstr "realizado por"
+
+#: core/models.py:81 customers/models.py:23 inventory/models.py:176
+#: sales/models.py:98
+msgid "date"
+msgstr "fecha"
+
+#: core/models.py:84
+msgid "permission log entry"
+msgstr "registro de permisos"
+
+#: core/models.py:85
+msgid "permission log"
+msgstr "bitácora de permisos"
+
+#: core/validators.py:6
+msgid "Use only letters, numbers, spaces, periods, hyphens and apostrophes."
+msgstr "Usa solo letras, números, espacios, puntos, guiones y apóstrofos."
+
+#: core/validators.py:10
+msgid "Use only letters, spaces, periods, hyphens and apostrophes."
+msgstr "Usa solo letras, espacios, puntos, guiones y apóstrofos."
+
+#: core/validators.py:13
+msgid "Use only letters, numbers and hyphens, without spaces."
+msgstr "Usa solo letras, números y guiones, sin espacios."
+
+#: core/validators.py:15
+msgid "Use only digits, without spaces or dashes."
+msgstr "Usa solo dígitos, sin espacios ni guiones."
+
+#: customers/models.py:18
+msgid "Digits only."
+msgstr "Solo dígitos."
+
+#: customers/models.py:20
+msgid "email"
+msgstr "correo electrónico"
+
+#: customers/models.py:22
+msgid "notes"
+msgstr "notas"
+
+#: customers/models.py:26
+msgid "customer"
+msgstr "cliente"
+
+#: customers/models.py:27
+msgid "customers"
+msgstr "clientes"
+
+#: customers/models.py:30
+msgid "Can register customers and manage drop-off orders"
+msgstr "Puede registrar clientes y gestionar encargos"
+
+#: inventory/admin.py:27 inventory/models.py:34
+msgid "stock"
+msgstr "stock"
+
+#: inventory/admin.py:31
+msgid "Below minimum"
+msgstr "Debajo del mínimo"
+
+#: inventory/models.py:17
+msgid "Bag"
+msgstr "Bolsa"
+
+#: inventory/models.py:18
+msgid "Gram"
+msgstr "Gramo"
+
+#: inventory/models.py:19
+msgid "Liter"
+msgstr "Litro"
+
+#: inventory/models.py:20
+msgid "Milliliter"
+msgstr "Mililitro"
+
+#: inventory/models.py:21 sales/models.py:27
+msgid "Piece"
+msgstr "Pieza"
+
+#: inventory/models.py:22
+msgid "Unit"
+msgstr "Unidad"
+
+#: inventory/models.py:25
+msgid "SKU"
+msgstr "SKU"
+
+#: inventory/models.py:26 sales/models.py:37
+msgid "unit"
+msgstr "unidad"
+
+#: inventory/models.py:28
+msgid "cost per unit"
+msgstr "costo por unidad"
+
+#: inventory/models.py:36
+msgid "minimum stock"
+msgstr "stock mínimo"
+
+#: inventory/models.py:43
+msgid "for sale"
+msgstr "a la venta"
+
+#: inventory/models.py:45
+msgid "Leave unchecked for supplies used in the loads (detergent, softener)."
+msgstr "Déjalo sin marcar para los insumos que se usan en las cargas (detergente, suavizante)."
+
+#: inventory/models.py:48
+msgid "sale price"
+msgstr "precio de venta"
+
+#: inventory/models.py:60 inventory/models.py:102 inventory/models.py:144
+msgid "product"
+msgstr "producto"
+
+#: inventory/models.py:61
+msgid "products"
+msgstr "productos"
+
+#: inventory/models.py:80
+msgid "The unit cannot change once the product has stock movements."
+msgstr "La unidad no puede cambiar una vez que el producto tiene movimientos de inventario."
+
+#: inventory/models.py:86
+msgid "A product for sale needs a sale price."
+msgstr "Un producto a la venta necesita precio de venta."
+
+#: inventory/models.py:97 sales/models.py:49 sales/models.py:79
+msgid "service"
+msgstr "servicio"
+
+#: inventory/models.py:105
+msgid "quantity per load"
+msgstr "cantidad por carga"
+
+#: inventory/models.py:108
+msgid "In the product's unit, for example 150 ml."
+msgstr "En la unidad del producto, por ejemplo 150 ml."
+
+#: inventory/models.py:113 inventory/models.py:114
+msgid "consumption per load"
+msgstr "consumo por carga"
+
+#: inventory/models.py:128
+msgid "Only wash services consume supplies."
+msgstr "Solo los servicios de lavado consumen insumos."
+
+#: inventory/models.py:138
+msgid "Purchase"
+msgstr "Compra"
+
+#: inventory/models.py:139
+msgid "Consumption"
+msgstr "Consumo"
+
+#: inventory/models.py:140
+msgid "Sale"
+msgstr "Venta"
+
+#: inventory/models.py:141
+msgid "Adjustment"
+msgstr "Ajuste"
+
+#: inventory/models.py:146 sales/models.py:36
+msgid "kind"
+msgstr "tipo"
+
+#: inventory/models.py:148
+msgid "quantity"
+msgstr "cantidad"
+
+#: inventory/models.py:152
+msgid ""
+"In the product's unit. Purchases are positive; an adjustment is negative to "
+"remove stock."
+msgstr "En la unidad del producto. Las compras son positivas; un ajuste es negativo para quitar stock."
+
+#: inventory/models.py:157
+msgid "unit cost"
+msgstr "costo unitario"
+
+#: inventory/models.py:165
+msgid "reason"
+msgstr "motivo"
+
+#: inventory/models.py:168
+msgid "Required for adjustments: why the stock changed (spill, count, error)."
+msgstr "Obligatorio en los ajustes: por qué cambió el stock (derrame, conteo, error)."
+
+#: inventory/models.py:179
+msgid "stock movement"
+msgstr "movimiento de inventario"
+
+#: inventory/models.py:180
+msgid "stock movements"
+msgstr "movimientos de inventario"
+
+#: inventory/models.py:183
+msgid "Can record stock entries"
+msgstr "Puede registrar entradas de inventario"
+
+#: inventory/models.py:184
+msgid "Can adjust stock (losses, corrections)"
+msgstr "Puede ajustar el inventario (mermas, correcciones)"
+
+#: inventory/models.py:207
+msgid "A purchase must add stock (positive)."
+msgstr "Una compra debe sumar stock (positivo)."
+
+#: inventory/models.py:209
+msgid "This kind of movement removes stock."
+msgstr "Este tipo de movimiento resta stock."
+
+#: inventory/models.py:211
+msgid "An adjustment cannot be zero."
+msgstr "Un ajuste no puede ser cero."
+
+#: inventory/models.py:213
+msgid "An adjustment needs a reason."
+msgstr "Un ajuste necesita un motivo."
+
+#: sales/apps.py:8
+msgid "Sales and catalog"
+msgstr "Ventas y catálogo"
+
+#: sales/models.py:13
+msgid "Self-service"
+msgstr "Autoservicio"
+
+#: sales/models.py:14
+msgid "Drop-off"
+msgstr "Encargo"
+
+#: sales/models.py:21
+msgid "Wash"
+msgstr "Lavado"
+
+#: sales/models.py:22
+msgid "Dry"
+msgstr "Secado"
+
+#: sales/models.py:23
+msgid "Other"
+msgstr "Otro"
+
+#: sales/models.py:26
+msgid "Load"
+msgstr "Carga"
+
+#: sales/models.py:28
+msgid "Pair"
+msgstr "Par"
+
+#: sales/models.py:31
+msgid "Washer"
+msgstr "Lavadora"
+
+#: sales/models.py:32
+msgid "Dryer"
+msgstr "Secadora"
+
+#: sales/models.py:33
+msgid "None"
+msgstr "Ninguna"
+
+#: sales/models.py:39
+msgid "machine kind"
+msgstr "tipo de máquina"
+
+#: sales/models.py:42
+msgid "uses a machine"
+msgstr "usa una máquina"
+
+#: sales/models.py:44
+msgid "Each unit sold starts a machine cycle."
+msgstr "Cada unidad vendida inicia un ciclo de máquina."
+
+#: sales/models.py:46 sales/models.py:97
+msgid "active"
+msgstr "activo"
+
+#: sales/models.py:50
+msgid "services"
+msgstr "servicios"
+
+#: sales/models.py:55
+msgid "Can manage services, prices, products and consumption per load"
+msgstr "Puede gestionar servicios, precios, productos y consumo por carga"
+
+#: sales/models.py:81
+msgid "mode"
+msgstr "modalidad"
+
+#: sales/models.py:83
+msgid "program"
+msgstr "programa"
+
+#: sales/models.py:86
+msgid "Leave empty for the general price. Reserved for prices per program."
+msgstr "Déjalo vacío para el precio general. Reservado para precios por programa."
+
+#: sales/models.py:89
+msgid "price"
+msgstr "precio"
+
+#: sales/models.py:101
+msgid "service price"
+msgstr "precio del servicio"
+
+#: sales/models.py:102
+msgid "service prices"
+msgstr "precios de servicios"
+
+#: sales/models.py:145
+msgid "A price cannot be edited; add a new price instead."
+msgstr "Un precio no se puede editar; agrega uno nuevo."

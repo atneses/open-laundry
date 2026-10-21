@@ -81,7 +81,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
   - Para los registros con historial, heredar de `core.admin_base.ReadOnlyModelAdmin`, que no permite agregar, editar ni borrar.
 - **Menú del admin:** cada modelo nuevo se agrega al menú lateral en `UNFOLD["SIDEBAR"]` (`config/settings/base.py`), dentro de su área de `mvp.md` §2 (creando el área si no existe), con un ícono de Material Symbols y `"permission"` que revise el permiso de vista del modelo (p. ej. `request.user.has_perm("core.view_user")`).
 - **Configuración:** valores sensibles o por entorno solo desde variables de entorno (`.env`, que no se sube a git; documentar las nuevas en `.env.example`). Settings en `config/settings/{base,dev,test,prod}.py`.
-- **Idioma de la interfaz:** no volver a agregar `LocaleMiddleware`; el sistema se muestra solo en español. Las traducciones (de los textos propios y de los de Unfold que no traen español) van en `backend/locale/es_MX/LC_MESSAGES/django.po` y se compilan con `compilemessages`.
+- **Idioma de la interfaz:** no volver a agregar `LocaleMiddleware`; el sistema se muestra solo en español. Las traducciones de los textos propios van en `backend/locale/es_MX/LC_MESSAGES/django.po` y se actualizan con `makemessages -l es_MX --ignore=.venv --ignore="*/tests/*"`; las de Unfold (que no trae español) se escriben a mano en `backend/locale_unfold/`, aparte para que `makemessages` no las marque como obsoletas. Ambas se compilan con `compilemessages --ignore=.venv`.
 
 ## Frontend (caja)
 

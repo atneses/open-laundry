@@ -135,10 +135,10 @@ class StockMovement(models.Model):
     """
 
     class Kind(models.TextChoices):
-        PURCHASE = "purchase", _("purchase")
-        CONSUMPTION = "consumption", _("consumption")
-        SALE = "sale", _("sale")
-        ADJUSTMENT = "adjustment", _("adjustment")
+        PURCHASE = "purchase", _("Purchase")
+        CONSUMPTION = "consumption", _("Consumption")
+        SALE = "sale", _("Sale")
+        ADJUSTMENT = "adjustment", _("Adjustment")
 
     product = models.ForeignKey(
         Product, verbose_name=_("product"), on_delete=models.PROTECT, related_name="movements"
