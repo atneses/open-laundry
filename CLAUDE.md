@@ -78,6 +78,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 - **Permisos:**
   - Cada acción se protege con los códigos de permiso de `mvp.md` §4 (p. ej. `sales.charge`, `sales.deliver_with_balance`).
   - **La validación siempre en el backend:** los servicios reciben al usuario y validan el permiso de la acción (así se prueban sin HTTP y protegen también admin y consola), y cada endpoint de DRF lo repite con su clase de permiso (403). El frontend solo oculta botones.
+  - En los servicios, el permiso se declara con `@requires_perm("app.code", message=_("You cannot …"))` de `core.permissions` (el usuario es el primer argumento; varios códigos = se exigen todos). Solo las reglas que no son "tiene estos permisos" (p. ej. "su propio turno o `view_all_cash_sessions`") se escriben dentro de la función. Un registro de otra sucursal da `PermissionDenied`.
   - Quien tiene `core.manage_users` decide todos los permisos: puede darlo a un rol o como permiso extra.
   - Los permisos se definen en el `Meta.permissions` del modelo de su app. Los roles (*Admin*, *Empleado*) se crean con una migración de datos y después el admin los edita; `migrate` nunca deshace esos cambios. Cada etapa que define permisos agrega una migración de datos que llama a `core.roles.grant_permissions` (Admin: todos los de la app; Empleado: los marcados en la tabla de `mvp.md` §4), que solo agrega permisos.
 - **API:**

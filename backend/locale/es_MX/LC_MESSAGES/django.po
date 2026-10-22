@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-22 11:28-0600\n"
+"POT-Creation-Date: 2026-10-22 13:08-0600\n"
 "Language: es_MX\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -198,6 +198,10 @@ msgstr "registro de permisos"
 #: core/models.py:149
 msgid "permission log"
 msgstr "bitácora de permisos"
+
+#: core/permissions.py:21
+msgid "You do not have permission to do this."
+msgstr "No tienes permiso para hacer esto."
 
 #: core/validators.py:6
 msgid "Use only letters, numbers, spaces, periods, hyphens and apostrophes."
@@ -676,8 +680,7 @@ msgstr "cancelada en el turno"
 #: sales/models.py:316
 msgid ""
 "Session that gave the money back; its cash count subtracts the payments."
-msgstr ""
-"Turno que devolvió el dinero; su corte resta los pagos."
+msgstr "Turno que devolvió el dinero; su corte resta los pagos."
 
 #: sales/models.py:318
 msgid "cancellation reason"
@@ -821,33 +824,37 @@ msgstr "descuento aplicado"
 msgid "applied discounts"
 msgstr "descuentos aplicados"
 
-#: sales/services.py:40
+#: sales/services.py:37
 msgid "You cannot open a cash session."
 msgstr "No puedes abrir caja."
 
-#: sales/services.py:43 sales/services.py:210
+#: sales/services.py:42 sales/services.py:201
 msgid "Your user has no branch assigned."
 msgstr "Tu usuario no tiene sucursal asignada."
 
-#: sales/services.py:47
+#: sales/services.py:46
 msgid "This branch already has an open cash session."
 msgstr "Esta sucursal ya tiene una caja abierta."
 
-#: sales/services.py:73
+#: sales/services.py:72
 msgid "You cannot close this cash session."
 msgstr "No puedes cerrar esta caja."
 
-#: sales/services.py:79
+#: sales/services.py:78
 msgid "This cash session is already closed."
 msgstr "Esta caja ya está cerrada."
 
-#: sales/services.py:82
+#: sales/services.py:81
 msgid "Enter the counted cash."
 msgstr "Captura el efectivo contado."
 
-#: sales/services.py:96
+#: sales/services.py:95
 msgid "Explain the difference between the counted and the expected cash."
 msgstr "Explica la diferencia entre el efectivo contado y el esperado."
+
+#: sales/services.py:140 sales/services.py:267
+msgid "You cannot charge sales."
+msgstr "No puedes cobrar ventas."
 
 #: sales/services.py:152
 msgid "A drop-off sale needs a customer."
@@ -861,21 +868,17 @@ msgstr "El cliente pertenece a otra sucursal."
 msgid "Add at least one service or product."
 msgstr "Agrega al menos un servicio o producto."
 
-#: sales/services.py:201
-msgid "You cannot charge sales."
-msgstr "No puedes cobrar ventas."
-
-#: sales/services.py:215
+#: sales/services.py:206
 msgid "Open the cash session first."
 msgstr "Primero abre la caja."
 
-#: sales/services.py:229
-msgid "You cannot cancel sales."
-msgstr "No puedes cancelar ventas."
-
-#: sales/services.py:236 sales/services.py:280 sales/services.py:353
+#: sales/services.py:221
 msgid "The sale belongs to another branch."
 msgstr "La venta es de otra sucursal."
+
+#: sales/services.py:226
+msgid "You cannot cancel sales."
+msgstr "No puedes cancelar ventas."
 
 #: sales/services.py:239
 msgid "This sale is already cancelled."
@@ -885,63 +888,63 @@ msgstr "Esta venta ya está cancelada."
 msgid "Explain why the sale is cancelled."
 msgstr "Explica por qué se cancela la venta."
 
-#: sales/services.py:283
+#: sales/services.py:279
 msgid "A cancelled sale cannot be paid."
 msgstr "No se puede pagar una venta cancelada."
 
-#: sales/services.py:296
+#: sales/services.py:292
 msgid "The amount must be greater than zero."
 msgstr "El monto debe ser mayor que cero."
 
-#: sales/services.py:299
+#: sales/services.py:295
 #, python-format
 msgid "The amount is more than the balance of %(balance)s."
 msgstr "El monto es mayor que el saldo de %(balance)s."
 
-#: sales/services.py:347
+#: sales/services.py:335
 msgid "You cannot apply discounts."
 msgstr "No puedes aplicar descuentos."
 
-#: sales/services.py:356
+#: sales/services.py:346
 msgid "Discounts are applied before the first payment."
 msgstr "Los descuentos se aplican antes del primer pago."
 
-#: sales/services.py:361
+#: sales/services.py:351
 msgid "This discount does not apply to this sale."
 msgstr "Este descuento no aplica a esta venta."
 
-#: sales/services.py:366
+#: sales/services.py:356
 msgid "This discount does not reduce the sale."
 msgstr "Este descuento no reduce la venta."
 
-#: sales/services.py:439
+#: sales/services.py:429
 #, python-format
 msgid "Not enough %(product)s in stock: %(stock)s left."
 msgstr "No hay suficiente %(product)s: quedan %(stock)s."
 
-#: sales/services.py:479
+#: sales/services.py:469
 msgid "The quantity must be greater than zero."
 msgstr "La cantidad debe ser mayor que cero."
 
-#: sales/services.py:482
+#: sales/services.py:472
 msgid "Each line is either a service or a product."
 msgstr "Cada línea es un servicio o un producto."
 
-#: sales/services.py:486
+#: sales/services.py:476
 #, python-format
 msgid "%(service)s is not active."
 msgstr "%(service)s no está activo."
 
-#: sales/services.py:490
+#: sales/services.py:480
 msgid "Services are sold in whole units."
 msgstr "Los servicios se venden en unidades completas."
 
-#: sales/services.py:496
+#: sales/services.py:486
 #, python-format
 msgid "%(service)s has no price for this mode."
 msgstr "%(service)s no tiene precio para esta modalidad."
 
-#: sales/services.py:502
+#: sales/services.py:492
 #, python-format
 msgid "%(product)s is not for sale."
 msgstr "%(product)s no está a la venta."

@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from core.models import Branch
+from core.permissions import requires_perm
 from inventory.models import Product, StockMovement
 from inventory.services import record_stock_movement
 
@@ -33,11 +34,9 @@ CANCEL_SALE = "sales.cancel_sale"
 CENTS = Decimal("0.01")
 
 
+@requires_perm(OPERATE_CASH_SESSION, message=_("You cannot open a cash session."))
 def open_cash_session(user, opening_float) -> CashSession:
     """Open a cash session for the user's branch, which must have none open."""
-
-    if not user.has_perm(OPERATE_CASH_SESSION):
-        raise PermissionDenied(_("You cannot open a cash session."))
 
     if user.branch_id is None:
         raise ValidationError(_("Your user has no branch assigned."))
@@ -138,6 +137,7 @@ class ItemRequest:
     product: Product | None = None
 
 
+@requires_perm(CHARGE, message=_("You cannot charge sales."))
 @transaction.atomic
 def create_sale(user, mode: str, items: list[ItemRequest], customer=None) -> Sale:
     """Charge a sale in the open cash session of the user's branch.
@@ -146,7 +146,7 @@ def create_sale(user, mode: str, items: list[ItemRequest], customer=None) -> Sal
     starts unpaid; payments are added with ``add_payment``.
     """
 
-    session = _charging_session(user)
+    session = _open_session(user)
 
     if mode == Mode.DROP_OFF and customer is None:
         raise ValidationError({"customer": _("A drop-off sale needs a customer.")})
@@ -194,15 +194,6 @@ def create_sale(user, mode: str, items: list[ItemRequest], customer=None) -> Sal
     return sale
 
 
-def _charging_session(user) -> CashSession:
-    """Open cash session of the user's branch, if the user can charge."""
-
-    if not user.has_perm(CHARGE):
-        raise PermissionDenied(_("You cannot charge sales."))
-
-    return _open_session(user)
-
-
 def _open_session(user) -> CashSession:
     """Open cash session of the user's branch; charging and cancelling need one."""
 
@@ -217,6 +208,22 @@ def _open_session(user) -> CashSession:
     return session
 
 
+def _lock_sale(user, sale: Sale) -> Sale:
+    """Lock the sale until the transaction ends; it must be of the user's branch.
+
+    Call inside a transaction, so two changes at the same time cannot both use the same
+    total or balance.
+    """
+
+    sale = Sale.objects.select_for_update().get(pk=sale.pk)
+
+    if sale.branch_id != user.branch_id:
+        raise PermissionDenied(_("The sale belongs to another branch."))
+
+    return sale
+
+
+@requires_perm(CANCEL_SALE, message=_("You cannot cancel sales."))
 @transaction.atomic
 def cancel_sale(user, sale: Sale, reason: str) -> Sale:
     """Cancel a sale with a reason, in the open cash session of the user's branch.
@@ -225,16 +232,8 @@ def cancel_sale(user, sale: Sale, reason: str) -> Sale:
     they were received in an earlier session. Sold products go back to stock.
     """
 
-    if not user.has_perm(CANCEL_SALE):
-        raise PermissionDenied(_("You cannot cancel sales."))
-
     session = _open_session(user)
-
-    # Lock the sale so it cannot be paid or cancelled again at the same time.
-    sale = Sale.objects.select_for_update().get(pk=sale.pk)
-
-    if sale.branch_id != user.branch_id:
-        raise ValidationError(_("The sale belongs to another branch."))
+    sale = _lock_sale(user, sale)
 
     if sale.status == Sale.Status.CANCELLED:
         raise ValidationError(_("This sale is already cancelled."))
@@ -265,6 +264,7 @@ def cancel_sale(user, sale: Sale, reason: str) -> Sale:
     return sale
 
 
+@requires_perm(CHARGE, message=_("You cannot charge sales."))
 @transaction.atomic
 def add_payment(user, sale: Sale, method: str, amount, reference: str = "") -> Payment:
     """Record a payment of the sale in the open cash session and update its balance.
@@ -272,13 +272,8 @@ def add_payment(user, sale: Sale, method: str, amount, reference: str = "") -> P
     A payment cannot be more than the balance; the change for cash is not recorded.
     """
 
-    session = _charging_session(user)
-
-    # Lock the sale so two payments at the same time cannot both use the same balance.
-    sale = Sale.objects.select_for_update().get(pk=sale.pk)
-
-    if sale.branch_id != user.branch_id:
-        raise ValidationError(_("The sale belongs to another branch."))
+    session = _open_session(user)
+    sale = _lock_sale(user, sale)
 
     if sale.status == Sale.Status.CANCELLED:
         raise ValidationError(_("A cancelled sale cannot be paid."))
@@ -337,6 +332,7 @@ def available_discounts(sale: Sale):
     )
 
 
+@requires_perm(APPLY_DISCOUNT, message=_("You cannot apply discounts."))
 @transaction.atomic
 def apply_discount(user, sale: Sale, discount: Discount) -> list[AppliedDiscount]:
     """Apply a discount of the catalog to a sale before its first payment.
@@ -344,14 +340,7 @@ def apply_discount(user, sale: Sale, discount: Discount) -> list[AppliedDiscount
     Several different discounts can be applied, but the total never goes below zero.
     """
 
-    if not user.has_perm(APPLY_DISCOUNT):
-        raise PermissionDenied(_("You cannot apply discounts."))
-
-    # Lock the sale so two discounts at the same time cannot both use the same total.
-    sale = Sale.objects.select_for_update().get(pk=sale.pk)
-
-    if sale.branch_id != user.branch_id:
-        raise ValidationError(_("The sale belongs to another branch."))
+    sale = _lock_sale(user, sale)
 
     if sale.status != Sale.Status.PENDING:
         raise ValidationError(_("Discounts are applied before the first payment."))

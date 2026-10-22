@@ -253,7 +253,7 @@ def test_applying_requires_the_apply_discount_permission(sale, branch):
 def test_a_sale_of_another_branch_cannot_get_a_discount(sale, branch):
     other = employee("other", Branch.objects.create(name="Norte", sale_prefix="N"))
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(PermissionDenied):
         apply_discount(other, sale, make_discount(branch))
 
     assert not AppliedDiscount.objects.exists()

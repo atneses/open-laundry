@@ -124,7 +124,7 @@ def test_a_sale_of_another_branch_cannot_be_cancelled(sale):
     other = employee("other", Branch.objects.create(name="Norte", sale_prefix="N"))
     open_cash_session(other, 500)
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(PermissionDenied):
         cancel_sale(other, sale, REASON)
 
     sale.refresh_from_db()
