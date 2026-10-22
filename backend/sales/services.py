@@ -123,11 +123,15 @@ def create_sale(user, mode: str, items: list[ItemRequest], customer=None) -> Sal
     Copies each price from the catalog and takes sold products out of stock. The sale
     starts unpaid; payments are added with ``add_payment``.
     """
+
     session = _charging_session(user)
+
     if mode == Mode.DROP_OFF and customer is None:
         raise ValidationError({"customer": _("A drop-off sale needs a customer.")})
+
     if customer is not None and customer.branch_id != user.branch_id:
         raise ValidationError({"customer": _("The customer belongs to another branch.")})
+
     if not items:
         raise ValidationError(_("Add at least one service or product."))
 
@@ -145,11 +149,14 @@ def create_sale(user, mode: str, items: list[ItemRequest], customer=None) -> Sal
         balance=subtotal,
         created_by=user,
     )
+
     for line in lines:
         line.sale = sale
         # bulk_create skips BaseModel.save, so set the user here.
         line.created_by = line.updated_by = user
+
     SaleItem.objects.bulk_create(lines)
+
     for line in lines:
         if line.product is not None:
             record_stock_movement(
@@ -161,6 +168,7 @@ def create_sale(user, mode: str, items: list[ItemRequest], customer=None) -> Sal
                     created_by=user,
                 )
             )
+
     return sale
 
 
@@ -232,11 +240,15 @@ def _check_stock(lines: list[SaleItem]) -> None:
     The product rows stay locked until the sale is saved, so two sales at the same
     time cannot sell the same last units.
     """
+
     wanted = defaultdict(Decimal)
+
     for line in lines:
         if line.product is not None:
             wanted[line.product_id] += line.quantity
+
     products = Product.objects.select_for_update().filter(pk__in=wanted).order_by("pk")
+
     for product in products:
         if product.stock < wanted[product.pk]:
             raise ValidationError(
@@ -251,17 +263,21 @@ def next_sale_number(branch_id) -> str:
     The branch row stays locked until the transaction ends, so numbers have no gaps
     or repeats even when two sales are charged at the same time.
     """
+
     branch = Branch.objects.select_for_update().get(pk=branch_id)
     branch.last_sale_number += 1
     branch.save(update_fields=["last_sale_number"])
+
     return f"{branch.sale_prefix}-{branch.last_sale_number:06d}"
 
 
 def active_price(service: Service, mode: str, branch_id, program: str = "") -> ServicePrice | None:
     """Active price of a service for a mode; a program without its own uses the general one."""
+
     prices = ServicePrice.objects.filter(
         service=service, mode=mode, branch_id=branch_id, is_active=True
     )
+
     return prices.filter(program=program).first() or (
         prices.filter(program="").first() if program else None
     )
@@ -269,27 +285,37 @@ def active_price(service: Service, mode: str, branch_id, program: str = "") -> S
 
 def _sale_item(item: ItemRequest, mode: str, branch_id) -> SaleItem:
     """Build a sale line with the current catalog price."""
+
     quantity = Decimal(item.quantity)
+
     if quantity <= 0:
         raise ValidationError({"quantity": _("The quantity must be greater than zero.")})
+
     if (item.service is None) == (item.product is None):
         raise ValidationError(_("Each line is either a service or a product."))
+
     if item.service is not None:
         if not item.service.is_active:
             raise ValidationError(_("%(service)s is not active.") % {"service": item.service})
+
         # Services are sold by whole loads, pieces or pairs.
         if quantity != quantity.to_integral_value():
             raise ValidationError({"quantity": _("Services are sold in whole units.")})
+
         price = active_price(item.service, mode, branch_id)
+
         if price is None:
             raise ValidationError(
                 _("%(service)s has no price for this mode.") % {"service": item.service}
             )
+
         unit_price = price.price
     else:
         if not item.product.is_for_sale or item.product.branch_id != branch_id:
             raise ValidationError(_("%(product)s is not for sale.") % {"product": item.product})
+
         unit_price = item.product.sale_price
+
     return SaleItem(
         service=item.service,
         product=item.product,
