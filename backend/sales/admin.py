@@ -11,10 +11,9 @@ from core.admin_base import ReadOnlyModelAdmin
 
 from .forms import CloseCashSessionForm, ServiceForm, ServicePriceForm
 from .models import CashSession, Service, ServicePrice
-from .services import close_cash_session
+from .services import VIEW_ALL_CASH_SESSIONS, close_cash_session
 
 MANAGE_CATALOG = "sales.manage_catalog"
-VIEW_ALL_CASH_SESSIONS = "sales.view_all_cash_sessions"
 
 
 class CatalogPermissionMixin:

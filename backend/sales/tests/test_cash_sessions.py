@@ -5,7 +5,7 @@ from decimal import Decimal
 import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError
 from django.urls import reverse
 
@@ -19,9 +19,16 @@ pytestmark = pytest.mark.django_db
 SUBMITTED = {"_form_submitted": "on"}
 
 
+def employee(username, branch=None):
+    """A user with the Employee role, which can operate their own cash session."""
+    user = get_user_model().objects.create_user(username, branch=branch)
+    user.groups.add(Group.objects.get(name=EMPLOYEE_ROLE))
+    return user
+
+
 @pytest.fixture
 def cashier(branch):
-    return get_user_model().objects.create_user("cashier", branch=branch)
+    return employee("cashier", branch)
 
 
 @pytest.fixture
@@ -52,7 +59,7 @@ def test_open_cash_session_in_the_users_branch(cashier, branch):
 
 
 def test_user_without_branch_cannot_open(db):
-    user = get_user_model().objects.create_user("nobranch")
+    user = employee("nobranch")
 
     with pytest.raises(ValidationError):
         open_cash_session(user, 500)
@@ -68,7 +75,7 @@ def test_opening_float_cannot_be_negative(cashier):
 
 
 def test_another_user_cannot_open_while_the_branch_has_one_open(open_session, branch):
-    other = get_user_model().objects.create_user("other", branch=branch)
+    other = employee("other", branch)
 
     with pytest.raises(ValidationError):
         open_cash_session(other, 500)
@@ -92,7 +99,7 @@ def test_database_rejects_two_open_sessions_in_a_branch(cashier, branch):
 
 def test_another_branch_can_open_at_the_same_time(open_session):
     other_branch = Branch.objects.create(name="Norte")
-    other = get_user_model().objects.create_user("other", branch=other_branch)
+    other = employee("other", other_branch)
 
     session = open_cash_session(other, 300)
 
@@ -265,3 +272,28 @@ def test_a_closed_session_cannot_be_closed_from_the_admin(admin_client, open_ses
     response = admin_client.post(close_url(session), SUBMITTED | {"counted_cash": "500"})
 
     assert response.status_code == 403
+
+
+def test_opening_requires_operate_cash_session(branch):
+    user = get_user_model().objects.create_user("noperm", branch=branch)
+
+    with pytest.raises(PermissionDenied):
+        open_cash_session(user, 500)
+
+    assert not CashSession.objects.exists()
+
+
+def test_an_employee_cannot_close_another_employees_session(open_session, branch):
+    other = employee("other", branch)
+
+    with pytest.raises(PermissionDenied):
+        close_cash_session(open_session, other, 500)
+
+    open_session.refresh_from_db()
+    assert open_session.closed_at is None
+
+
+def test_a_manager_can_close_another_employees_session(open_session, manager):
+    session = close_cash_session(open_session, manager, 500)
+
+    assert session.closed_by == manager

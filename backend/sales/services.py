@@ -1,15 +1,21 @@
 from decimal import Decimal
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .models import CashSession
 
+OPERATE_CASH_SESSION = "sales.operate_cash_session"
+VIEW_ALL_CASH_SESSIONS = "sales.view_all_cash_sessions"
+
 
 def open_cash_session(user, opening_float) -> CashSession:
     """Open a cash session for the user's branch, which must have none open."""
+
+    if not user.has_perm(OPERATE_CASH_SESSION):
+        raise PermissionDenied(_("You cannot open a cash session."))
 
     if user.branch_id is None:
         raise ValidationError(_("Your user has no branch assigned."))
@@ -38,6 +44,11 @@ def close_cash_session(session: CashSession, user, counted_cash, notes: str = ""
 
     ``user`` is who closes it: the cashier, or a manager closing a forgotten session.
     """
+
+    own = user.pk == session.user_id and user.has_perm(OPERATE_CASH_SESSION)
+
+    if not own and not user.has_perm(VIEW_ALL_CASH_SESSIONS):
+        raise PermissionDenied(_("You cannot close this cash session."))
 
     # Lock the row so two closes at the same time cannot both go through.
     session = CashSession.objects.select_for_update().get(pk=session.pk)

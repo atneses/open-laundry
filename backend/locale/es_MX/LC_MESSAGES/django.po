@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-21 20:51-0600\n"
+"POT-Creation-Date: 2026-10-21 23:01-0600\n"
 "Language: es_MX\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -395,20 +395,20 @@ msgstr "Un ajuste no puede ser cero."
 msgid "An adjustment needs a reason."
 msgstr "Un ajuste necesita un motivo."
 
-#: sales/admin.py:99 sales/admin.py:104
+#: sales/admin.py:98 sales/admin.py:103
 msgid "Close cash session"
 msgstr "Cerrar caja"
 
-#: sales/admin.py:105
+#: sales/admin.py:104
 msgid "Capture the cash counted in the drawer of this forgotten session."
 msgstr ""
 "Captura el efectivo contado en el cajón de esta caja que quedó abierta."
 
-#: sales/admin.py:107
+#: sales/admin.py:106
 msgid "Close"
 msgstr "Cerrar"
 
-#: sales/admin.py:134
+#: sales/admin.py:133
 msgid "The cash session was closed."
 msgstr "La caja se cerró."
 
@@ -577,22 +577,30 @@ msgstr "Puede abrir y cerrar su propia caja"
 msgid "Can view the cash sessions of every shift"
 msgstr "Puede ver los cortes de caja de todos los turnos"
 
-#: sales/services.py:14
+#: sales/services.py:17
+msgid "You cannot open a cash session."
+msgstr "No puedes abrir caja."
+
+#: sales/services.py:19
 msgid "Your user has no branch assigned."
 msgstr "Tu usuario no tiene sucursal asignada."
 
-#: sales/services.py:18
+#: sales/services.py:23
 msgid "This branch already has an open cash session."
 msgstr "Esta sucursal ya tiene una caja abierta."
 
-#: sales/services.py:41
+#: sales/services.py:45
+msgid "You cannot close this cash session."
+msgstr "No puedes cerrar esta caja."
+
+#: sales/services.py:49
 msgid "This cash session is already closed."
 msgstr "Esta caja ya está cerrada."
 
-#: sales/services.py:43
+#: sales/services.py:51
 msgid "Enter the counted cash."
 msgstr "Captura el efectivo contado."
 
-#: sales/services.py:55
+#: sales/services.py:63
 msgid "Explain the difference between the counted and the expected cash."
 msgstr "Explica la diferencia entre el efectivo contado y el esperado."
