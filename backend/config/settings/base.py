@@ -207,6 +207,14 @@ UNFOLD = {
                             "sales.manage_catalog",
                         ),
                     },
+                    {
+                        "title": _("Discounts"),
+                        "icon": "percent",
+                        "link": reverse_lazy("admin:sales_discount_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "sales.manage_discounts",
+                        ),
+                    },
                 ],
             },
             {

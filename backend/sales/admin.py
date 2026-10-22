@@ -9,11 +9,21 @@ from unfold.decorators import action
 
 from core.admin_base import ReadOnlyModelAdmin
 
-from .forms import CloseCashSessionForm, ServiceForm, ServicePriceForm
-from .models import CashSession, Payment, Sale, SaleItem, Service, ServicePrice
+from .forms import CloseCashSessionForm, DiscountForm, ServiceForm, ServicePriceForm
+from .models import (
+    AppliedDiscount,
+    CashSession,
+    Discount,
+    Payment,
+    Sale,
+    SaleItem,
+    Service,
+    ServicePrice,
+)
 from .services import VIEW_ALL_CASH_SESSIONS, close_cash_session
 
 MANAGE_CATALOG = "sales.manage_catalog"
+MANAGE_DISCOUNTS = "sales.manage_discounts"
 
 
 class CatalogPermissionMixin:
@@ -171,6 +181,20 @@ class PaymentInline(TabularInline):
         return False
 
 
+class AppliedDiscountInline(TabularInline):
+    model = AppliedDiscount
+    extra = 0
+    fields = ["discount", "sale_item", "amount", "created_by", "created_at"]
+    readonly_fields = fields
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Sale)
 class SaleAdmin(ReadOnlyModelAdmin):
     """Sales are charged at the POS and only viewed here."""
@@ -189,4 +213,39 @@ class SaleAdmin(ReadOnlyModelAdmin):
     search_fields = ["number", "customer__name", "customer__phone"]
     list_select_related = ["customer", "created_by"]
     date_hierarchy = "created_at"
-    inlines = [SaleItemInline, PaymentInline]
+    inlines = [SaleItemInline, AppliedDiscountInline, PaymentInline]
+
+
+@admin.register(Discount)
+class DiscountAdmin(ModelAdmin):
+    """Discounts are managed with sales.manage_discounts; deactivate them, never delete."""
+
+    form = DiscountForm
+    list_display = [
+        "name",
+        "kind",
+        "value",
+        "scope",
+        "mode",
+        "valid_from",
+        "valid_until",
+        "is_active",
+    ]
+    list_filter = ["is_active", "kind", "scope", "mode", "branch"]
+    search_fields = ["name"]
+
+    def has_module_permission(self, request):
+        return request.user.has_perm(MANAGE_DISCOUNTS)
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.has_perm(MANAGE_DISCOUNTS)
+
+    def has_add_permission(self, request):
+        return request.user.has_perm(MANAGE_DISCOUNTS)
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.has_perm(MANAGE_DISCOUNTS)
+
+    # Applied discounts point to it.
+    def has_delete_permission(self, request, obj=None):
+        return False

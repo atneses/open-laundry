@@ -419,11 +419,10 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** dos pagos parciales dejan la venta en `paid` con saldo 0, y el corte del turno suma bien los pagos en efectivo y con tarjeta (pruebas).
 
 ### 7.3 Regla de autoservicio
-- [ ] **Qué se hace:** en autoservicio la venta debe quedar pagada completa antes de poder activar máquinas.
-- **Listo cuando:** una prueba confirma que no se puede activar una máquina con saldo pendiente en autoservicio.
+- **Movido al 9.5:** la regla se valida al activar una máquina, que se construye en la Etapa 9.
 
 ### 7.4 Descuentos
-- [ ] **Qué se hace:** crear `Discount` (porcentaje o monto fijo, vigencia, modalidad, servicios) y `AppliedDiscount`. Un servicio lista los descuentos vigentes que aplican a una venta y otro los aplica (requiere `sales.apply_discount`). Crearlos y editarlos en el admin requiere `sales.manage_discounts`.
+- [x] **Qué se hace:** crear `Discount` (porcentaje o monto fijo, vigencia, modalidad, servicios) y `AppliedDiscount`. Un servicio lista los descuentos vigentes que aplican a una venta y otro los aplica (requiere `sales.apply_discount`). Crearlos y editarlos en el admin requiere `sales.manage_discounts`.
 - **Para qué:** que el empleado solo use descuentos autorizados.
 - **Listo cuando:** un descuento vencido o de otra modalidad no aparece ni se puede aplicar (pruebas).
 
@@ -437,6 +436,8 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Productos:** venderlos crea un `StockMovement` de venta ligado a la venta (`StockMovement.sale`) en la misma transacción. **No se puede vender más de lo que hay en stock** (los productos se bloquean durante el cobro, así dos ventas a la vez no venden las mismas últimas unidades). Los servicios se venden en unidades completas.
 - Ventas en el admin (área *Operación*), de solo lectura, con sus líneas; se ven con `sales.view_sale`. Permiso `sales.charge` para Admin y Empleado (migración `sales/0007`).
 - **7.2:** `Payment` en `sales`, con `cash_session` (no estaba en el MVP): el pago cuenta en el turno en que se recibió, así el saldo de un encargo cobrado en otro turno cae en el corte correcto. No hay `paid_at`: se usan `created_at` / `created_by`. Servicio `add_payment`: requiere `sales.charge` y la caja abierta de la sucursal; rechaza montos ≤ 0, mayores que el saldo y ventas canceladas o de otra sucursal; recalcula saldo y estado bloqueando la venta. La referencia del voucher es opcional. `session_totals` ya suma efectivo y tarjeta (crédito + débito) y cuenta las ventas del turno. Pagos de solo lectura en la ficha de la venta (sin entrada propia en el menú); migración `sales/0009` da al Admin los permisos de `Payment`.
+- **7.3:** movido al 9.5 (la regla se valida al activar una máquina).
+- **7.4:** `Discount` (con `branch`) y `AppliedDiscount` en `sales`; quien lo aplicó es `created_by` (no hay campo `user`). `available_discounts(sale)` lista los activos, vigentes hoy, de la sucursal y modalidad de la venta, no aplicados y, si son por servicio, con alguno de sus servicios en la venta. `apply_discount` requiere `sales.apply_discount`, solo con la venta en `pending` (antes del primer pago); recalcula descuento, total y saldo. Se suman varios descuentos distintos (cada uno una vez); ninguno baja el total de $0 ni un renglón de su importe. Porcentaje sobre el subtotal o el renglón; monto fijo por servicio, una vez por renglón. Si el total queda en $0 la venta pasa a `paid`. Descuentos en el admin (área *Catálogo*) con `sales.manage_discounts`, sin borrar (se desactivan); aplicados de solo lectura en la ficha de la venta. Migración `sales/0011`: Admin todos, Empleado `sales.apply_discount`. El nombre del descuento admite `%` (no usa `validate_name`).
 
 **Riesgos y pendientes:**
 - **Pendiente – precio por programa (función futura):** `active_price` ya busca por programa de lavado con respaldo al precio general, pero el cobro siempre usa el general porque no hay precios por programa.
@@ -444,6 +445,9 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Pendiente – cambio en efectivo:** no se guarda el monto recibido ni el cambio; los calcula la caja (Etapa 12) y el ticket (Etapa 10).
 - **Pendiente – pagos en el admin:** solo se ven dentro de la venta; no hay lista de pagos con filtro por método (el MVP lo menciona para el dashboard y reportes, Etapa 11).
 - **Riesgo – tarjeta sin referencia:** la referencia es opcional, así que un pago con tarjeta puede no tener cómo cuadrarse contra el reporte de Mercado Pago Point.
+- **Pendiente – descuentos por día de la semana:** el MVP pone de ejemplo "10% martes", pero la vigencia es solo por fechas; falta un campo de días si el negocio lo necesita.
+- **Pendiente – quitar un descuento aplicado:** no se puede deshacer; habría que cancelar la venta (7.5) y cobrarla de nuevo.
+- **Riesgo – redondeo:** el porcentaje se redondea a centavos por renglón (redondeo bancario de `Decimal`), así que la suma por renglones puede diferir un centavo del porcentaje del total.
 
 **✅ Etapa 7 terminada cuando:** los servicios permiten cobrar ventas en efectivo y tarjeta, con y sin descuento, y cancelarlas, con pruebas de cada regla y permiso, y el corte de caja cuadra.
 
@@ -490,9 +494,9 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** existe la interfaz y una prueba que usa un driver falso.
 
 ### 9.5 Driver manual
-- [ ] **Qué se hace:** `ManualDriver`: al activar (el servicio requiere `machines.start_machine`), marca el ciclo como `is_manual` y `running`; el empleado presiona Start en la máquina (modo PUSH).
+- [ ] **Qué se hace:** `ManualDriver`: al activar (el servicio requiere `machines.start_machine`), marca el ciclo como `is_manual` y `running`; el empleado presiona Start en la máquina (modo PUSH). **Regla de autoservicio** (movida desde el 7.3): una venta de autoservicio debe estar pagada completa antes de activar sus máquinas.
 - **Para qué:** es como operan hoy y es el respaldo permanente si falla la cajita.
-- **Listo cuando:** activar una máquina en modo manual deja el ciclo en curso.
+- **Listo cuando:** activar una máquina en modo manual deja el ciclo en curso, y no se puede activar con saldo pendiente en autoservicio (prueba).
 
 ### 9.6 Simulador
 - [ ] **Qué se hace:** `SimulatorDriver`: imita a la cajita, con confirmación tras unos segundos o falla al azar (configurable). Corre en una tarea de Celery.

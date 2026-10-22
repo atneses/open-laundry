@@ -12,11 +12,23 @@ from core.models import Branch
 from inventory.models import Product, StockMovement
 from inventory.services import record_stock_movement
 
-from .models import CashSession, Mode, Payment, Sale, SaleItem, Service, ServicePrice
+from .models import (
+    MAX_PERCENTAGE,
+    AppliedDiscount,
+    CashSession,
+    Discount,
+    Mode,
+    Payment,
+    Sale,
+    SaleItem,
+    Service,
+    ServicePrice,
+)
 
 OPERATE_CASH_SESSION = "sales.operate_cash_session"
 VIEW_ALL_CASH_SESSIONS = "sales.view_all_cash_sessions"
 CHARGE = "sales.charge"
+APPLY_DISCOUNT = "sales.apply_discount"
 CENTS = Decimal("0.01")
 
 
@@ -232,6 +244,115 @@ def add_payment(user, sale: Sale, method: str, amount, reference: str = "") -> P
     sale.save(update_fields=["balance", "status", "updated_at", "updated_by"])
 
     return payment
+
+
+def available_discounts(sale: Sale):
+    """Discounts that can still be applied to the sale, as a queryset.
+
+    Active, in force today, for the sale's branch and mode, not applied yet and, for a
+    discount on services, with at least one of its services in the sale. Only a sale
+    without payments takes discounts.
+    """
+
+    if sale.status != Sale.Status.PENDING:
+        return Discount.objects.none()
+
+    today = timezone.localdate()
+    services = sale.items.filter(service__isnull=False).values("service_id")
+
+    return (
+        Discount.objects.filter(branch_id=sale.branch_id, is_active=True)
+        .filter(Q(mode="") | Q(mode=sale.mode))
+        .filter(Q(valid_from__isnull=True) | Q(valid_from__lte=today))
+        .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=today))
+        .filter(
+            Q(scope=Discount.Scope.SALE) | Q(scope=Discount.Scope.SERVICE, services__in=services),
+        )
+        .exclude(applied__sale=sale)
+        .distinct()
+    )
+
+
+@transaction.atomic
+def apply_discount(user, sale: Sale, discount: Discount) -> list[AppliedDiscount]:
+    """Apply a discount of the catalog to a sale before its first payment.
+
+    Several different discounts can be applied, but the total never goes below zero.
+    """
+
+    if not user.has_perm(APPLY_DISCOUNT):
+        raise PermissionDenied(_("You cannot apply discounts."))
+
+    # Lock the sale so two discounts at the same time cannot both use the same total.
+    sale = Sale.objects.select_for_update().get(pk=sale.pk)
+
+    if sale.branch_id != user.branch_id:
+        raise ValidationError(_("The sale belongs to another branch."))
+
+    if sale.status != Sale.Status.PENDING:
+        raise ValidationError(_("Discounts are applied before the first payment."))
+
+    discount = available_discounts(sale).filter(pk=discount.pk).first()
+
+    if discount is None:
+        raise ValidationError(_("This discount does not apply to this sale."))
+
+    applied = _discount_rows(sale, discount)
+
+    if not applied:
+        raise ValidationError(_("This discount does not reduce the sale."))
+
+    for row in applied:
+        # bulk_create skips BaseModel.save, so set the user here.
+        row.created_by = row.updated_by = user
+
+    AppliedDiscount.objects.bulk_create(applied)
+    sale.discount_total += sum(row.amount for row in applied)
+    sale.total = sale.subtotal - sale.discount_total
+    sale.balance = sale.total
+    sale.status = Sale.Status.PAID if sale.total == 0 else Sale.Status.PENDING
+    sale.updated_by = user
+    sale.save(
+        update_fields=["discount_total", "total", "balance", "status", "updated_at", "updated_by"],
+    )
+
+    return applied
+
+
+def _discount_rows(sale: Sale, discount: Discount) -> list[AppliedDiscount]:
+    """Rows of the discount for the sale, never taking more than what is left to pay."""
+
+    left = sale.total
+
+    if discount.scope == Discount.Scope.SALE:
+        amount = min(_discount_amount(discount, sale.subtotal), left)
+
+        return [AppliedDiscount(sale=sale, discount=discount, amount=amount)] if amount else []
+
+    rows = []
+    lines = sale.items.filter(service__in=discount.services.all()).annotate(
+        discounted=Sum("applied_discounts__amount", default=Decimal(0)),
+    )
+
+    for line in lines.order_by("pk"):
+        amount = min(_discount_amount(discount, line.amount), line.amount - line.discounted, left)
+
+        if amount > 0:
+            rows.append(
+                AppliedDiscount(sale=sale, sale_item=line, discount=discount, amount=amount),
+            )
+            left -= amount
+
+    return rows
+
+
+def _discount_amount(discount: Discount, base: Decimal) -> Decimal:
+    """Amount a discount takes from a base amount, before any limit."""
+
+    if discount.kind == Discount.Kind.PERCENTAGE:
+        return (base * discount.value / MAX_PERCENTAGE).quantize(CENTS)
+
+    return discount.value
 
 
 def _check_stock(lines: list[SaleItem]) -> None:

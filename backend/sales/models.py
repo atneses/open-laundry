@@ -8,6 +8,8 @@ from django.utils.translation import gettext_lazy as _
 from core.models import BaseModel
 from core.validators import validate_name
 
+MAX_PERCENTAGE = 100
+
 
 class Mode(models.TextChoices):
     """How a service is sold: the customer does it or the laundry does it."""
@@ -416,3 +418,143 @@ class Payment(BaseModel):
 
     def __str__(self):
         return f"{self.get_method_display()} {self.amount}"
+
+
+class Discount(BaseModel):
+    """A discount of the catalog that employees can apply, such as "10% on self-service".
+
+    It applies to the whole sale or only to the lines of its services, optionally
+    limited to one mode and to a range of dates. Deactivate it instead of deleting it.
+    """
+
+    class Kind(models.TextChoices):
+        PERCENTAGE = "percentage", _("Percentage")
+        FIXED_AMOUNT = "fixed_amount", _("Fixed amount")
+
+    class Scope(models.TextChoices):
+        SALE = "sale", _("Whole sale")
+        SERVICE = "service", _("Services")
+
+    branch = models.ForeignKey(
+        "core.Branch",
+        verbose_name=_("branch"),
+        on_delete=models.PROTECT,
+        related_name="discounts",
+    )
+    name = models.CharField(_("name"), max_length=100)
+    kind = models.CharField(_("kind"), max_length=20, choices=Kind.choices)
+    value = models.DecimalField(
+        _("value"),
+        max_digits=10,
+        decimal_places=2,
+        help_text=_("Percentage (e.g. 10 for 10%) or amount in pesos."),
+    )
+    scope = models.CharField(
+        _("applies to"),
+        max_length=20,
+        choices=Scope.choices,
+        default=Scope.SALE,
+        help_text=_("A fixed amount on services is taken once from each line of those services."),
+    )
+    services = models.ManyToManyField(
+        Service,
+        verbose_name=_("services"),
+        blank=True,
+        related_name="discounts",
+    )
+    mode = models.CharField(
+        _("mode"),
+        max_length=20,
+        choices=Mode.choices,
+        blank=True,
+        help_text=_("Leave empty for both modes."),
+    )
+    valid_from = models.DateField(_("valid from"), null=True, blank=True)
+    valid_until = models.DateField(_("valid until"), null=True, blank=True)
+    is_active = models.BooleanField(_("active"), default=True)
+
+    class Meta:
+        verbose_name = _("discount")
+        verbose_name_plural = _("discounts")
+        ordering = ["name"]
+        permissions = [
+            ("apply_discount", _("Can apply catalog discounts")),
+            ("manage_discounts", _("Can create, edit or deactivate discounts")),
+        ]
+        constraints = [
+            models.CheckConstraint(condition=Q(value__gt=0), name="discount_value_positive"),
+            models.CheckConstraint(
+                condition=~Q(kind="percentage") | Q(value__lte=MAX_PERCENTAGE),
+                name="discount_percentage_up_to_100",
+            ),
+            models.CheckConstraint(
+                condition=Q(valid_from__isnull=True)
+                | Q(valid_until__isnull=True)
+                | Q(valid_until__gte=models.F("valid_from")),
+                name="discount_valid_until_after_valid_from",
+            ),
+        ]
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        super().clean()
+
+        too_high = self.value is not None and self.value > MAX_PERCENTAGE
+
+        if self.kind == self.Kind.PERCENTAGE and too_high:
+            raise ValidationError({"value": _("A percentage cannot be more than 100.")})
+
+        if self.valid_from and self.valid_until and self.valid_until < self.valid_from:
+            raise ValidationError(
+                {"valid_until": _("The end date cannot be before the start date.")},
+            )
+
+
+class AppliedDiscount(BaseModel):
+    """A discount applied to a sale, with the amount it took off.
+
+    ``created_by`` is who applied it. A discount on services has one row per line.
+    """
+
+    sale = models.ForeignKey(
+        Sale,
+        verbose_name=_("sale"),
+        on_delete=models.PROTECT,
+        related_name="applied_discounts",
+    )
+    sale_item = models.ForeignKey(
+        SaleItem,
+        verbose_name=_("sale item"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="applied_discounts",
+    )
+    discount = models.ForeignKey(
+        Discount,
+        verbose_name=_("discount"),
+        on_delete=models.PROTECT,
+        related_name="applied",
+    )
+    amount = models.DecimalField(_("amount"), max_digits=10, decimal_places=2)
+
+    class Meta:
+        verbose_name = _("applied discount")
+        verbose_name_plural = _("applied discounts")
+        constraints = [
+            # A discount is applied only once to each sale or line.
+            models.UniqueConstraint(
+                fields=["sale", "discount", "sale_item"],
+                nulls_distinct=False,
+                name="discount_applied_once",
+            ),
+            models.CheckConstraint(
+                condition=Q(amount__gt=0),
+                name="applied_discount_amount_positive",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.discount} -{self.amount}"

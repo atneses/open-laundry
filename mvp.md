@@ -345,6 +345,7 @@ erDiagram
     }
     DISCOUNT {
         int id PK
+        int branch_id FK
         string name
         string kind "percentage | fixed_amount"
         decimal value
@@ -361,7 +362,7 @@ erDiagram
         int sale_item_id FK "opcional"
         int discount_id FK
         decimal amount
-        int user_id FK
+        int created_by FK "quién lo aplicó"
     }
     CASH_SESSION {
         int id PK
@@ -437,7 +438,7 @@ erDiagram
 
 **Precios y descuentos**
 - **ServicePrice:** hoy un precio fijo por servicio y modalidad (`program` vacío). Para cobrar distinto ciertos programas se agregan filas con `program`; si no hay, se usa el general. Un servicio nuevo es solo dar de alta registros. **Los precios no se editan:** para cambiar uno se agrega otro, que pasa a ser el activo, y el anterior queda inactivo como historial (con su fecha de captura). Solo hay un precio activo por servicio, modalidad, programa y sucursal.
-- **Discount:** los crea quien tenga `sales.manage_discounts`. El empleado elige de la lista los vigentes para esa modalidad y servicio (p. ej. "10% martes en autoservicio"). `AppliedDiscount` guarda el monto y quién lo aplicó.
+- **Discount:** los crea quien tenga `sales.manage_discounts`. El empleado elige de la lista los vigentes para esa modalidad y servicio (p. ej. "10% martes en autoservicio"). `AppliedDiscount` guarda el monto y quién lo aplicó. Se aplican **antes del primer pago** y se pueden sumar varios descuentos distintos (cada uno una vez), sin que el total baje de $0. El porcentaje se calcula sobre el subtotal (o sobre el renglón, si es por servicio); un monto fijo por servicio se descuenta **una vez por renglón**, no por carga.
 
 **Inventario**
 - **LoadConsumption:** solo para lavado (el secado no consume). Valor inicial 150–200 ml de detergente y 150–200 ml de suavizante, editable desde el admin.
