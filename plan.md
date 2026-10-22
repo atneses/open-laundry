@@ -357,22 +357,36 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Objetivo:** las reglas del turno de caja: abrir con un fondo, una caja abierta por empleado y el corte con su diferencia. Esta etapa es **solo modelo, servicios, admin y pruebas**: la API de caja se hace en la Etapa 7 (7.2), junto con el cobro.
 
 ### 6.1 Modelo `CashSession`
-- [ ] **Qué se hace:** crear `CashSession` (apertura, fondo inicial, cierre, efectivo esperado, efectivo contado, diferencia, total de tarjeta, número de ventas y cancelaciones) y los permisos `sales.operate_cash_session` y `sales.view_all_cash_sessions`, con su migración para los roles.
+- [x] **Qué se hace:** crear `CashSession` (apertura, fondo inicial, cierre, efectivo esperado, efectivo contado, diferencia, total de tarjeta, número de ventas y cancelaciones) y los permisos `sales.operate_cash_session` y `sales.view_all_cash_sessions`, con su migración para los roles.
 - **Listo cuando:** el modelo está migrado y visible (solo lectura) en el admin.
 
 ### 6.2 Abrir caja
-- [ ] **Qué se hace:** servicio para abrir caja con el fondo inicial. Un empleado no puede tener dos cajas abiertas.
+- [x] **Qué se hace:** servicio para abrir caja con el fondo inicial. Solo puede haber una caja abierta por sucursal.
 - **Para qué:** cada venta queda ligada al turno de quien la cobró.
 - **Listo cuando:** abrir una segunda caja con la primera abierta da error (prueba).
 
 ### 6.3 Cerrar caja (corte)
-- [ ] **Qué se hace:** servicio de cierre: el empleado captura el efectivo contado y el sistema calcula: efectivo esperado = fondo + pagos en efectivo del turno − cancelaciones; diferencia = contado − esperado; total de tarjeta para cuadrar contra Mercado Pago Point.
+- [x] **Qué se hace:** servicio de cierre: el empleado captura el efectivo contado y el sistema calcula: efectivo esperado = fondo + pagos en efectivo del turno − cancelaciones; diferencia = contado − esperado; total de tarjeta para cuadrar contra Mercado Pago Point.
 - **Para qué:** detectar faltantes o sobrantes por turno.
 - **Listo cuando:** una prueba de un turno sin ventas da esperado = fondo y la diferencia correcta. La prueba con ventas en efectivo, tarjeta y una cancelación se hace en la Etapa 7 (7.6 y 7.9).
 
 ### 6.4 Cortes en el admin
-- [ ] **Qué se hace:** consulta de cortes en Unfold, en el área *Operación*, de solo lectura, visible con `sales.view_all_cash_sessions`.
+- [x] **Qué se hace:** consulta de cortes en Unfold, en el área *Operación*, de solo lectura, visible con `sales.view_all_cash_sessions`.
 - **Listo cuando:** un usuario sin el permiso recibe 403 en la pantalla de cortes (prueba).
+
+**Notas de la implementación:**
+- **Cambio respecto a lo planeado:** una sola caja abierta **por sucursal** (no por empleado): el siguiente turno no abre hasta que el anterior cierre. Se exige también en la base de datos.
+- `CashSession` en `sales`; servicios `open_cash_session` y `close_cash_session` en `sales/services.py`. La sucursal sale del usuario: sin sucursal asignada no se puede abrir.
+- Al cerrar se guardan esperado, contado, diferencia, total de tarjeta y conteos. **Con diferencia ≠ 0 la nota es obligatoria** (validado en el servicio y en la base de datos).
+- Los totales del turno (`session_totals`) devuelven 0 hasta que existan ventas y pagos (Etapa 7).
+- **Permisos:** `sales.operate_cash_session` y `sales.view_all_cash_sessions`; la migración `sales/0004` se los da a Admin y `operate_cash_session` a Empleado. Cortes en el área *Operación* del menú.
+- **Caja olvidada:** quien tiene `sales.view_all_cash_sessions` puede cerrar desde el admin una caja que quedó abierta (acción *Cerrar caja* en el detalle del corte), capturando el efectivo contado y, si hay diferencia, la nota. Cada corte guarda quién lo cerró (`closed_by`).
+
+**Riesgos y pendientes:**
+- **Pendiente – cálculo real del corte:** `session_totals` debe sumar pagos en efectivo y tarjeta, ventas y cancelaciones del turno (Etapa 7, 7.6 y 7.9).
+- **Pendiente – API de caja:** abrir, cerrar y consultar desde la caja (Etapa 7, 7.2). Hasta entonces solo se abre y cierra desde código o pruebas.
+- **Pendiente – quién cierra desde la caja:** el servicio no revisa que quien cierra sea quien abrió; lo controlará la API (7.2). Desde el admin la puede cerrar quien tenga `sales.view_all_cash_sessions`.
+- **Riesgo – acción del admin no probada en el navegador:** el diálogo de *Cerrar caja* se probó con pruebas automáticas, no a mano.
 
 **✅ Etapa 6 terminada cuando:** las reglas de abrir y cerrar caja y el cálculo del corte pasan sus pruebas.
 

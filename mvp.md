@@ -53,7 +53,7 @@ Sistema web para una lavandería de una sola sucursal con autoservicio y servici
 | **Clientes**                | Nombre y teléfono obligatorios; dirección y demás datos opcionales.                                                                                                                         |
 | **Inventario**              | Insumos (detergente, suavizante, bolsas): entradas, consumo automático por carga, stock mínimo.                                                                                             |
 | **Pagos**                   | Efectivo y tarjeta (crédito / débito) en terminal **Mercado Pago Point**. Sin CFDI por ahora.                                                                                               |
-| **Caja**                    | Apertura y corte **por turno** y por empleado.                                                                                                                                              |
+| **Caja**                    | Apertura y corte **por turno**; una caja abierta por sucursal.                                                                                                                              |
 | **Tickets**                 | Comprobante no fiscal con desglose del consumo, en impresora térmica **POS-8360 de 80 mm por USB**.                                                                                         |
 | **Roles**                   | **Administrador (admin)** y **empleado**. Más de 5 usuarios, cada uno con su propia cuenta.                                                                                                 |
 | **Permisos**                | Cada acción es un permiso. El admin puede agregar permisos de admin a un empleado concreto (excepto gestionar usuarios y permisos).                                                         |
@@ -362,6 +362,7 @@ erDiagram
         int user_id FK
         datetime opened_at
         datetime closed_at "opcional"
+        int closed_by FK "opcional"
         decimal opening_float
         decimal expected_cash
         decimal counted_cash "opcional"
@@ -436,7 +437,7 @@ erDiagram
 - **StockMovement:** `quantity` lleva signo (positivo suma, negativo resta): las compras suman, el consumo y las ventas restan, y los ajustes pueden ir en cualquier sentido. El stock de un producto solo cambia con movimientos; los movimientos no se editan ni se borran.
 
 **Caja y pagos**
-- **CashSession:** uno por turno y empleado; no se puede cobrar sin caja abierta. `expected_cash = opening_float + cash payments of the session` (menos cancelados). `card_total` se cuadra contra el reporte de Mercado Pago Point.
+- **CashSession:** uno por turno, y solo una caja abierta por sucursal (el siguiente turno abre cuando el anterior cierra); no se puede cobrar sin caja abierta. Si al cerrar hay diferencia entre lo contado y lo esperado, la nota es obligatoria. Se guarda quién la cerró (`closed_by`); una caja olvidada la puede cerrar desde el admin quien tenga `sales.view_all_cash_sessions`. `expected_cash = opening_float + cash payments of the session` (menos cancelados). `card_total` se cuadra contra el reporte de Mercado Pago Point.
 - **Pago con tarjeta:** en el MVP se captura a mano la referencia del voucher; en la Fase 2 la integración con la API de Point la llena sola (`mp_payment_intent_id`).
 
 **Usuarios y máquinas**
