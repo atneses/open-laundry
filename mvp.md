@@ -217,6 +217,8 @@ erDiagram
         string name
         string address
         string phone
+        string sale_prefix "prefijo del folio, p. ej. A"
+        int last_sale_number
     }
     USER {
         int id PK
@@ -296,10 +298,10 @@ erDiagram
     }
     SALE {
         int id PK
-        string number "folio"
+        string number "folio: prefijo de la sucursal + consecutivo (A-000123)"
         int customer_id FK "obligatorio en encargo"
         int branch_id FK
-        int user_id FK
+        int created_by FK "cajero"
         string mode "self_service | drop_off"
         string status "pending | partially_paid | paid | cancelled"
         decimal subtotal
@@ -427,7 +429,8 @@ erDiagram
 - **Autoservicio:** se cobra completo, el empleado activa la máquina y el ciclo se inicia de inmediato.
 - **Encargo:** los ciclos quedan *pendientes de asignar* y el empleado los activa al procesar la ropa; el `DropOffOrder` avanza de estado con ellos. Se puede pagar en varios `Payment`. Un encargo con saldo solo lo entrega quien tenga `sales.deliver_with_balance`.
 - **Estados del ciclo:** `requested` → `credit_sent` (la cajita confirmó el crédito; falta presionar Start) → `running` (por el medidor de consumo, el empleado o por tiempo) → `finished`. Si la cajita no confirma pasa a `failed`. `is_manual = true` cuando se arrancó en modo PUSH.
-- **SaleItem:** un servicio **o** un producto. `unit_price` se copia de `ServicePrice` según la modalidad y se conserva aunque el precio cambie.
+- **SaleItem:** un servicio **o** un producto. `unit_price` se copia de `ServicePrice` según la modalidad (o de `Product.sale_price`) y se conserva aunque el precio cambie. Vender un producto lo descuenta del stock en el mismo cobro (`StockMovement` de venta).
+- **Folio:** cada sucursal define su prefijo (`Branch.sale_prefix`) y el consecutivo no tiene huecos (`A-000123`).
 
 **Precios y descuentos**
 - **ServicePrice:** hoy un precio fijo por servicio y modalidad (`program` vacío). Para cobrar distinto ciertos programas se agregan filas con `program`; si no hay, se usa el general. Un servicio nuevo es solo dar de alta registros. **Los precios no se editan:** para cambiar uno se agrega otro, que pasa a ser el activo, y el anterior queda inactivo como historial (con su fecha de captura). Solo hay un precio activo por servicio, modalidad, programa y sucursal.

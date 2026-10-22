@@ -409,7 +409,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Objetivo:** las reglas de cobro (ventas, pagos, descuentos y cancelaciones) en el backend, con su consulta en el admin. Esta etapa es **solo modelos, servicios, admin y pruebas**: la API se hace en la Etapa 12. Los servicios reciben al usuario y **validan sus permisos** (p. ej. cobrar sin `sales.charge` da error), así que las reglas de permisos se prueban aquí.
 
 ### 7.1 Modelos de venta
-- [ ] **Qué se hace:** crear `Sale` (modalidad, estado, subtotal, descuento, total, saldo, turno) y `SaleItem` (servicio o producto, cantidad, precio unitario copiado del catálogo), y el servicio de cobro, que requiere `sales.charge` y una caja abierta.
+- [x] **Qué se hace:** crear `Sale` (modalidad, estado, subtotal, descuento, total, saldo, turno) y `SaleItem` (servicio o producto, cantidad, precio unitario copiado del catálogo), y el servicio de cobro, que requiere `sales.charge` y una caja abierta.
 - **Para qué:** que el precio cobrado no cambie aunque después se modifique el catálogo.
 - **Listo cuando:** una venta de 3 cargas de lavado en autoservicio calcula el total con el precio de autoservicio; sin caja abierta o sin `sales.charge` la venta se rechaza (pruebas).
 
@@ -430,6 +430,16 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 ### 7.5 Cancelaciones
 - [ ] **Qué se hace:** servicio para cancelar una venta con motivo obligatorio (requiere `sales.cancel_sale`); queda quién, cuándo y por qué. Los pagos en efectivo cancelados se descuentan del corte.
 - **Listo cuando:** cancelar sin motivo o sin permiso da error, y el corte refleja la cancelación (pruebas).
+
+**Notas de la implementación:**
+- **7.1:** `Sale` y `SaleItem` en `sales`; el cajero es `created_by` (no hay campo `user`). Servicio `create_sale` (`sales/services.py`): requiere `sales.charge`, la caja abierta de la sucursal del usuario y, en encargo, un cliente de la misma sucursal. Copia el precio activo del catálogo (`active_price`) y la venta empieza en `pending` con saldo = total.
+- **Folio:** prefijo por sucursal (`Branch.sale_prefix`, por defecto `A`) + consecutivo de 6 dígitos (`A-000123`). El contador `Branch.last_sale_number` se bloquea dentro de la transacción del cobro, así que no hay huecos ni repetidos.
+- **Productos:** venderlos crea un `StockMovement` de venta ligado a la venta (`StockMovement.sale`) en la misma transacción. **No se puede vender más de lo que hay en stock** (los productos se bloquean durante el cobro, así dos ventas a la vez no venden las mismas últimas unidades). Los servicios se venden en unidades completas.
+- Ventas en el admin (área *Operación*), de solo lectura, con sus líneas; se ven con `sales.view_sale`. Permiso `sales.charge` para Admin y Empleado (migración `sales/0007`).
+
+**Riesgos y pendientes:**
+- **Pendiente – precio por programa (función futura):** `active_price` ya busca por programa de lavado con respaldo al precio general, pero el cobro siempre usa el general porque no hay precios por programa.
+- **Riesgo – cambiar el prefijo:** el consecutivo es por sucursal; si una sucursal cambia su `sale_prefix`, su numeración sigue (p. ej. de `A-000010` a `B-000011`).
 
 **✅ Etapa 7 terminada cuando:** los servicios permiten cobrar ventas en efectivo y tarjeta, con y sin descuento, y cancelarlas, con pruebas de cada regla y permiso, y el corte de caja cuadra.
 

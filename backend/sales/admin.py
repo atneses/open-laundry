@@ -10,7 +10,7 @@ from unfold.decorators import action
 from core.admin_base import ReadOnlyModelAdmin
 
 from .forms import CloseCashSessionForm, ServiceForm, ServicePriceForm
-from .models import CashSession, Service, ServicePrice
+from .models import CashSession, Sale, SaleItem, Service, ServicePrice
 from .services import VIEW_ALL_CASH_SESSIONS, close_cash_session
 
 MANAGE_CATALOG = "sales.manage_catalog"
@@ -141,3 +141,38 @@ class CashSessionAdmin(ReadOnlyModelAdmin):
         url = reverse("admin:sales_cashsession_change", args=[object_id])
 
         return HttpResponse(headers={"HX-Redirect": url})
+
+
+class SaleItemInline(TabularInline):
+    model = SaleItem
+    extra = 0
+    fields = ["service", "product", "quantity", "unit_price", "amount"]
+    readonly_fields = fields
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Sale)
+class SaleAdmin(ReadOnlyModelAdmin):
+    """Sales are charged at the POS and only viewed here."""
+
+    list_display = [
+        "number",
+        "created_at",
+        "mode",
+        "status",
+        "customer",
+        "total",
+        "balance",
+        "created_by",
+    ]
+    list_filter = ["status", "mode", "branch", "created_by"]
+    search_fields = ["number", "customer__name", "customer__phone"]
+    list_select_related = ["customer", "created_by"]
+    date_hierarchy = "created_at"
+    inlines = [SaleItemInline]

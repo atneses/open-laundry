@@ -163,6 +163,14 @@ class StockMovement(BaseModel):
         blank=True,
         validators=[MinValueValidator(0)],
     )
+    sale = models.ForeignKey(
+        "sales.Sale",
+        verbose_name=_("sale"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="stock_movements",
+    )
     reason = models.CharField(
         _("reason"),
         max_length=255,

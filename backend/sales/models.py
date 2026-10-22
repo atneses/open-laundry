@@ -233,3 +233,115 @@ class CashSession(BaseModel):
 
     def __str__(self):
         return f"{self.user} · {self.opened_at:%Y-%m-%d %H:%M}"
+
+
+class Sale(BaseModel):
+    """A sale charged at the counter. ``created_by`` is the cashier who charged it.
+
+    Sales are never deleted; they are cancelled (Stage 7.5).
+    """
+
+    class Status(models.TextChoices):
+        PENDING = "pending", _("Pending")
+        PARTIALLY_PAID = "partially_paid", _("Partially paid")
+        PAID = "paid", _("Paid")
+        CANCELLED = "cancelled", _("Cancelled")
+
+    number = models.CharField(_("number"), max_length=20)
+    branch = models.ForeignKey(
+        "core.Branch", verbose_name=_("branch"), on_delete=models.PROTECT, related_name="sales"
+    )
+    cash_session = models.ForeignKey(
+        CashSession,
+        verbose_name=_("cash session"),
+        on_delete=models.PROTECT,
+        related_name="sales",
+    )
+    customer = models.ForeignKey(
+        "customers.Customer",
+        verbose_name=_("customer"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="sales",
+    )
+    mode = models.CharField(_("mode"), max_length=20, choices=Mode.choices)
+    status = models.CharField(
+        _("status"), max_length=20, choices=Status.choices, default=Status.PENDING
+    )
+    subtotal = models.DecimalField(_("subtotal"), max_digits=10, decimal_places=2)
+    discount_total = models.DecimalField(_("discount"), max_digits=10, decimal_places=2, default=0)
+    total = models.DecimalField(_("total"), max_digits=10, decimal_places=2)
+    balance = models.DecimalField(_("balance"), max_digits=10, decimal_places=2)
+
+    class Meta:
+        verbose_name = _("sale")
+        verbose_name_plural = _("sales")
+        ordering = ["-created_at"]
+        permissions = [
+            ("charge", _("Can charge sales and print receipts")),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=["branch", "number"], name="unique_sale_number"),
+            models.CheckConstraint(
+                condition=~Q(mode="drop_off") | Q(customer__isnull=False),
+                name="drop_off_sale_has_customer",
+            ),
+            models.CheckConstraint(
+                condition=Q(subtotal__gte=0, discount_total__gte=0, total__gte=0, balance__gte=0),
+                name="sale_amounts_not_negative",
+            ),
+        ]
+
+    def __str__(self):
+        return self.number
+
+
+class SaleItem(BaseModel):
+    """A line of a sale: a service or a product, with the price it was charged at."""
+
+    sale = models.ForeignKey(
+        Sale, verbose_name=_("sale"), on_delete=models.PROTECT, related_name="items"
+    )
+    service = models.ForeignKey(
+        Service,
+        verbose_name=_("service"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="sale_items",
+    )
+    product = models.ForeignKey(
+        "inventory.Product",
+        verbose_name=_("product"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="sale_items",
+    )
+    quantity = models.DecimalField(_("quantity"), max_digits=10, decimal_places=3)
+    unit_price = models.DecimalField(
+        _("unit price"),
+        max_digits=10,
+        decimal_places=2,
+        help_text=_("Copied from the catalog when charging; later price changes do not alter it."),
+    )
+    amount = models.DecimalField(_("amount"), max_digits=10, decimal_places=2)
+
+    class Meta:
+        verbose_name = _("sale item")
+        verbose_name_plural = _("sale items")
+        constraints = [
+            # A line is either a service or a product.
+            models.CheckConstraint(
+                condition=Q(service__isnull=False, product__isnull=True)
+                | Q(service__isnull=True, product__isnull=False),
+                name="sale_item_service_or_product",
+            ),
+            models.CheckConstraint(
+                condition=Q(quantity__gt=0), name="sale_item_quantity_positive"
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.quantity} x {self.service or self.product}"

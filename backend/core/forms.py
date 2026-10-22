@@ -45,11 +45,11 @@ class InputFilterModelForm(forms.ModelForm):
 
 
 class BranchForm(InputFilterModelForm):
-    input_filters = {"name": "name", "phone": "digits"}
+    input_filters = {"name": "name", "phone": "digits", "sale_prefix": "code"}
 
     class Meta:
         model = Branch
-        fields = ["name", "address", "phone"]
+        fields = ["name", "address", "phone", "sale_prefix"]
 
 
 class UserChangeForm(InputFilterModelForm, unfold_forms.UserChangeForm):

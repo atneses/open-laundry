@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from .middleware import get_current_user
-from .validators import validate_name, validate_person_name, validate_phone
+from .validators import validate_code, validate_name, validate_person_name, validate_phone
 
 
 class BaseModel(models.Model):
@@ -60,6 +60,17 @@ class Branch(BaseModel):
     name = models.CharField(_("name"), max_length=120, validators=[validate_name])
     address = models.CharField(_("address"), max_length=255, blank=True)
     phone = models.CharField(_("phone"), max_length=20, blank=True, validators=[validate_phone])
+    sale_prefix = models.CharField(
+        _("sale number prefix"),
+        max_length=5,
+        default="A",
+        validators=[validate_code],
+        help_text=_("Starts every sale number of the branch, e.g. A-000123."),
+    )
+    # Last sale number given; only changed by sales.services.next_sale_number.
+    last_sale_number = models.PositiveIntegerField(
+        _("last sale number"), default=0, editable=False
+    )
 
     class Meta:
         verbose_name = _("branch")
