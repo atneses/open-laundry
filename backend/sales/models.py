@@ -591,3 +591,60 @@ class AppliedDiscount(BaseModel):
 
     def __str__(self):
         return f"{self.discount} -{self.amount}"
+
+
+class DropOffOrder(BaseModel):
+    """Clothes left by a customer: the follow-up of a drop-off sale until delivery.
+
+    It is created with its sale and only moves forward, one status at a time. Once its
+    sale is cancelled, it no longer changes.
+    """
+
+    class Status(models.TextChoices):
+        RECEIVED = "received", _("Received")
+        IN_PROGRESS = "in_progress", _("In progress")
+        READY = "ready", _("Ready")
+        DELIVERED = "delivered", _("Delivered")
+
+    sale = models.OneToOneField(
+        Sale,
+        verbose_name=_("sale"),
+        on_delete=models.PROTECT,
+        related_name="drop_off_order",
+    )
+    status = models.CharField(
+        _("status"),
+        max_length=20,
+        choices=Status.choices,
+        default=Status.RECEIVED,
+    )
+    promised_at = models.DateTimeField(_("promised at"))
+    delivered_at = models.DateTimeField(_("delivered at"), null=True, blank=True)
+    delivered_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("delivered by"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="delivered_drop_off_orders",
+    )
+    notes = models.TextField(_("notes"), blank=True)
+
+    class Meta:
+        verbose_name = _("drop-off order")
+        verbose_name_plural = _("drop-off orders")
+        ordering = ["promised_at"]
+        permissions = [
+            ("deliver_with_balance", _("Can deliver a drop-off order with a pending balance")),
+        ]
+        constraints = [
+            # A delivered order keeps when and who.
+            models.CheckConstraint(
+                condition=~Q(status="delivered")
+                | Q(delivered_at__isnull=False, delivered_by__isnull=False),
+                name="delivered_drop_off_order_has_details",
+            ),
+        ]
+
+    def __str__(self):
+        return self.sale.number

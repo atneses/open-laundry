@@ -1,5 +1,6 @@
 """Tests for charging sales: lines, prices, numbers and stock (plan Stage 7.1)."""
 
+from datetime import timedelta
 from decimal import Decimal
 
 import pytest
@@ -7,13 +8,14 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.urls import reverse
+from django.utils import timezone
 
 from core.models import Branch
 from core.roles import ADMIN_ROLE, EMPLOYEE_ROLE
 from customers.models import Customer
 from inventory.models import Product, StockMovement
 from sales.models import Mode, Sale, Service, ServicePrice
-from sales.services import ItemRequest, create_sale, open_cash_session
+from sales.services import DropOffRequest, ItemRequest, create_sale, open_cash_session
 
 pytestmark = pytest.mark.django_db
 
@@ -84,7 +86,10 @@ def test_self_service_sale_uses_the_self_service_price(cashier, wash):
 
 
 def test_drop_off_sale_uses_the_drop_off_price(cashier, wash, customer):
-    sale = create_sale(cashier, Mode.DROP_OFF, [ItemRequest(2, service=wash)], customer)
+    items = [ItemRequest(2, service=wash)]
+    drop_off = DropOffRequest(timezone.now() + timedelta(days=1))
+
+    sale = create_sale(cashier, Mode.DROP_OFF, items, customer, drop_off)
 
     assert sale.total == Decimal("120.00")
 
@@ -200,8 +205,10 @@ def test_customer_of_another_branch_is_rejected(cashier, wash):
         phone="5500000000",
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as error:
         create_sale(cashier, Mode.DROP_OFF, [ItemRequest(1, service=wash)], other)
+
+    assert "customer" in error.value.message_dict
 
 
 @pytest.mark.parametrize("quantity", [0, -1, Decimal("1.5")])

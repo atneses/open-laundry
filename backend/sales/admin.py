@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from unfold.admin import ModelAdmin, TabularInline
+from unfold.admin import ModelAdmin, StackedInline, TabularInline
 from unfold.decorators import action
 
 from core.admin_base import ReadOnlyModelAdmin
@@ -14,6 +14,7 @@ from .models import (
     AppliedDiscount,
     CashSession,
     Discount,
+    DropOffOrder,
     Payment,
     Sale,
     SaleItem,
@@ -195,6 +196,20 @@ class AppliedDiscountInline(TabularInline):
         return False
 
 
+class DropOffOrderInline(StackedInline):
+    model = DropOffOrder
+    extra = 0
+    fields = ["status", "promised_at", "delivered_at", "delivered_by", "notes"]
+    readonly_fields = fields
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Sale)
 class SaleAdmin(ReadOnlyModelAdmin):
     """Sales are charged at the POS and only viewed here."""
@@ -213,7 +228,7 @@ class SaleAdmin(ReadOnlyModelAdmin):
     search_fields = ["number", "customer__name", "customer__phone"]
     list_select_related = ["customer", "created_by"]
     date_hierarchy = "created_at"
-    inlines = [SaleItemInline, AppliedDiscountInline, PaymentInline]
+    inlines = [DropOffOrderInline, SaleItemInline, AppliedDiscountInline, PaymentInline]
 
 
 @admin.register(Discount)
@@ -249,3 +264,21 @@ class DiscountAdmin(ModelAdmin):
     # Applied discounts point to it.
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(DropOffOrder)
+class DropOffOrderAdmin(ReadOnlyModelAdmin):
+    """Drop-off orders are received and delivered at the POS and only viewed here."""
+
+    list_display = ["sale", "status", "promised_at", "customer", "balance", "delivered_at"]
+    list_filter = ["status"]
+    search_fields = ["sale__number", "sale__customer__name", "sale__customer__phone"]
+    list_select_related = ["sale__customer"]
+
+    @admin.display(description=_("customer"))
+    def customer(self, obj):
+        return obj.sale.customer
+
+    @admin.display(description=_("balance"))
+    def balance(self, obj):
+        return obj.sale.balance

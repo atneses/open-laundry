@@ -1,6 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
@@ -18,6 +19,7 @@ from .models import (
     AppliedDiscount,
     CashSession,
     Discount,
+    DropOffOrder,
     Mode,
     Payment,
     Sale,
@@ -26,11 +28,16 @@ from .models import (
     ServicePrice,
 )
 
+if TYPE_CHECKING:
+    from datetime import datetime
+
 OPERATE_CASH_SESSION = "sales.operate_cash_session"
 VIEW_ALL_CASH_SESSIONS = "sales.view_all_cash_sessions"
 CHARGE = "sales.charge"
 APPLY_DISCOUNT = "sales.apply_discount"
 CANCEL_SALE = "sales.cancel_sale"
+MANAGE_CUSTOMERS = "customers.manage_customers"
+DELIVER_WITH_BALANCE = "sales.deliver_with_balance"
 CENTS = Decimal("0.01")
 
 
@@ -137,13 +144,28 @@ class ItemRequest:
     product: Product | None = None
 
 
+@dataclass
+class DropOffRequest:
+    """What a drop-off sale needs besides its lines: when it will be ready."""
+
+    promised_at: datetime
+    notes: str = ""
+
+
 @requires_perm(CHARGE, message=_("You cannot charge sales."))
 @transaction.atomic
-def create_sale(user, mode: str, items: list[ItemRequest], customer=None) -> Sale:
+def create_sale(
+    user,
+    mode: str,
+    items: list[ItemRequest],
+    customer=None,
+    drop_off: DropOffRequest | None = None,
+) -> Sale:
     """Charge a sale in the open cash session of the user's branch.
 
     Copies each price from the catalog and takes sold products out of stock. The sale
-    starts unpaid; payments are added with ``add_payment``.
+    starts unpaid; payments are added with ``add_payment``. A drop-off sale also
+    receives its ``DropOffOrder`` from ``drop_off``.
     """
 
     session = _open_session(user)
@@ -153,6 +175,12 @@ def create_sale(user, mode: str, items: list[ItemRequest], customer=None) -> Sal
 
     if customer is not None and customer.branch_id != user.branch_id:
         raise ValidationError({"customer": _("The customer belongs to another branch.")})
+
+    if mode == Mode.DROP_OFF and drop_off is None:
+        raise ValidationError({"promised_at": _("Enter when the order will be ready.")})
+
+    if mode == Mode.DROP_OFF and drop_off.promised_at < timezone.now():
+        raise ValidationError({"promised_at": _("The promised date cannot be in the past.")})
 
     if not items:
         raise ValidationError(_("Add at least one service or product."))
@@ -178,6 +206,14 @@ def create_sale(user, mode: str, items: list[ItemRequest], customer=None) -> Sal
         line.created_by = line.updated_by = user
 
     SaleItem.objects.bulk_create(lines)
+
+    if mode == Mode.DROP_OFF:
+        DropOffOrder.objects.create(
+            sale=sale,
+            promised_at=drop_off.promised_at,
+            notes=drop_off.notes.strip(),
+            created_by=user,
+        )
 
     for line in lines:
         if line.product is not None:
@@ -237,6 +273,11 @@ def cancel_sale(user, sale: Sale, reason: str) -> Sale:
 
     if sale.status == Sale.Status.CANCELLED:
         raise ValidationError(_("This sale is already cancelled."))
+
+    order = DropOffOrder.objects.filter(sale=sale).first()
+
+    if order is not None and order.status == DropOffOrder.Status.DELIVERED:
+        raise ValidationError(_("A delivered drop-off order cannot be cancelled."))
 
     reason = reason.strip()
 
@@ -406,6 +447,67 @@ def _discount_amount(discount: Discount, base: Decimal) -> Decimal:
         return (base * discount.value / MAX_PERCENTAGE).quantize(CENTS)
 
     return discount.value
+
+
+@requires_perm(MANAGE_CUSTOMERS, message=_("You cannot manage drop-off orders."))
+@transaction.atomic
+def advance_drop_off_order(user, order: DropOffOrder) -> DropOffOrder:
+    """Move the order to its next status: received → in progress → ready.
+
+    Delivering is done with ``deliver_drop_off_order``, which checks the balance.
+    """
+
+    order = _lock_drop_off_order(user, order)
+    next_status = {
+        DropOffOrder.Status.RECEIVED: DropOffOrder.Status.IN_PROGRESS,
+        DropOffOrder.Status.IN_PROGRESS: DropOffOrder.Status.READY,
+    }.get(order.status)
+
+    if next_status is None:
+        raise ValidationError(_("This order cannot move forward; deliver it instead."))
+
+    order.status = next_status
+    order.updated_by = user
+    order.save(update_fields=["status", "updated_at", "updated_by"])
+
+    return order
+
+
+@requires_perm(MANAGE_CUSTOMERS, message=_("You cannot manage drop-off orders."))
+@transaction.atomic
+def deliver_drop_off_order(user, order: DropOffOrder) -> DropOffOrder:
+    """Deliver a ready order. With a pending balance it needs sales.deliver_with_balance."""
+
+    order = _lock_drop_off_order(user, order)
+
+    if order.status != DropOffOrder.Status.READY:
+        raise ValidationError(_("Only a ready order can be delivered."))
+
+    if order.sale.balance > 0 and not user.has_perm(DELIVER_WITH_BALANCE):
+        raise PermissionDenied(_("You cannot deliver an order with a pending balance."))
+
+    order.status = DropOffOrder.Status.DELIVERED
+    order.delivered_at = timezone.now()
+    order.delivered_by = order.updated_by = user
+    order.save(
+        update_fields=["status", "delivered_at", "delivered_by", "updated_at", "updated_by"],
+    )
+
+    return order
+
+
+def _lock_drop_off_order(user, order: DropOffOrder) -> DropOffOrder:
+    """Lock the order's sale and reload the order; a cancelled sale freezes it."""
+
+    sale = _lock_sale(user, order.sale)
+
+    if sale.status == Sale.Status.CANCELLED:
+        raise ValidationError(_("The sale of this order is cancelled."))
+
+    order = DropOffOrder.objects.get(pk=order.pk)
+    order.sale = sale
+
+    return order
 
 
 def _check_stock(lines: list[SaleItem]) -> None:

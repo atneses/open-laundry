@@ -186,6 +186,14 @@ UNFOLD = {
                         "permission": lambda request: request.user.has_perm("sales.view_sale"),
                     },
                     {
+                        "title": _("Drop-off orders"),
+                        "icon": "local_shipping",
+                        "link": reverse_lazy("admin:sales_dropofforder_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "sales.view_dropofforder",
+                        ),
+                    },
+                    {
                         "title": _("Cash sessions"),
                         "icon": "point_of_sale",
                         "link": reverse_lazy("admin:sales_cashsession_changelist"),
