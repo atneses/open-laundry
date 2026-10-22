@@ -1,6 +1,6 @@
 # MVP: Sistema de Gestión de Lavandería
 
-> Definición del MVP y propuesta de implementación · Última actualización: 2026-10-18
+> Definición del MVP y propuesta de implementación · Última actualización: 2026-10-22
 
 Sistema web para una lavandería de una sola sucursal con autoservicio y servicio por encargo: ventas y caja, clientes, encargos, inventario de insumos, tickets y **activación de las lavadoras y secadoras desde el sistema**, con registro de cada uso.
 
@@ -29,10 +29,6 @@ Sistema web para una lavandería de una sola sucursal con autoservicio y servici
   - [Opciones evaluadas](#opciones-evaluadas)
 - [6. Seguridad](#6-seguridad)
 - [7. Plan de trabajo](#7-plan-de-trabajo)
-  - [Fase 0 – Preparación](#fase-0--preparación)
-  - [Fase 1 – MVP operativo](#fase-1--mvp-operativo)
-  - [Fase 2 – Control de máquinas e integraciones](#fase-2--control-de-máquinas-e-integraciones)
-  - [Fase 3 – Crecimiento](#fase-3--crecimiento)
 - [8. Estructura del repositorio](#8-estructura-del-repositorio)
 - [9. Pendientes](#9-pendientes)
 - [Anexo: diseños para fases futuras](#anexo-diseños-para-fases-futuras)
@@ -56,7 +52,7 @@ Sistema web para una lavandería de una sola sucursal con autoservicio y servici
 | **Caja**                    | Apertura y corte **por turno**; una caja abierta por sucursal.                                                                                                                              |
 | **Tickets**                 | Comprobante no fiscal con desglose del consumo, en impresora térmica **POS-8360 de 80 mm por USB**.                                                                                         |
 | **Roles**                   | **Administrador (admin)** y **empleado**. Más de 5 usuarios, cada uno con su propia cuenta.                                                                                                 |
-| **Permisos**                | Cada acción es un permiso. El admin puede agregar permisos de admin a un empleado concreto (excepto gestionar usuarios y permisos).                                                         |
+| **Permisos**                | Cada acción es un permiso. El admin puede agregar permisos de admin a un empleado concreto, incluso el de gestionar usuarios y permisos.                                                    |
 | **Descuentos**              | El empleado solo aplica los del catálogo que crea el admin: porcentaje o monto fijo, con vigencia, por servicio o modalidad.                                                                |
 | **Cancelaciones**           | El empleado puede cancelar sin autorización, con motivo obligatorio y registro en bitácora.                                                                                                 |
 | **Acciones reservadas**     | Solo las hace un admin o un empleado con ese permiso. La autorización remota desde el celular queda para una fase futura.                                                                   |
@@ -127,7 +123,7 @@ flowchart TB
 | Tareas asíncronas      | Celery + Redis                                                              | Comandos a máquinas y reintentos sin bloquear la API.                      |
 | Control de máquinas    | MQTT (Mosquitto) + programa propio en la cajita (ESPHome o firmware propio) | La cajita se conecta sola al broker; no hay que abrir puertos en el local. |
 | Admin / back-office    | Django Admin + `django-unfold`                                              | Ver *Interfaces*.                                                          |
-| Frontend               | React + TypeScript + Vite                                                   | Solo operación diaria. UI: MUI o shadcn/ui. Datos: TanStack Query.         |
+| Frontend               | React + TypeScript + Vite                                                   | Solo operación diaria. UI: Tailwind + shadcn/ui. Datos: TanStack Query.    |
 | Tiempo real (opcional) | Django Channels o SSE                                                       | Se puede empezar con *polling* cada 10 s.                                  |
 | Mobile                 | React Native (Expo)                                                         | Fase 3; misma API.                                                         |
 | BD                     | PostgreSQL 16                                                               |                                                                            |
@@ -242,6 +238,7 @@ erDiagram
     }
     CUSTOMER {
         int id PK
+        int branch_id FK
         string name "obligatorio"
         string phone "obligatorio, único por sucursal"
         string email "opcional"
@@ -294,6 +291,7 @@ erDiagram
         decimal unit_cost "opcional"
         int machine_cycle_id FK "opcional"
         int sale_id FK "opcional"
+        string reason "obligatorio en ajustes"
         int created_by FK
         datetime created_at
     }
@@ -444,10 +442,13 @@ erDiagram
 **Inventario**
 - **LoadConsumption:** solo para lavado (el secado no consume). Valor inicial 150–200 ml de detergente y 150–200 ml de suavizante, editable desde el admin.
 - Al iniciar un ciclo con `customer_supplies = false` se genera un `StockMovement(kind=consumption)`. Así se ve el costo de la promoción y salen alertas de stock mínimo. Comparar cada mes el consumo teórico contra las compras ayuda a afinar la medida y detectar mermas.
-- **StockMovement:** `quantity` lleva signo (positivo suma, negativo resta): las compras suman, el consumo y las ventas restan, y los ajustes pueden ir en cualquier sentido. El stock de un producto solo cambia con movimientos; los movimientos no se editan ni se borran.
+- **StockMovement:** `quantity` lleva signo (positivo suma, negativo resta): las compras y las ventas canceladas (`sale_cancellation`) suman, el consumo y las ventas restan, y los ajustes pueden ir en cualquier sentido. El stock de un producto solo cambia con movimientos; los movimientos no se editan ni se borran.
 
 **Caja y pagos**
-- **CashSession:** uno por turno, y solo una caja abierta por sucursal (el siguiente turno abre cuando el anterior cierra); no se puede cobrar sin caja abierta. Si al cerrar hay diferencia entre lo contado y lo esperado, la nota es obligatoria. Se guarda quién la cerró (`closed_by`); una caja olvidada la puede cerrar desde el admin quien tenga `sales.view_all_cash_sessions`. `expected_cash = opening_float + cash payments of the session` (menos cancelados). Cada pago cuenta en el turno en que se recibió (`Payment.cash_session`), aunque la venta sea de otro turno (p. ej. el saldo de un encargo). Un pago no puede ser mayor que el saldo: el cambio en efectivo no se guarda. **Cancelar** una venta requiere caja abierta: ese turno devuelve sus pagos (su corte resta el efectivo y la tarjeta de la venta, aunque se hayan cobrado en un turno anterior, cuyo corte no cambia) y los productos vendidos regresan al stock (`StockMovement(kind=sale_cancellation)`). `card_total` se cuadra contra el reporte de Mercado Pago Point.
+- **CashSession:** uno por turno, y solo una caja abierta por sucursal (el siguiente turno abre cuando el anterior cierra); no se puede cobrar sin caja abierta. Se guarda quién la cerró (`closed_by`); una caja olvidada la puede cerrar desde el admin quien tenga `sales.view_all_cash_sessions`.
+- **Corte:** `expected_cash = opening_float + cash payments of the session − cash returned by sales cancelled in the session`; `card_total` igual con la tarjeta y se cuadra contra el reporte de Mercado Pago Point. Si lo contado no coincide con lo esperado, la nota es obligatoria.
+- **Payment:** cada pago cuenta en el turno en que se recibió (`Payment.cash_session`), aunque la venta sea de otro turno (p. ej. el saldo de un encargo). Un pago no puede ser mayor que el saldo: el cambio en efectivo no se guarda.
+- **Cancelar** una venta requiere caja abierta: ese turno devuelve sus pagos (`Sale.cancel_cash_session`), aunque se hayan cobrado en un turno anterior, cuyo corte no cambia. Los productos vendidos regresan al stock.
 - **Pago con tarjeta:** en el MVP se captura a mano la referencia del voucher; en la Fase 2 la integración con la API de Point la llena sola (`mp_payment_intent_id`).
 
 **Usuarios y máquinas**
@@ -487,7 +488,7 @@ permisos efectivos = permisos del rol + permisos agregados al usuario
 - Solo quien tiene *Gestionar usuarios, roles y permisos* agrega o quita permisos, y por eso un empleado no puede darse permisos a sí mismo. Ese permiso también se puede dar como extra: quien lo tiene decide a quién confiárselo.
 - Al quitar un permiso, deja de valer en la siguiente acción, sin cerrar sesión. Se registra quién lo otorgó o quitó y cuándo.
 - Si un empleado no tiene el permiso, la acción queda **bloqueada**: la hace un admin o un empleado con ese permiso.
-- **Implementación:** `Group` por rol, `Permission` personalizados con los códigos de la tabla y `user_permissions` para los individuales. Cada endpoint de DRF declara el permiso que exige; el frontend solo oculta botones. **La validación siempre ocurre en el backend.** En el admin, la ficha del usuario muestra los permisos del rol y casillas para los extra.
+- **Implementación:** `Group` por rol, `Permission` personalizados con los códigos de la tabla y `user_permissions` para los individuales. Los servicios del backend y cada endpoint de DRF validan el permiso; el frontend solo oculta botones. **La validación siempre ocurre en el backend.** En el admin, la ficha del usuario muestra los permisos del rol y casillas para los extra.
 - **Los roles se pueden editar:** se crean con los permisos de la tabla y después el admin puede cambiarlos; las actualizaciones del sistema nunca deshacen sus cambios. Cuando una etapa agrega permisos nuevos, se le dan a los roles una sola vez (Admin: todos; Empleado: los de la tabla).
 
 ### Ticket para el cliente
@@ -533,8 +534,6 @@ Entrega estimada: 18/10/2026 18:00
 ```
 /api/auth/token/  /api/auth/refresh/
 /api/auth/me/                       usuario actual + permisos efectivos
-/api/users/                         CRUD (solo admin)
-/api/users/{id}/permissions/        agregar / quitar permisos individuales (solo admin)
 /api/customers/                     CRUD + búsqueda por teléfono/nombre
 /api/services/                      catálogo + precios por modalidad
 /api/products/                      solo lectura + /low-stock/ (se crean y editan en el admin)
@@ -544,13 +543,12 @@ Entrega estimada: 18/10/2026 18:00
 /api/drop-off-orders/               listado por estado, cambiar estado, entregar
 /api/discounts/                     catálogo (gestionar / vigentes)
 /api/cash-sessions/                 abrir / cerrar turno, corte actual, historial
-/api/machines/                      listado con estado
-/api/machines/{id}/start/           crea MachineCycle y encola el comando
-/api/machines/{id}/test-pulse/      solo con machines.manage_machines
-/api/machine-controllers/           estado de la cajita (en línea, última conexión)
-/api/machine-cycles/                historial de usos
+/api/machines/                      listado con estado y ciclos pendientes
+/api/machines/{id}/start/           activa un ciclo (crea o usa el MachineCycle)
 /api/reports/daily-sales/  /machine-usage/  /inventory/
 ```
+
+Usuarios y permisos, catálogo, descuentos y máquinas se administran en el admin, no por la API. En la Fase 2 se agrega el estado de la cajita para la caja (en línea / fuera de línea); el pulso de prueba es una acción del admin.
 
 ---
 
@@ -568,7 +566,6 @@ Del manual de la lavadora (`docs/Wahser_GCWM1069CD7_manual.pdf`):
 - 120 V, 60 Hz, enchufe de 3 patas en contacto propio.
 - Tiene WiFi para la plataforma comercial **LG Laundry Lounge** (no LG ThinQ). Una lavadora ya está en la red, sin registrar. **El control no depende de ese WiFi.**
 - Contraseña de fábrica del menú de servicio: `3000` (ver §6).
-- Falta revisar el manual de la secadora.
 
 ### La cajita de relés (instalación de Aitare)
 
@@ -592,7 +589,7 @@ Se conservan la placa, los relés y los 6 cables; solo se cambia el programa (ES
 **Cómo se comunica:**
 - `RelayBoardDriver` (implementa `MachineDriver`) publica en `laundry/<controller>/cmd`: `{"id": 812, "channel": 3, "pulses": 4, "width_ms": 50, "gap_ms": 150}`.
 - La cajita envía los pulsos por el relé y responde en `laundry/<controller>/ack`: `{"id": 812, "ok": true}`. Publica *en línea / fuera de línea* con el mensaje de "última voluntad" de MQTT.
-- **Sin pulsos duplicados:** él `id` es el del `MachineCycle`; la cajita recuerda los últimos y no repite si llega un reintento.
+- **Sin pulsos duplicados:** el `id` es el del `MachineCycle`; la cajita recuerda los últimos y no repite si llega un reintento.
 - La **escucha MQTT** (proceso aparte) recibe confirmaciones, estado y consumo, y actualiza `MachineCycle`, `Machine` y `MachineController`. Se guarda la respuesta cruda en `driver_response`.
 - Cada cajita tiene su propio usuario MQTT y solo accede a sus temas.
 
@@ -605,8 +602,9 @@ sequenceDiagram
     participant P as Cajita
     participant L as Lavadora 3
 
-    E->>S: Cobra 1 carga de lavado (autoservicio)
-    S->>S: Crea MachineCycle (requested)
+    E->>S: Cobra 1 carga de lavado (autoservicio, pagada completa)
+    E->>S: Activar Lavadora 3
+    S->>S: MachineCycle → requested
     S->>P: cmd {id: 812, channel: 3, pulses: 4, width_ms: 50}
     P->>L: 4 pulsos (como 4 monedas)
     P-->>S: ack {id: 812, ok: true}
@@ -646,7 +644,7 @@ Aitare ya tenía esta configuración: hay que copiar sus valores de ControlEquip
 | Opción                                                                | Rol           | Resumen                                                                                                                                                       |
 |-----------------------------------------------------------------------|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **A. Cajita de relés con programa propio**                            | **Principal** | Hardware y cableado ya instalados, independiente de LG, la máquina no arranca sin pago. Requiere cambiar el programa (reversible) y alguien presiona Start.   |
-| **B. LG Smart Laundry Lounge / Commercial Laundry API**               | A futuro      | Oficial y con más datos. Solo para socios B2B de LG; documentación no pública; no se sabe si permite iniciar ciclos. Información pedida con `contacto_lg.md`. |
+| **B. LG Smart Laundry Lounge / Commercial Laundry API**               | A futuro      | Oficial y con más datos. Solo para socios B2B de LG; documentación no pública; no se sabe si permite iniciar ciclos. Se pidió información a LG.               |
 | **C. Medición de consumo** (p. ej. Shelly Plus Plug US, 120 V / 15 A) | Complemento   | Confirma arranque y fin y cuenta ciclos reales, por MQTT. No arranca máquinas; hay que calibrar el umbral.                                                    |
 | **D. Registro manual** (OPL / PUSH)                                   | Respaldo      | Sin riesgo técnico; solo bitácora.                                                                                                                            |
 | LG ThinQ / `pythinqconnect` / Home Assistant                          | Descartada    | Son para aparatos de casa; estos equipos usan Laundry Lounge.                                                                                                 |
@@ -660,7 +658,7 @@ Sobre LG: la [página de LG México](https://www.lg.com/mx/business/lavanderia-c
 ## 6. Seguridad
 
 - HTTPS obligatorio; JWT con expiración corta + refresh token.
-- Permisos validados en el backend (§4); solo un admin gestiona usuarios y permisos.
+- Permisos validados en el backend (§4); solo quien tiene `core.manage_users` gestiona usuarios y permisos.
 - Datos de clientes: el mínimo necesario, aviso de privacidad y respaldos cifrados.
 - Credenciales (MQTT, LG, Mercado Pago) en variables de entorno o *secrets manager*, nunca en el repositorio.
 - MQTT cifrado; cada cajita con su propio usuario revocable y acceso solo a sus temas; solo el backend publica órdenes.
@@ -671,41 +669,12 @@ Sobre LG: la [página de LG México](https://www.lg.com/mx/business/lavanderia-c
 
 ## 7. Plan de trabajo
 
-### Fase 0 – Preparación
-- **Cajita:** capturas de la configuración de pulsos de cada equipo en ControlEquipos; foto de la conexión de un relé; adaptador USB-serie (CH340 o CP2102); respaldo del programa de Aitare; prueba con **una lavadora** en modo PAY; confirmar WiFi de 2.4 GHz.
-- **Máquinas:** manual de la secadora; cambiar la contraseña `3000`; probar un medidor de consumo en una lavadora (opcional).
-- **LG:** enviar la consulta de información (`contacto_lg.md`) y revisar el portal de desarrolladores con sesión iniciada.
-- **Caja:** driver de la POS-8360 y ticket de prueba de 80 mm; cuenta de desarrollador de Mercado Pago (API de Point).
-- **Proyecto:** repositorio, estructura `backend/`, docker compose y pruebas.
+El detalle por etapas y pasos está en [`plan.md`](plan.md). Resumen de las fases:
 
-### Fase 1 – MVP operativo
-- Autenticación, usuarios, roles y permisos individuales.
-- Admin con Unfold: marca, menú, configuración (catálogo, precios, descuentos, consumo por carga, máquinas, usuarios y permisos) y consultas de solo lectura.
-- Clientes (alta rápida por teléfono).
-- Catálogo de servicios con precio de autoservicio y de encargo.
-- Punto de venta: modalidad, cobro en efectivo o tarjeta (referencia del voucher), ticket y reimpresión.
-- Encargos: recepción con fecha promesa, pagos parciales, tablero pendiente / listo / entregado.
-- Inventario: entradas, consumo automático por carga, alertas de stock.
-- Descuentos autorizados.
-- Apertura y corte de caja por turno.
-- Máquinas y ciclos con **driver manual y simulador** (el simulador imita a la cajita: confirma o falla).
-- Reportes en el dashboard de Unfold.
-- Despliegue en una VM con respaldos.
-
-### Fase 2 – Control de máquinas e integraciones
-- Broker MQTT, escucha MQTT, `RelayBoardDriver` y programa de la cajita; alta de relés y pulsos de las 6 máquinas; pulso de prueba.
-- Medición de consumo en las 6 máquinas (opcional).
-- Estado de las máquinas en tiempo real; conciliación ventas ↔ ciclos y alertas de ciclos sin cobro.
-- Integración con la API de Mercado Pago Point.
-- `LGCloudDriver`, solo si LG da acceso a su API.
-
-### Fase 3 – Crecimiento
-- App móvil (Expo) y, si el negocio lo decide, activación por el propio cliente con pago en línea.
-- Notificaciones por WhatsApp/SMS ("tu ropa está lista").
-- Precios por programa o por tiempo de secado (el modelo ya lo soporta).
-- Autorización remota de acciones reservadas y verificación en dos pasos para admins (ver Anexo).
-- Permisos temporales y roles personalizados (p. ej. "Encargado de turno").
-- Facturación CFDI, multisucursal y programa de lealtad, si se necesitan.
+- **Fase 0 – Preparación:** datos y material para la cajita y las máquinas, caja (PC e impresora) y cuentas externas (Mercado Pago, LG). Se hace en paralelo al desarrollo.
+- **Fase 1 – MVP operativo:** backend y admin con Unfold (usuarios y permisos, catálogo, inventario, clientes, caja, ventas, pagos, descuentos, encargos, máquinas con driver manual y simulador, tickets y reportes), API, caja en React y despliegue con respaldos.
+- **Fase 2 – Control de máquinas e integraciones:** cajita por MQTT (`RelayBoardDriver`), medidores de consumo (opcional), conciliación ventas ↔ ciclos, Mercado Pago Point y `LGCloudDriver` si LG da acceso.
+- **Fase 3 – Crecimiento:** app móvil (Expo) y activación por el cliente con pago en línea; avisos por WhatsApp/SMS; precios por programa o por tiempo de secado (el modelo ya lo soporta); autorización remota y verificación en dos pasos (ver Anexo); permisos temporales y roles personalizados; CFDI, multisucursal y lealtad, si se necesitan.
 
 ---
 
@@ -736,11 +705,11 @@ Laundry/
 
 ## 9. Pendientes
 
-1. **Cajita:** capturas de la configuración de pulsos en ControlEquipos, foto de la conexión de un relé y adaptador USB-serie.
-2. **Secadora:** manual de la `CDG27RUCNS`, para confirmar que su entrada de pago y pulsos funcionan igual.
-3. **LG:** respuesta a la consulta (`contacto_lg.md`): compatibilidad, registro, API, inicio remoto y costos.
-4. **Insumos:** medida exacta de detergente y suavizante por carga (editable; no bloquea).
-5. **Impresora POS-8360:** confirmar con una impresión de prueba si acepta ESC/POS, y si se usa cajón de dinero.
+Información del negocio o de terceros que falta (las tareas para conseguirla están en la Etapa 0 de `plan.md`):
+
+1. **LG:** respuesta a la consulta: compatibilidad, registro, API, inicio remoto y costos.
+2. **Insumos:** medida exacta de detergente y suavizante por carga (editable; no bloquea).
+3. **Impresora POS-8360:** confirmar con una impresión de prueba si acepta ESC/POS, y si se usa cajón de dinero.
 
 ---
 
@@ -786,7 +755,6 @@ sequenceDiagram
 
 - Manual de la lavadora `GCWM1069CD7`: `docs/Wahser_GCWM1069CD7_manual.pdf`
 - Instalación de Aitare: fotos en `docs/board_1.jpeg` y `docs/board_2.jpeg`; programa en `Aitaire/` (fuera de git)
-- Consulta a LG: `contacto_lg.md`
 - LG México – Smart Laundry Lounge: https://www.lg.com/mx/business/lavanderia-comercial/smart-laundry-lounge/
 - LG – Commercial Laundry API: https://thinq.developer.lge.com/en/cloud/about/service/commercial-laundry/
 - LG Smart Solution API Developer: https://smartsolution.developer.lge.com/en/apiManage/landing

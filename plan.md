@@ -1,6 +1,6 @@
 # Plan de implementación: Sistema de Gestión de Lavandería
 
-> Basado en `mvp.md` · Última actualización: 2026-10-20
+> Basado en `mvp.md` · Última actualización: 2026-10-22
 
 Este plan divide la construcción del sistema en **etapas** y cada etapa en **pasos pequeños**. Cada paso dice:
 
@@ -93,7 +93,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 0 – Preparación en el local
 
-**Objetivo:** reunir los datos y el material para controlar las máquinas con la cajita, y dejar lista la caja (PC e impresora). **No bloquea** el desarrollo de las Etapas 1 a 14.
+**Objetivo:** reunir los datos y el material para controlar las máquinas con la cajita, y dejar lista la caja (PC e impresora). Se hace en paralelo y **no bloquea** el desarrollo; solo la Etapa 15 la necesita terminada.
 
 ### 0.1 Datos de la configuración de Aitare
 - [ ] **Qué se hace:** abrir ControlEquipos en la PC del negocio (aunque la cajita esté apagada) y tomar capturas de la configuración de **cada equipo**: pulso de arranque, duración del pulso (ms), número de pulsos, tiempo, costo y número de relé.
@@ -195,7 +195,6 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - El modelo `Branch` (sucursal) se creó en el paso 1.4 (y no en el 3.1) porque el usuario necesita apuntar a una sucursal desde la primera migración.
 
 **Riesgos y pendientes:**
-- **Traducciones:** los textos propios están traducidos en `backend/locale/es_MX/` (se mantienen con `makemessages`) y los de Unfold, que no trae español, en `backend/locale_unfold/`, aparte para que `makemessages` no los marque como obsoletos.
 - **Pendiente – nombres de permisos:** se guardan en la base en inglés y el admin los muestra así en las casillas de roles y usuarios, aunque su traducción ya está en el `.po`.
 - **Pendiente – traducción de Unfold incompleta:** los textos de complementos no usados (importar/exportar, historial, editor de texto) siguen en inglés.
 
@@ -240,7 +239,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** el permiso existe después de migrar.
 
 ### 3.2 Roles
-- [x] **Qué se hace:** crear los grupos **Admin** (todos los permisos) y **Empleado** (los permisos por defecto de la tabla de `mvp.md` §4) con una migración de datos. Después el admin puede editarlos, y cada etapa que define permisos agrega una migración que se los da a los roles una sola vez.
+- [x] **Qué se hace:** crear los grupos **Admin** y **Empleado** con una migración de datos, según la tabla de `mvp.md` §4.
 - **Para qué:** asignar un rol completo a un usuario con un solo clic, sin repetir la asignación de permisos en cada etapa.
 - **Listo cuando:** después de migrar, Admin tiene todos los permisos y Empleado no tiene `core.manage_users` (prueba).
 
@@ -256,7 +255,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** se puede crear un empleado, darle un permiso extra y desactivarlo; un usuario sin `core.manage_users` no entra a la pantalla (prueba).
 
 **Notas de la implementación:**
-- Los roles se crean en la migración `core/0003_create_roles` (*Admin*: todos los permisos; *Empleado*: ninguno, hasta que las apps definan los suyos). Se editan en el admin, solo con `core.manage_users`, y `migrate` no deshace esos cambios.
+- Los roles se crean en la migración `core/0002_create_roles` (*Admin*: todos los permisos; *Empleado*: ninguno, hasta que las apps definan los suyos). Se editan en el admin, solo con `core.manage_users`.
 - Seguridad adicional: un usuario sin rango de superusuario no ve la casilla de superusuario ni puede editar a un superusuario (evita que alguien se suba de privilegios).
 - La bitácora (`PermissionLog`) se muestra en el área *Bitácoras* del menú.
 
@@ -309,7 +308,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **Notas de la implementación:**
 - Apps `sales` (`Service`, `ServicePrice` y las modalidades `Mode`) e `inventory` (`Product`, `LoadConsumption`, `StockMovement`). Los precios se capturan dentro de la ficha del servicio.
-- **Permisos:** `sales.manage_catalog` (servicios, precios, **productos** y consumo por carga), `inventory.receive_stock` (entradas) e `inventory.adjust_stock` (ajustes). Las migraciones `sales/0002` e `inventory/0003` se los dan a los roles: Admin, todos; Empleado, `receive_stock`. Productos y movimientos se ven con cualquiera de los tres; crear o editar productos requiere `manage_catalog`.
+- **Permisos:** `sales.manage_catalog` (servicios, precios, **productos** y consumo por carga), `inventory.receive_stock` (entradas) e `inventory.adjust_stock` (ajustes). Las migraciones `sales/0002` e `inventory/0002` se los dan a los roles: Admin, todos; Empleado, `receive_stock`. Productos y movimientos se ven con cualquiera de los tres; crear o editar productos requiere `manage_catalog`.
 - **Precios sin fecha:** el último precio agregado es el activo y los anteriores quedan inactivos como historial, con su fecha `created_at` (`ServicePrice.save`). Los precios no se editan ni se borran, solo se desactivan; un error de captura se corrige agregando otro precio.
 - **Movimientos:** `quantity` lleva signo (compra > 0; consumo y venta < 0; ajuste ≠ 0), validado en el modelo y en la base de datos. `record_stock_movement` (`inventory/services.py`) guarda el movimiento y actualiza el stock con `F()` en una transacción. En el admin, quien tiene `receive_stock` solo puede registrar compras y quien tiene `adjust_stock`, ajustes; el consumo y las ventas los generará el sistema (Etapas 7 y 9). Los movimientos no se editan ni se borran, y el stock del producto es de solo lectura.
 - **Unidad fija:** la unidad de un producto no se puede cambiar una vez que tiene movimientos (solo lectura en el admin y rechazada en `Product.save`); si hace falta otra unidad, se crea otro producto.
@@ -320,10 +319,9 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Riesgos y pendientes:**
 - **Riesgo – stock negativo:** no se impide que el stock quede en negativo (p. ej. si el consumo teórico supera lo registrado o faltó capturar una entrada). Se decidió así para no bloquear un lavado; el filtro de stock bajo lo hace visible.
 - **Riesgo – precios editados por código:** `update()` y `bulk_update` se saltan la regla de que los precios no se editan.
-- **Riesgo – borrar un servicio:** borra también sus precios (con su historial) y su consumo por carga (`CASCADE`). Desde la Etapa 7 las ventas protegerán a los servicios ya vendidos; para retirar uno sin perder nada se usa `is_active`.
+- **Riesgo – borrar un servicio:** si nunca se ha vendido, borra también sus precios (con su historial) y su consumo por carga (`CASCADE`); uno vendido no se puede borrar. Para retirarlo se usa `is_active`.
 - **Riesgo – sucursal del precio:** cada precio pide su sucursal a mano. Con una sola sucursal no importa; con varias, un precio con la sucursal equivocada no se encontraría al cobrar.
-- **Pendiente – precio a cobrar:** al cobrar (Etapa 7) se busca el precio activo por servicio, modalidad, programa y sucursal; si no hay uno por programa, se usa el general.
-- **Pendiente – enlaces del movimiento:** `StockMovement` todavía no tiene `sale` ni `machine_cycle`; se agregan cuando existan esos modelos (Etapas 7 y 9).
+- **Pendiente – enlace al ciclo:** `StockMovement.machine_cycle` se agrega con `MachineCycle` (Etapa 9).
 
 **✅ Etapa 4 terminada cuando:** el catálogo y el inventario se administran desde el admin.
 
@@ -349,7 +347,6 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - Nueva área *Operación* en el menú lateral, primera según `mvp.md` §2.
 
 **Riesgos y pendientes:**
-- **Riesgo – borrar un cliente:** hoy se puede borrar; desde la Etapa 7 las ventas lo protegerán (`PROTECT`).
 - **Pendiente – uso por empleados:** el rol Empleado tiene `manage_customers`, pero un empleado normal no entra al admin (`is_staff`); registrará clientes desde la caja (API en 12.4, pantalla en la Etapa 13).
 
 **✅ Etapa 5 terminada cuando:** se pueden registrar y buscar clientes desde el admin.
@@ -382,13 +379,11 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Cambio respecto a lo planeado:** una sola caja abierta **por sucursal** (no por empleado): el siguiente turno no abre hasta que el anterior cierre. Se exige también en la base de datos.
 - `CashSession` en `sales`; servicios `open_cash_session` y `close_cash_session` en `sales/services.py`. La sucursal sale del usuario: sin sucursal asignada no se puede abrir.
 - Al cerrar se guardan esperado, contado, diferencia, total de tarjeta y conteos. **Con diferencia ≠ 0 la nota es obligatoria** (validado en el servicio y en la base de datos).
-- Los totales del turno (`session_totals`) devuelven 0 hasta que existan ventas y pagos (Etapa 7).
 - **Permisos:** `sales.operate_cash_session` y `sales.view_all_cash_sessions`; la migración `sales/0004` se los da a Admin y `operate_cash_session` a Empleado. Cortes en el área *Operación* del menú.
 - **Permisos en los servicios:** abrir requiere `sales.operate_cash_session`; cerrar, ser quien abrió (con ese permiso) o tener `sales.view_all_cash_sessions`. Si no, `PermissionDenied`.
 - **Caja olvidada:** quien tiene `sales.view_all_cash_sessions` puede cerrar desde el admin una caja que quedó abierta (acción *Cerrar caja* en el detalle del corte), capturando el efectivo contado y, si hay diferencia, la nota. Cada corte guarda quién lo cerró (`closed_by`).
 
 **Riesgos y pendientes:**
-- ~~**Pendiente – cálculo real del corte:**~~ resuelto en la Etapa 7 (7.2 y 7.5): `session_totals` suma pagos en efectivo y tarjeta, ventas y cancelaciones del turno.
 - **Pendiente – API de caja:** abrir, cerrar y consultar desde la caja (Etapa 12, 12.2). Hasta entonces solo se abre y cierra desde código o pruebas.
 - **Riesgo – acción del admin no probada en el navegador:** el diálogo de *Cerrar caja* se probó con pruebas automáticas, no a mano.
 
@@ -398,7 +393,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Riesgo – registros sin usuario:** fuera de una petición (consola, `seed_demo`, migraciones y, más adelante, Celery o MQTT) `created_by` queda vacío salvo que se pase a mano. Por eso `StockMovement.created_by` ahora es opcional (antes era obligatorio).
 - **Riesgo – escrituras masivas:** `bulk_create` y `QuerySet.update` no pasan por `save`; deben llenar estos campos a mano (como `log_permission_changes`).
 - **Riesgo – API con JWT sin probar:** el middleware lee el usuario cuando se guarda, después de que DRF lo autentica, pero no hay endpoints todavía; se prueba en la Etapa 12.
-- **Pendiente – modelos futuros:** el MVP define campos como `Sale.user_id` y `Payment.user_id`; al crearlos, decidir si se usa `created_by` en su lugar.
+- **Pendiente – `MachineCycle.user_id`:** el MVP lo define; al crearlo (Etapa 9), decidir si se usa `created_by` en su lugar, como en `Sale` y `Payment`.
 
 **✅ Etapa 6 terminada cuando:** las reglas de abrir y cerrar caja y el cálculo del corte pasan sus pruebas.
 
@@ -431,19 +426,20 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** cancelar sin motivo o sin permiso da error, y el corte refleja la cancelación (pruebas).
 
 **Notas de la implementación:**
-- **7.1:** `Sale` y `SaleItem` en `sales`; el cajero es `created_by` (no hay campo `user`). Servicio `create_sale` (`sales/services.py`): requiere `sales.charge`, la caja abierta de la sucursal del usuario y, en encargo, un cliente de la misma sucursal. Copia el precio activo del catálogo (`active_price`) y la venta empieza en `pending` con saldo = total.
-- **Folio:** prefijo por sucursal (`Branch.sale_prefix`, por defecto `A`) + consecutivo de 6 dígitos (`A-000123`). El contador `Branch.last_sale_number` se bloquea dentro de la transacción del cobro, así que no hay huecos ni repetidos.
-- **Productos:** venderlos crea un `StockMovement` de venta ligado a la venta (`StockMovement.sale`) en la misma transacción. **No se puede vender más de lo que hay en stock** (los productos se bloquean durante el cobro, así dos ventas a la vez no venden las mismas últimas unidades). Los servicios se venden en unidades completas.
-- Ventas en el admin (área *Operación*), de solo lectura, con sus líneas; se ven con `sales.view_sale`. Permiso `sales.charge` para Admin y Empleado (migración `sales/0007`).
-- **7.2:** `Payment` en `sales`, con `cash_session` (no estaba en el MVP): el pago cuenta en el turno en que se recibió, así el saldo de un encargo cobrado en otro turno cae en el corte correcto. No hay `paid_at`: se usan `created_at` / `created_by`. Servicio `add_payment`: requiere `sales.charge` y la caja abierta de la sucursal; rechaza montos ≤ 0, mayores que el saldo y ventas canceladas o de otra sucursal; recalcula saldo y estado bloqueando la venta. La referencia del voucher es opcional. `session_totals` ya suma efectivo y tarjeta (crédito + débito) y cuenta las ventas del turno. Pagos de solo lectura en la ficha de la venta (sin entrada propia en el menú); migración `sales/0009` da al Admin los permisos de `Payment`.
-- **7.3:** movido al 9.5 (la regla se valida al activar una máquina).
-- **7.4:** `Discount` (con `branch`) y `AppliedDiscount` en `sales`; quien lo aplicó es `created_by` (no hay campo `user`). `available_discounts(sale)` lista los activos, vigentes hoy, de la sucursal y modalidad de la venta, no aplicados y, si son por servicio, con alguno de sus servicios en la venta. `apply_discount` requiere `sales.apply_discount`, solo con la venta en `pending` (antes del primer pago); recalcula descuento, total y saldo. Se suman varios descuentos distintos (cada uno una vez); ninguno baja el total de $0 ni un renglón de su importe. Porcentaje sobre el subtotal o el renglón; monto fijo por servicio, una vez por renglón. Si el total queda en $0 la venta pasa a `paid`. Descuentos en el admin (área *Catálogo*) con `sales.manage_discounts`, sin borrar (se desactivan); aplicados de solo lectura en la ficha de la venta. Migración `sales/0011`: Admin todos, Empleado `sales.apply_discount`. El nombre del descuento admite `%` (no usa `validate_name`).
-- **7.5:** servicio `cancel_sale` (requiere `sales.cancel_sale`, motivo obligatorio y la caja abierta de la sucursal). La venta guarda `cancelled_at`, `cancelled_by`, `cancel_reason` y `cancel_cash_session` (no estaba en el MVP): el turno donde se cancela devuelve los pagos, así una venta cobrada en un turno ya cerrado se descuenta del turno abierto y el corte cerrado no cambia. `session_totals` resta del efectivo y de la tarjeta los pagos de las ventas canceladas en el turno, cuenta las ventas no canceladas y las cancelaciones. Los productos regresan al stock con un movimiento nuevo `sale_cancellation`. Permiso para Admin y Empleado (migración `sales/0013`). El mensaje "abre la caja" ahora es genérico (cobrar y cancelar).
+- Los servicios están en `sales/services.py` y declaran su permiso con `@requires_perm` (`core.permissions`). Una venta de otra sucursal da `PermissionDenied`.
+- **Quién y cuándo:** el cajero de la venta, quien cobró un pago y quien aplicó un descuento son `created_by`. No hay campos `user` ni `paid_at`.
+- **Folio:** prefijo por sucursal (`Branch.sale_prefix`, por defecto `A`) + 6 dígitos (`A-000123`). El contador `Branch.last_sale_number` se bloquea en la transacción del cobro, así que no hay huecos ni repetidos.
+- **Productos:** venderlos crea un `StockMovement` ligado a la venta. No se vende más de lo que hay en stock (los productos se bloquean durante el cobro). Los servicios se venden en unidades completas.
+- **Campos que no estaban en el MVP:** `Payment.cash_session` (el pago cuenta en el turno que lo recibió) y `Sale.cancel_cash_session` (el turno que cancela devuelve los pagos; un corte cerrado no cambia). `StockMovement` tiene el tipo nuevo `sale_cancellation`.
+- **Descuentos:** tienen `branch`, y su nombre admite `%` (no usa `validate_name`). Si los descuentos dejan el total en $0, la venta pasa a `paid`.
+- **Admin:** ventas en *Operación*, de solo lectura, con sus líneas, descuentos aplicados y pagos. Descuentos en *Catálogo*, con `sales.manage_discounts`, sin borrar.
+- **Migraciones de roles:** `sales/0007` (`charge`), `0009` (pagos, Admin), `0011` (descuentos; Empleado `apply_discount`) y `0013` (`cancel_sale`).
+- **7.3** se movió al 9.5.
 
 **Riesgos y pendientes:**
 - **Pendiente – precio por programa (función futura):** `active_price` ya busca por programa de lavado con respaldo al precio general, pero el cobro siempre usa el general porque no hay precios por programa.
 - **Riesgo – cambiar el prefijo:** el consecutivo es por sucursal; si una sucursal cambia su `sale_prefix`, su numeración sigue (p. ej. de `A-000010` a `B-000011`).
-- **Pendiente – cambio en efectivo:** no se guarda el monto recibido ni el cambio; los calcula la caja (Etapa 12) y el ticket (Etapa 10).
+- **Pendiente – cambio en efectivo:** no se guarda el monto recibido ni el cambio; los calculan el ticket (Etapa 10) y la caja (Etapa 13).
 - **Pendiente – pagos en el admin:** solo se ven dentro de la venta; no hay lista de pagos con filtro por método (el MVP lo menciona para el dashboard y reportes, Etapa 11).
 - **Riesgo – tarjeta sin referencia:** la referencia es opcional, así que un pago con tarjeta puede no tener cómo cuadrarse contra el reporte de Mercado Pago Point.
 - **Pendiente – descuentos por día de la semana:** el MVP pone de ejemplo "10% martes", pero la vigencia es solo por fechas; falta un campo de días si el negocio lo necesita.
@@ -511,6 +507,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 ### 9.7 Consumo de insumos
 - [ ] **Qué se hace:** al iniciar un ciclo de lavado sin `customer_supplies`, crear los movimientos de consumo según `LoadConsumption`.
 - **Listo cuando:** un lavado baja 150–200 ml de detergente y de suavizante; con `customer_supplies` no baja nada.
+- **Por decidir antes de empezar:** ¿el consumo se bloquea si el stock llega a 0 (como la venta de productos, 7.1) o se permite negativo para no frenar un lavado pagado (decisión de la Etapa 4)?
 
 ### 9.8 Cierre por tiempo
 - [ ] **Qué se hace:** tarea periódica (Celery Beat) que pasa a `finished` los ciclos que superen la duración esperada del programa.
@@ -823,11 +820,4 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Después del plan (Fase 3 en `mvp.md`)
 
-No forman parte de este plan; se planean cuando el sistema esté estable:
-- App móvil y activación por el propio cliente con pago en línea.
-- Notificaciones por WhatsApp/SMS.
-- Precios por programa o por tiempo de secado.
-- Autorización remota de acciones reservadas y verificación en dos pasos.
-- Permisos temporales y roles personalizados.
-- Integración con la API de LG, si LG da acceso.
-- Facturación CFDI, multisucursal y lealtad, si se necesitan.
+No forman parte de este plan y se planean cuando el sistema esté estable: la **Fase 3** de `mvp.md` §7 y, de la Fase 2, el `LGCloudDriver`, que depende de que LG dé acceso a su API.
