@@ -133,7 +133,7 @@ def test_a_sale_of_another_branch_cannot_be_paid(sale):
     other = employee("other", other_branch)
     open_cash_session(other, 500)
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(PermissionDenied):
         add_payment(other, sale, CASH, "10.00")
 
     assert not Payment.objects.exists()
