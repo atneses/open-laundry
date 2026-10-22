@@ -117,7 +117,8 @@ class ServicePrice(BaseModel):
     def save(self, *args, **kwargs):
         if not self._state.adding:
             self._check_only_deactivated()
-            return super().save(*args, **kwargs)
+            super().save(*args, **kwargs)
+            return
         with transaction.atomic():
             ServicePrice.objects.filter(
                 service=self.service_id,

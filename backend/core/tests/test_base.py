@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils.translation import gettext
 
-from core.models import Branch
+from core.models import Branch, User
 
 
 def test_health_is_public(api_client):
@@ -15,7 +15,7 @@ def test_health_is_public(api_client):
 
 
 def test_custom_user_model():
-    assert get_user_model()._meta.label == "core.User"
+    assert get_user_model() is User
 
 
 @pytest.mark.django_db

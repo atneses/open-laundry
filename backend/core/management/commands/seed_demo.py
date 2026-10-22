@@ -17,7 +17,7 @@ from inventory.models import LoadConsumption, Product, StockMovement
 from inventory.services import record_stock_movement
 from sales.models import Mode, Service, ServicePrice
 
-DEMO_PASSWORD = "demo1234"
+DEMO_PASSWORD = "demo1234"  # noqa: S105 (fictitious development data)
 
 USERS = [
     # username, first name, role, is_staff
@@ -26,7 +26,7 @@ USERS = [
 ]
 
 SERVICES = [
-    # name, kind, unit, machine_kind, {mode: price}
+    # Each service: name, kind, unit, machine kind and its price per mode.
     ("Lavado por carga", "wash", "load", "washer", {Mode.SELF_SERVICE: 60, Mode.DROP_OFF: 75}),
     ("Secado por carga", "dry", "load", "dryer", {Mode.SELF_SERVICE: 55, Mode.DROP_OFF: 70}),
     ("Lavado de tenis", "other", "pair", "none", {Mode.DROP_OFF: 90}),
@@ -58,7 +58,8 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         if not settings.DEBUG:
-            raise CommandError("Demo data is only for development (DEBUG must be on).")
+            msg = "Demo data is only for development (DEBUG must be on)."
+            raise CommandError(msg)
 
         branch, _ = Branch.objects.get_or_create(
             name="Sucursal Demo", defaults={"address": "Calle Falsa 123", "phone": "5555555555"}

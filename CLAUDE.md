@@ -25,7 +25,7 @@ Lee esto antes de trabajar en el proyecto. Para el **qué** y el **porqué** del
 
 | Parte               | Tecnología                                                                                                 |
 |---------------------|------------------------------------------------------------------------------------------------------------|
-| Backend             | Python 3.13, **Django 5.2 LTS**, Django REST Framework, `djangorestframework-simplejwt`, `drf-spectacular` |
+| Backend             | Python 3.14, **Django 5.2 LTS**, Django REST Framework, `djangorestframework-simplejwt`, `drf-spectacular` |
 | Admin               | Django Admin + `django-unfold` (back-office: configuración, consultas, reportes)                           |
 | Tareas              | Celery + Redis                                                                                             |
 | Base de datos       | PostgreSQL 16                                                                                              |
