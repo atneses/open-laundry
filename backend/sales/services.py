@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
+from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -11,7 +12,7 @@ from core.models import Branch
 from inventory.models import Product, StockMovement
 from inventory.services import record_stock_movement
 
-from .models import CashSession, Mode, Sale, SaleItem, Service, ServicePrice
+from .models import CashSession, Mode, Payment, Sale, SaleItem, Service, ServicePrice
 
 OPERATE_CASH_SESSION = "sales.operate_cash_session"
 VIEW_ALL_CASH_SESSIONS = "sales.view_all_cash_sessions"
@@ -92,10 +93,18 @@ def close_cash_session(session: CashSession, user, counted_cash, notes: str = ""
 def session_totals(session: CashSession) -> dict:
     """Cash and card payments, sales and cancellations of the session.
 
-    Sales and payments arrive in Stage 7; until then a session has none.
+    Payments count in the session that received them, whatever session the sale is from.
+    Cancellations arrive in Stage 7.5; until then there are none.
     """
 
-    return {"cash": Decimal(0), "card": Decimal(0), "sales": 0, "cancellations": 0}
+    card = Q(method__in=[Payment.Method.CREDIT_CARD, Payment.Method.DEBIT_CARD])
+    payments = session.payments.aggregate(
+        cash=Sum("amount", filter=Q(method=Payment.Method.CASH), default=Decimal(0)),
+        card=Sum("amount", filter=card, default=Decimal(0)),
+    )
+    sales = session.sales.aggregate(count=Count("pk"))["count"]
+
+    return {**payments, "sales": sales, "cancellations": 0}
 
 
 @dataclass
@@ -112,15 +121,9 @@ def create_sale(user, mode: str, items: list[ItemRequest], customer=None) -> Sal
     """Charge a sale in the open cash session of the user's branch.
 
     Copies each price from the catalog and takes sold products out of stock. The sale
-    starts unpaid; payments are added afterwards (Stage 7.2).
+    starts unpaid; payments are added with ``add_payment``.
     """
-    if not user.has_perm(CHARGE):
-        raise PermissionDenied(_("You cannot charge sales."))
-    if user.branch_id is None:
-        raise ValidationError(_("Your user has no branch assigned."))
-    session = CashSession.objects.filter(branch_id=user.branch_id, closed_at__isnull=True).first()
-    if session is None:
-        raise ValidationError(_("Open the cash session before charging."))
+    session = _charging_session(user)
     if mode == Mode.DROP_OFF and customer is None:
         raise ValidationError({"customer": _("A drop-off sale needs a customer.")})
     if customer is not None and customer.branch_id != user.branch_id:
@@ -159,6 +162,68 @@ def create_sale(user, mode: str, items: list[ItemRequest], customer=None) -> Sal
                 )
             )
     return sale
+
+
+def _charging_session(user) -> CashSession:
+    """Open cash session of the user's branch, if the user can charge."""
+
+    if not user.has_perm(CHARGE):
+        raise PermissionDenied(_("You cannot charge sales."))
+
+    if user.branch_id is None:
+        raise ValidationError(_("Your user has no branch assigned."))
+
+    session = CashSession.objects.filter(branch_id=user.branch_id, closed_at__isnull=True).first()
+
+    if session is None:
+        raise ValidationError(_("Open the cash session before charging."))
+
+    return session
+
+
+@transaction.atomic
+def add_payment(user, sale: Sale, method: str, amount, reference: str = "") -> Payment:
+    """Record a payment of the sale in the open cash session and update its balance.
+
+    A payment cannot be more than the balance; the change for cash is not recorded.
+    """
+
+    session = _charging_session(user)
+
+    # Lock the sale so two payments at the same time cannot both use the same balance.
+    sale = Sale.objects.select_for_update().get(pk=sale.pk)
+
+    if sale.branch_id != user.branch_id:
+        raise ValidationError(_("The sale belongs to another branch."))
+
+    if sale.status == Sale.Status.CANCELLED:
+        raise ValidationError(_("A cancelled sale cannot be paid."))
+
+    payment = Payment(
+        sale=sale,
+        cash_session=session,
+        method=method,
+        amount=amount,
+        reference=reference.strip(),
+        created_by=user,
+    )
+    payment.full_clean(exclude=["sale", "cash_session"], validate_constraints=False)
+
+    if payment.amount <= 0:
+        raise ValidationError({"amount": _("The amount must be greater than zero.")})
+
+    if payment.amount > sale.balance:
+        message = _("The amount is more than the balance of %(balance)s.")
+
+        raise ValidationError({"amount": message % {"balance": sale.balance}})
+
+    payment.save()
+    sale.balance -= payment.amount
+    sale.status = Sale.Status.PAID if sale.balance == 0 else Sale.Status.PARTIALLY_PAID
+    sale.updated_by = user
+    sale.save(update_fields=["balance", "status", "updated_at", "updated_by"])
+
+    return payment
 
 
 def _check_stock(lines: list[SaleItem]) -> None:

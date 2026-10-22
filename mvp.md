@@ -197,6 +197,7 @@ erDiagram
     CUSTOMER |o--o{ SALE : compra
     SALE ||--|{ SALE_ITEM : contiene
     SALE ||--o{ PAYMENT : "se paga con"
+    CASH_SESSION ||--o{ PAYMENT : "recibido en"
     SALE ||--o| DROP_OFF_ORDER : "si es encargo"
     SALE ||--o{ APPLIED_DISCOUNT : recibe
     DISCOUNT ||--o{ APPLIED_DISCOUNT : "se aplica como"
@@ -334,11 +335,13 @@ erDiagram
     PAYMENT {
         int id PK
         int sale_id FK
+        int cash_session_id FK "turno en que se recibió"
         string method "cash | credit_card | debit_card"
         decimal amount
-        string reference "voucher de Mercado Pago Point"
+        string reference "voucher de Mercado Pago Point (opcional)"
         string mp_payment_intent_id "Fase 2"
-        datetime paid_at
+        int created_by FK "quién lo cobró"
+        datetime created_at "cuándo se pagó"
     }
     DISCOUNT {
         int id PK
@@ -442,7 +445,7 @@ erDiagram
 - **StockMovement:** `quantity` lleva signo (positivo suma, negativo resta): las compras suman, el consumo y las ventas restan, y los ajustes pueden ir en cualquier sentido. El stock de un producto solo cambia con movimientos; los movimientos no se editan ni se borran.
 
 **Caja y pagos**
-- **CashSession:** uno por turno, y solo una caja abierta por sucursal (el siguiente turno abre cuando el anterior cierra); no se puede cobrar sin caja abierta. Si al cerrar hay diferencia entre lo contado y lo esperado, la nota es obligatoria. Se guarda quién la cerró (`closed_by`); una caja olvidada la puede cerrar desde el admin quien tenga `sales.view_all_cash_sessions`. `expected_cash = opening_float + cash payments of the session` (menos cancelados). `card_total` se cuadra contra el reporte de Mercado Pago Point.
+- **CashSession:** uno por turno, y solo una caja abierta por sucursal (el siguiente turno abre cuando el anterior cierra); no se puede cobrar sin caja abierta. Si al cerrar hay diferencia entre lo contado y lo esperado, la nota es obligatoria. Se guarda quién la cerró (`closed_by`); una caja olvidada la puede cerrar desde el admin quien tenga `sales.view_all_cash_sessions`. `expected_cash = opening_float + cash payments of the session` (menos cancelados). Cada pago cuenta en el turno en que se recibió (`Payment.cash_session`), aunque la venta sea de otro turno (p. ej. el saldo de un encargo). Un pago no puede ser mayor que el saldo: el cambio en efectivo no se guarda. `card_total` se cuadra contra el reporte de Mercado Pago Point.
 - **Pago con tarjeta:** en el MVP se captura a mano la referencia del voucher; en la Fase 2 la integración con la API de Point la llena sola (`mp_payment_intent_id`).
 
 **Usuarios y máquinas**

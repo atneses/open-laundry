@@ -10,7 +10,7 @@ from unfold.decorators import action
 from core.admin_base import ReadOnlyModelAdmin
 
 from .forms import CloseCashSessionForm, ServiceForm, ServicePriceForm
-from .models import CashSession, Sale, SaleItem, Service, ServicePrice
+from .models import CashSession, Payment, Sale, SaleItem, Service, ServicePrice
 from .services import VIEW_ALL_CASH_SESSIONS, close_cash_session
 
 MANAGE_CATALOG = "sales.manage_catalog"
@@ -157,6 +157,20 @@ class SaleItemInline(TabularInline):
         return False
 
 
+class PaymentInline(TabularInline):
+    model = Payment
+    extra = 0
+    fields = ["created_at", "method", "amount", "reference", "cash_session", "created_by"]
+    readonly_fields = fields
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Sale)
 class SaleAdmin(ReadOnlyModelAdmin):
     """Sales are charged at the POS and only viewed here."""
@@ -175,4 +189,4 @@ class SaleAdmin(ReadOnlyModelAdmin):
     search_fields = ["number", "customer__name", "customer__phone"]
     list_select_related = ["customer", "created_by"]
     date_hierarchy = "created_at"
-    inlines = [SaleItemInline]
+    inlines = [SaleItemInline, PaymentInline]

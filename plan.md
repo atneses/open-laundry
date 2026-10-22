@@ -414,7 +414,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** una venta de 3 cargas de lavado en autoservicio calcula el total con el precio de autoservicio; sin caja abierta o sin `sales.charge` la venta se rechaza (pruebas).
 
 ### 7.2 Pagos
-- [ ] **Qué se hace:** crear `Payment` (efectivo, tarjeta de crédito, tarjeta de débito; monto; referencia del voucher). Una venta puede tener varios pagos; el saldo y el estado se recalculan solos (`pending`, `partially_paid`, `paid`). Conectar `session_totals` del corte (Etapa 6) con los pagos.
+- [x] **Qué se hace:** crear `Payment` (efectivo, tarjeta de crédito, tarjeta de débito; monto; referencia del voucher). Una venta puede tener varios pagos; el saldo y el estado se recalculan solos (`pending`, `partially_paid`, `paid`). Conectar `session_totals` del corte (Etapa 6) con los pagos.
 - **Para qué:** permitir anticipos en encargos y pagos mixtos.
 - **Listo cuando:** dos pagos parciales dejan la venta en `paid` con saldo 0, y el corte del turno suma bien los pagos en efectivo y con tarjeta (pruebas).
 
@@ -436,10 +436,14 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Folio:** prefijo por sucursal (`Branch.sale_prefix`, por defecto `A`) + consecutivo de 6 dígitos (`A-000123`). El contador `Branch.last_sale_number` se bloquea dentro de la transacción del cobro, así que no hay huecos ni repetidos.
 - **Productos:** venderlos crea un `StockMovement` de venta ligado a la venta (`StockMovement.sale`) en la misma transacción. **No se puede vender más de lo que hay en stock** (los productos se bloquean durante el cobro, así dos ventas a la vez no venden las mismas últimas unidades). Los servicios se venden en unidades completas.
 - Ventas en el admin (área *Operación*), de solo lectura, con sus líneas; se ven con `sales.view_sale`. Permiso `sales.charge` para Admin y Empleado (migración `sales/0007`).
+- **7.2:** `Payment` en `sales`, con `cash_session` (no estaba en el MVP): el pago cuenta en el turno en que se recibió, así el saldo de un encargo cobrado en otro turno cae en el corte correcto. No hay `paid_at`: se usan `created_at` / `created_by`. Servicio `add_payment`: requiere `sales.charge` y la caja abierta de la sucursal; rechaza montos ≤ 0, mayores que el saldo y ventas canceladas o de otra sucursal; recalcula saldo y estado bloqueando la venta. La referencia del voucher es opcional. `session_totals` ya suma efectivo y tarjeta (crédito + débito) y cuenta las ventas del turno. Pagos de solo lectura en la ficha de la venta (sin entrada propia en el menú); migración `sales/0009` da al Admin los permisos de `Payment`.
 
 **Riesgos y pendientes:**
 - **Pendiente – precio por programa (función futura):** `active_price` ya busca por programa de lavado con respaldo al precio general, pero el cobro siempre usa el general porque no hay precios por programa.
 - **Riesgo – cambiar el prefijo:** el consecutivo es por sucursal; si una sucursal cambia su `sale_prefix`, su numeración sigue (p. ej. de `A-000010` a `B-000011`).
+- **Pendiente – cambio en efectivo:** no se guarda el monto recibido ni el cambio; los calcula la caja (Etapa 12) y el ticket (Etapa 10).
+- **Pendiente – pagos en el admin:** solo se ven dentro de la venta; no hay lista de pagos con filtro por método (el MVP lo menciona para el dashboard y reportes, Etapa 11).
+- **Riesgo – tarjeta sin referencia:** la referencia es opcional, así que un pago con tarjeta puede no tener cómo cuadrarse contra el reporte de Mercado Pago Point.
 
 **✅ Etapa 7 terminada cuando:** los servicios permiten cobrar ventas en efectivo y tarjeta, con y sin descuento, y cancelarlas, con pruebas de cada regla y permiso, y el corte de caja cuadra.
 

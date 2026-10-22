@@ -3,80 +3,80 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-21 23:30-0600\n"
+"POT-Creation-Date: 2026-10-22 10:29-0600\n"
 "Language: es_MX\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: config/settings/base.py:130 config/settings/base.py:131
+#: config/settings/base.py:133 config/settings/base.py:134
 msgid "Laundry"
 msgstr "Lavandería"
 
-#: config/settings/base.py:132
+#: config/settings/base.py:135
 msgid "Administration"
 msgstr "Administración"
 
-#: config/settings/base.py:168
+#: config/settings/base.py:171
 msgid "Operation"
 msgstr "Operación"
 
-#: config/settings/base.py:172 customers/apps.py:8
+#: config/settings/base.py:175 customers/apps.py:8
 msgid "Customers"
 msgstr "Clientes"
 
-#: config/settings/base.py:180
+#: config/settings/base.py:183
 msgid "Sales"
 msgstr "Ventas"
 
-#: config/settings/base.py:186
+#: config/settings/base.py:189
 msgid "Cash sessions"
 msgstr "Cortes de caja"
 
-#: config/settings/base.py:196
+#: config/settings/base.py:199
 msgid "Catalog"
 msgstr "Catálogo"
 
-#: config/settings/base.py:200
+#: config/settings/base.py:203
 msgid "Services and prices"
 msgstr "Servicios y precios"
 
-#: config/settings/base.py:210 inventory/apps.py:8
+#: config/settings/base.py:213 inventory/apps.py:8
 msgid "Inventory"
 msgstr "Inventario"
 
-#: config/settings/base.py:214
+#: config/settings/base.py:217
 msgid "Products"
 msgstr "Productos"
 
-#: config/settings/base.py:220
+#: config/settings/base.py:223
 msgid "Stock movements"
 msgstr "Movimientos de inventario"
 
-#: config/settings/base.py:226
+#: config/settings/base.py:229
 msgid "Consumption per load"
 msgstr "Consumo por carga"
 
-#: config/settings/base.py:236
+#: config/settings/base.py:239
 msgid "Users and permissions"
 msgstr "Usuarios y permisos"
 
-#: config/settings/base.py:240
+#: config/settings/base.py:243
 msgid "Users"
 msgstr "Usuarios"
 
-#: config/settings/base.py:246
+#: config/settings/base.py:249
 msgid "Roles"
 msgstr "Roles"
 
-#: config/settings/base.py:252
+#: config/settings/base.py:255
 msgid "Branches"
 msgstr "Sucursales"
 
-#: config/settings/base.py:260
+#: config/settings/base.py:263
 msgid "Logs"
 msgstr "Bitácoras"
 
-#: config/settings/base.py:264
+#: config/settings/base.py:267
 msgid "Permissions"
 msgstr "Permisos"
 
@@ -116,82 +116,82 @@ msgstr "creado por"
 msgid "updated by"
 msgstr "modificado por"
 
-#: core/models.py:56 customers/models.py:17 inventory/models.py:24
+#: core/models.py:60 customers/models.py:17 inventory/models.py:24
 #: sales/models.py:37
 msgid "name"
 msgstr "nombre"
 
-#: core/models.py:57 customers/models.py:22
+#: core/models.py:61 customers/models.py:22
 msgid "address"
 msgstr "dirección"
 
-#: core/models.py:58 customers/models.py:19
+#: core/models.py:62 customers/models.py:19
 msgid "phone"
 msgstr "teléfono"
 
-#: core/models.py:60
+#: core/models.py:64
 msgid "sale number prefix"
 msgstr "prefijo del folio"
 
-#: core/models.py:64
+#: core/models.py:68
 msgid "Starts every sale number of the branch, e.g. A-000123."
 msgstr "Inicio de cada folio de venta de la sucursal, p. ej. A-000123."
 
-#: core/models.py:68
+#: core/models.py:72
 msgid "last sale number"
 msgstr "último número de venta"
 
-#: core/models.py:72 core/models.py:88 customers/models.py:15
-#: inventory/models.py:56 sales/models.py:95 sales/models.py:157
-#: sales/models.py:247
+#: core/models.py:76 core/models.py:92 customers/models.py:15
+#: inventory/models.py:56 sales/models.py:95 sales/models.py:162
+#: sales/models.py:252
 msgid "branch"
 msgstr "sucursal"
 
-#: core/models.py:73
+#: core/models.py:77
 msgid "branches"
 msgstr "sucursales"
 
-#: core/models.py:96
+#: core/models.py:101
 msgid "first name"
 msgstr "nombre"
 
-#: core/models.py:99
+#: core/models.py:104
 msgid "last name"
 msgstr "apellidos"
 
-#: core/models.py:103 core/models.py:122 sales/models.py:163
+#: core/models.py:108 core/models.py:127 sales/models.py:168
 msgid "user"
 msgstr "usuario"
 
-#: core/models.py:104
+#: core/models.py:109
 msgid "users"
 msgstr "usuarios"
 
-#: core/models.py:106
+#: core/models.py:111
 msgid "Can manage users, roles and permissions"
 msgstr "Puede gestionar usuarios, roles y permisos"
 
-#: core/models.py:117
+#: core/models.py:122
 msgid "Granted"
 msgstr "Otorgado"
 
-#: core/models.py:118
+#: core/models.py:123
 msgid "Revoked"
 msgstr "Revocado"
 
-#: core/models.py:128
+#: core/models.py:133
 msgid "permission"
 msgstr "permiso"
 
-#: core/models.py:132
+#: core/models.py:137
 msgid "action"
 msgstr "acción"
 
-#: core/models.py:135
+#: core/models.py:140
 msgid "permission log entry"
 msgstr "registro de permisos"
 
-#: core/models.py:136
+#: core/models.py:141
 msgid "permission log"
 msgstr "bitácora de permisos"
 
@@ -219,11 +219,11 @@ msgstr "Solo dígitos."
 msgid "email"
 msgstr "correo electrónico"
 
-#: customers/models.py:23 sales/forms.py:40 sales/models.py:203
+#: customers/models.py:23 sales/forms.py:40 sales/models.py:208
 msgid "notes"
 msgstr "notas"
 
-#: customers/models.py:26 sales/models.py:257
+#: customers/models.py:26 sales/models.py:262
 msgid "customer"
 msgstr "cliente"
 
@@ -235,11 +235,11 @@ msgstr "clientes"
 msgid "Can register customers and manage drop-off orders"
 msgstr "Puede registrar clientes y gestionar encargos"
 
-#: inventory/admin.py:27 inventory/models.py:34
+#: inventory/admin.py:28 inventory/models.py:34
 msgid "stock"
 msgstr "stock"
 
-#: inventory/admin.py:31
+#: inventory/admin.py:32
 msgid "Below minimum"
 msgstr "Debajo del mínimo"
 
@@ -297,8 +297,8 @@ msgstr ""
 msgid "sale price"
 msgstr "precio de venta"
 
-#: inventory/models.py:60 inventory/models.py:102 inventory/models.py:144
-#: sales/models.py:311
+#: inventory/models.py:60 inventory/models.py:104 inventory/models.py:146
+#: sales/models.py:316
 msgid "product"
 msgstr "producto"
 
@@ -306,62 +306,62 @@ msgstr "producto"
 msgid "products"
 msgstr "productos"
 
-#: inventory/models.py:80
+#: inventory/models.py:81
 msgid "The unit cannot change once the product has stock movements."
 msgstr ""
 "La unidad no puede cambiar una vez que el producto tiene movimientos de "
 "inventario."
 
-#: inventory/models.py:86
+#: inventory/models.py:88
 msgid "A product for sale needs a sale price."
 msgstr "Un producto a la venta necesita precio de venta."
 
-#: inventory/models.py:97 sales/models.py:51 sales/models.py:81
-#: sales/models.py:303
+#: inventory/models.py:99 sales/models.py:51 sales/models.py:81
+#: sales/models.py:308
 msgid "service"
 msgstr "servicio"
 
-#: inventory/models.py:105
+#: inventory/models.py:107
 msgid "quantity per load"
 msgstr "cantidad por carga"
 
-#: inventory/models.py:108
+#: inventory/models.py:110
 msgid "In the product's unit, for example 150 ml."
 msgstr "En la unidad del producto, por ejemplo 150 ml."
 
-#: inventory/models.py:113 inventory/models.py:114
+#: inventory/models.py:115 inventory/models.py:116
 msgid "consumption per load"
 msgstr "consumo por carga"
 
-#: inventory/models.py:128
+#: inventory/models.py:130
 msgid "Only wash services consume supplies."
 msgstr "Solo los servicios de lavado consumen insumos."
 
-#: inventory/models.py:138
+#: inventory/models.py:140
 msgid "Purchase"
 msgstr "Compra"
 
-#: inventory/models.py:139
+#: inventory/models.py:141
 msgid "Consumption"
 msgstr "Consumo"
 
-#: inventory/models.py:140
+#: inventory/models.py:142
 msgid "Sale"
 msgstr "Venta"
 
-#: inventory/models.py:141
+#: inventory/models.py:143
 msgid "Adjustment"
 msgstr "Ajuste"
 
-#: inventory/models.py:146 sales/models.py:38
+#: inventory/models.py:148 sales/models.py:38
 msgid "kind"
 msgstr "tipo"
 
-#: inventory/models.py:148 sales/models.py:317
+#: inventory/models.py:150 sales/models.py:322
 msgid "quantity"
 msgstr "cantidad"
 
-#: inventory/models.py:152
+#: inventory/models.py:154
 msgid ""
 "In the product's unit. Purchases are positive; an adjustment is negative to "
 "remove stock."
@@ -369,69 +369,70 @@ msgstr ""
 "En la unidad del producto. Las compras son positivas; un ajuste es negativo "
 "para quitar stock."
 
-#: inventory/models.py:157
+#: inventory/models.py:159
 msgid "unit cost"
 msgstr "costo unitario"
 
-#: inventory/models.py:166 sales/models.py:273 sales/models.py:299
+#: inventory/models.py:168 sales/models.py:278 sales/models.py:304
+#: sales/models.py:363
 msgid "sale"
 msgstr "venta"
 
-#: inventory/models.py:173
+#: inventory/models.py:175
 msgid "reason"
 msgstr "motivo"
 
-#: inventory/models.py:176
+#: inventory/models.py:178
 msgid "Required for adjustments: why the stock changed (spill, count, error)."
 msgstr ""
 "Obligatorio en los ajustes: por qué cambió el stock (derrame, conteo, error)."
 
-#: inventory/models.py:180
+#: inventory/models.py:182
 msgid "stock movement"
 msgstr "movimiento de inventario"
 
-#: inventory/models.py:181
+#: inventory/models.py:183
 msgid "stock movements"
 msgstr "movimientos de inventario"
 
-#: inventory/models.py:184
+#: inventory/models.py:186
 msgid "Can record stock entries"
 msgstr "Puede registrar entradas de inventario"
 
-#: inventory/models.py:185
+#: inventory/models.py:187
 msgid "Can adjust stock (losses, corrections)"
 msgstr "Puede ajustar el inventario (mermas, correcciones)"
 
-#: inventory/models.py:208
+#: inventory/models.py:211
 msgid "A purchase must add stock (positive)."
 msgstr "Una compra debe sumar stock (positivo)."
 
-#: inventory/models.py:210
+#: inventory/models.py:214
 msgid "This kind of movement removes stock."
 msgstr "Este tipo de movimiento resta stock."
 
-#: inventory/models.py:212
+#: inventory/models.py:217
 msgid "An adjustment cannot be zero."
 msgstr "Un ajuste no puede ser cero."
 
-#: inventory/models.py:214
+#: inventory/models.py:220
 msgid "An adjustment needs a reason."
 msgstr "Un ajuste necesita un motivo."
 
-#: sales/admin.py:98 sales/admin.py:103
+#: sales/admin.py:100 sales/admin.py:105
 msgid "Close cash session"
 msgstr "Cerrar caja"
 
-#: sales/admin.py:104
+#: sales/admin.py:106
 msgid "Capture the cash counted in the drawer of this forgotten session."
 msgstr ""
 "Captura el efectivo contado en el cajón de esta caja que quedó abierta."
 
-#: sales/admin.py:106
+#: sales/admin.py:108
 msgid "Close"
 msgstr "Cerrar"
 
-#: sales/admin.py:133
+#: sales/admin.py:138
 msgid "The cash session was closed."
 msgstr "La caja se cerró."
 
@@ -439,7 +440,7 @@ msgstr "La caja se cerró."
 msgid "Sales and catalog"
 msgstr "Ventas y catálogo"
 
-#: sales/forms.py:31 sales/models.py:185
+#: sales/forms.py:31 sales/models.py:190
 msgid "counted cash"
 msgstr "efectivo contado"
 
@@ -511,7 +512,7 @@ msgstr "servicios"
 msgid "Can manage services, prices, products and consumption per load"
 msgstr "Puede gestionar servicios, precios, productos y consumo por carga"
 
-#: sales/models.py:83 sales/models.py:263
+#: sales/models.py:83 sales/models.py:268
 msgid "mode"
 msgstr "modalidad"
 
@@ -536,213 +537,262 @@ msgstr "precio del servicio"
 msgid "service prices"
 msgstr "precios de servicios"
 
-#: sales/models.py:146
+#: sales/models.py:151
 msgid "A price cannot be edited; add a new price instead."
 msgstr "Un precio no se puede editar; agrega uno nuevo."
 
-#: sales/models.py:167
+#: sales/models.py:172
 msgid "opened at"
 msgstr "apertura"
 
-#: sales/models.py:168
+#: sales/models.py:173
 msgid "closed at"
 msgstr "cierre"
 
-#: sales/models.py:171
+#: sales/models.py:176
 msgid "closed by"
 msgstr "cerrada por"
 
-#: sales/models.py:176
+#: sales/models.py:181
 msgid "Who closed it; another user when a forgotten session is closed."
 msgstr "Quién la cerró; otro usuario si se cerró una caja olvidada."
 
-#: sales/models.py:179
+#: sales/models.py:184
 msgid "opening float"
 msgstr "fondo inicial"
 
-#: sales/models.py:182
+#: sales/models.py:187
 msgid "expected cash"
 msgstr "efectivo esperado"
 
-#: sales/models.py:193
+#: sales/models.py:198
 msgid "difference"
 msgstr "diferencia"
 
-#: sales/models.py:198
+#: sales/models.py:203
 msgid "Counted minus expected: negative is missing cash, positive is extra."
 msgstr "Contado menos esperado: negativo es faltante, positivo es sobrante."
 
-#: sales/models.py:200
+#: sales/models.py:205
 msgid "card total"
 msgstr "total con tarjeta"
 
-#: sales/models.py:201 sales/models.py:274
+#: sales/models.py:206 sales/models.py:279
 msgid "sales"
 msgstr "ventas"
 
-#: sales/models.py:202
+#: sales/models.py:207
 msgid "cancellations"
 msgstr "cancelaciones"
 
-#: sales/models.py:206 sales/models.py:251
+#: sales/models.py:211 sales/models.py:256 sales/models.py:367
 msgid "cash session"
 msgstr "corte de caja"
 
-#: sales/models.py:207
+#: sales/models.py:212
 msgid "cash sessions"
 msgstr "cortes de caja"
 
-#: sales/models.py:210
+#: sales/models.py:215
 msgid "Can open and close their own cash session"
 msgstr "Puede abrir y cerrar su propia caja"
 
-#: sales/models.py:211
+#: sales/models.py:216
 msgid "Can view the cash sessions of every shift"
 msgstr "Puede ver los cortes de caja de todos los turnos"
 
-#: sales/models.py:240
+#: sales/models.py:245
 msgid "Pending"
 msgstr "Pendiente"
 
-#: sales/models.py:241
+#: sales/models.py:246
 msgid "Partially paid"
 msgstr "Pagada parcialmente"
 
-#: sales/models.py:242
+#: sales/models.py:247
 msgid "Paid"
 msgstr "Pagada"
 
-#: sales/models.py:243
+#: sales/models.py:248
 msgid "Cancelled"
 msgstr "Cancelada"
 
-#: sales/models.py:245
+#: sales/models.py:250
 msgid "number"
 msgstr "folio"
 
-#: sales/models.py:265
+#: sales/models.py:270
 msgid "status"
 msgstr "estado"
 
-#: sales/models.py:267
+#: sales/models.py:272
 msgid "subtotal"
 msgstr "subtotal"
 
-#: sales/models.py:268
+#: sales/models.py:273
 msgid "discount"
 msgstr "descuento"
 
-#: sales/models.py:269
+#: sales/models.py:274
 msgid "total"
 msgstr "total"
 
-#: sales/models.py:270
+#: sales/models.py:275
 msgid "balance"
 msgstr "saldo"
 
-#: sales/models.py:277
+#: sales/models.py:282
 msgid "Can charge sales and print receipts"
 msgstr "Puede cobrar ventas e imprimir tickets"
 
-#: sales/models.py:319
+#: sales/models.py:324
 msgid "unit price"
 msgstr "precio unitario"
 
-#: sales/models.py:322
+#: sales/models.py:327
 msgid ""
 "Copied from the catalog when charging; later price changes do not alter it."
 msgstr ""
 "Se copia del catálogo al cobrar; los cambios de precio posteriores no lo "
 "alteran."
 
-#: sales/models.py:324
+#: sales/models.py:329 sales/models.py:372
 msgid "amount"
 msgstr "importe"
 
-#: sales/models.py:327
+#: sales/models.py:332
 msgid "sale item"
 msgstr "línea de venta"
 
-#: sales/models.py:328
+#: sales/models.py:333
 msgid "sale items"
 msgstr "líneas de venta"
 
-#: sales/services.py:25
+#: sales/models.py:358
+msgid "Cash"
+msgstr "Efectivo"
+
+#: sales/models.py:359
+msgid "Credit card"
+msgstr "Tarjeta de crédito"
+
+#: sales/models.py:360
+msgid "Debit card"
+msgstr "Tarjeta de débito"
+
+#: sales/models.py:371
+msgid "method"
+msgstr "método"
+
+#: sales/models.py:374
+msgid "reference"
+msgstr "referencia"
+
+#: sales/models.py:374
+msgid "Card voucher reference."
+msgstr "Referencia del voucher de la tarjeta."
+
+#: sales/models.py:378
+msgid "payment"
+msgstr "pago"
+
+#: sales/models.py:379
+msgid "payments"
+msgstr "pagos"
+
+#: sales/services.py:27
 msgid "You cannot open a cash session."
 msgstr "No puedes abrir caja."
 
-#: sales/services.py:27 sales/services.py:106
+#: sales/services.py:30 sales/services.py:174
 msgid "Your user has no branch assigned."
 msgstr "Tu usuario no tiene sucursal asignada."
 
-#: sales/services.py:31
+#: sales/services.py:34
 msgid "This branch already has an open cash session."
 msgstr "Esta sucursal ya tiene una caja abierta."
 
-#: sales/services.py:53
+#: sales/services.py:60
 msgid "You cannot close this cash session."
 msgstr "No puedes cerrar esta caja."
 
-#: sales/services.py:57
+#: sales/services.py:66
 msgid "This cash session is already closed."
 msgstr "Esta caja ya está cerrada."
 
-#: sales/services.py:59
+#: sales/services.py:69
 msgid "Enter the counted cash."
 msgstr "Captura el efectivo contado."
 
-#: sales/services.py:71
+#: sales/services.py:83
 msgid "Explain the difference between the counted and the expected cash."
 msgstr "Explica la diferencia entre el efectivo contado y el esperado."
 
-#: sales/services.py:104
-msgid "You cannot charge sales."
-msgstr "No puedes cobrar ventas."
-
-#: sales/services.py:109
-msgid "Open the cash session before charging."
-msgstr "Abre la caja antes de cobrar."
-
-#: sales/services.py:111
+#: sales/services.py:128
 msgid "A drop-off sale needs a customer."
 msgstr "Una venta por encargo necesita un cliente."
 
-#: sales/services.py:113
+#: sales/services.py:130
 msgid "The customer belongs to another branch."
 msgstr "El cliente pertenece a otra sucursal."
 
-#: sales/services.py:115
+#: sales/services.py:132
 msgid "Add at least one service or product."
 msgstr "Agrega al menos un servicio o producto."
 
-#: sales/services.py:164
+#: sales/services.py:171
+msgid "You cannot charge sales."
+msgstr "No puedes cobrar ventas."
+
+#: sales/services.py:179
+msgid "Open the cash session before charging."
+msgstr "Abre la caja antes de cobrar."
+
+#: sales/services.py:196
+msgid "The sale belongs to another branch."
+msgstr "La venta es de otra sucursal."
+
+#: sales/services.py:199
+msgid "A cancelled sale cannot be paid."
+msgstr "No se puede pagar una venta cancelada."
+
+#: sales/services.py:212
+msgid "The amount must be greater than zero."
+msgstr "El monto debe ser mayor que cero."
+
+#: sales/services.py:215
+#, python-format
+msgid "The amount is more than the balance of %(balance)s."
+msgstr "El monto es mayor que el saldo de %(balance)s."
+
+#: sales/services.py:242
 #, python-format
 msgid "Not enough %(product)s in stock: %(stock)s left."
 msgstr "No hay suficiente %(product)s: quedan %(stock)s."
 
-#: sales/services.py:195
+#: sales/services.py:273
 msgid "The quantity must be greater than zero."
 msgstr "La cantidad debe ser mayor que cero."
 
-#: sales/services.py:197
+#: sales/services.py:275
 msgid "Each line is either a service or a product."
 msgstr "Cada línea es un servicio o un producto."
 
-#: sales/services.py:200
+#: sales/services.py:278
 #, python-format
 msgid "%(service)s is not active."
 msgstr "%(service)s no está activo."
 
-#: sales/services.py:203
+#: sales/services.py:281
 msgid "Services are sold in whole units."
 msgstr "Los servicios se venden en unidades completas."
 
-#: sales/services.py:207
+#: sales/services.py:285
 #, python-format
 msgid "%(service)s has no price for this mode."
 msgstr "%(service)s no tiene precio para esta modalidad."
 
-#: sales/services.py:212
+#: sales/services.py:290
 #, python-format
 msgid "%(product)s is not for sale."
 msgstr "%(product)s no está a la venta."

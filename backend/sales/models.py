@@ -345,3 +345,42 @@ class SaleItem(BaseModel):
 
     def __str__(self):
         return f"{self.quantity} x {self.service or self.product}"
+
+
+class Payment(BaseModel):
+    """A payment towards a sale; a sale can have several (an advance and the rest).
+
+    ``cash_session`` is the session open when it was received, which may differ from the
+    sale's when a drop-off pays its balance on a later shift. Payments are never deleted.
+    """
+
+    class Method(models.TextChoices):
+        CASH = "cash", _("Cash")
+        CREDIT_CARD = "credit_card", _("Credit card")
+        DEBIT_CARD = "debit_card", _("Debit card")
+
+    sale = models.ForeignKey(
+        Sale, verbose_name=_("sale"), on_delete=models.PROTECT, related_name="payments"
+    )
+    cash_session = models.ForeignKey(
+        CashSession,
+        verbose_name=_("cash session"),
+        on_delete=models.PROTECT,
+        related_name="payments",
+    )
+    method = models.CharField(_("method"), max_length=20, choices=Method.choices)
+    amount = models.DecimalField(_("amount"), max_digits=10, decimal_places=2)
+    reference = models.CharField(
+        _("reference"), max_length=100, blank=True, help_text=_("Card voucher reference.")
+    )
+
+    class Meta:
+        verbose_name = _("payment")
+        verbose_name_plural = _("payments")
+        ordering = ["created_at"]
+        constraints = [
+            models.CheckConstraint(condition=Q(amount__gt=0), name="payment_amount_positive"),
+        ]
+
+    def __str__(self):
+        return f"{self.get_method_display()} {self.amount}"
