@@ -12,7 +12,7 @@ pytestmark = pytest.mark.django_db
 def test_admin_records_who_created_a_record(client, admin_user):
     client.force_login(admin_user)
 
-    client.post(reverse("admin:core_branch_add"), {"name": "Matriz"})
+    client.post(reverse("admin:core_branch_add"), {"name": "Matriz", "sale_prefix": "A"})
 
     branch = Branch.objects.get()
     assert branch.created_by == admin_user
@@ -26,7 +26,7 @@ def test_admin_records_who_changed_a_record_and_keeps_its_creator(client, admin_
     client.force_login(editor)
     url = reverse("admin:core_branch_change", args=[branch.pk])
 
-    client.post(url, {"name": "Centro"})
+    client.post(url, {"name": "Centro", "sale_prefix": "A"})
 
     changed = Branch.objects.get()
     assert changed.created_by == admin_user

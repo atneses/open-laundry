@@ -8,6 +8,8 @@ from django.utils.translation import gettext_lazy as _
 from core.models import BaseModel
 from core.validators import validate_name
 
+MAX_PERCENTAGE = 100
+
 
 class Mode(models.TextChoices):
     """How a service is sold: the customer does it or the laundry does it."""
@@ -38,7 +40,10 @@ class Service(BaseModel):
     kind = models.CharField(_("kind"), max_length=10, choices=Kind.choices)
     unit = models.CharField(_("unit"), max_length=10, choices=Unit.choices, default=Unit.LOAD)
     machine_kind = models.CharField(
-        _("machine kind"), max_length=10, choices=MachineKind.choices, default=MachineKind.NONE
+        _("machine kind"),
+        max_length=10,
+        choices=MachineKind.choices,
+        default=MachineKind.NONE,
     )
     uses_machine = models.BooleanField(
         _("uses a machine"),
@@ -78,7 +83,10 @@ class ServicePrice(BaseModel):
     """
 
     service = models.ForeignKey(
-        Service, verbose_name=_("service"), on_delete=models.CASCADE, related_name="prices"
+        Service,
+        verbose_name=_("service"),
+        on_delete=models.CASCADE,
+        related_name="prices",
     )
     mode = models.CharField(_("mode"), max_length=20, choices=Mode.choices)
     program = models.CharField(
@@ -88,7 +96,10 @@ class ServicePrice(BaseModel):
         help_text=_("Leave empty for the general price. Reserved for prices per program."),
     )
     price = models.DecimalField(
-        _("price"), max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
+        _("price"),
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
     )
     branch = models.ForeignKey(
         "core.Branch",
@@ -181,10 +192,16 @@ class CashSession(BaseModel):
         help_text=_("Who closed it; another user when a forgotten session is closed."),
     )
     opening_float = models.DecimalField(
-        _("opening float"), max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
+        _("opening float"),
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
     )
     expected_cash = models.DecimalField(
-        _("expected cash"), max_digits=10, decimal_places=2, default=0
+        _("expected cash"),
+        max_digits=10,
+        decimal_places=2,
+        default=0,
     )
     counted_cash = models.DecimalField(
         _("counted cash"),
@@ -222,7 +239,8 @@ class CashSession(BaseModel):
                 name="one_open_cash_session_per_branch",
             ),
             models.CheckConstraint(
-                condition=Q(opening_float__gte=0), name="cash_session_float_not_negative"
+                condition=Q(opening_float__gte=0),
+                name="cash_session_float_not_negative",
             ),
             # A cash count that does not match must be explained.
             models.CheckConstraint(
@@ -233,3 +251,343 @@ class CashSession(BaseModel):
 
     def __str__(self):
         return f"{self.user} · {self.opened_at:%Y-%m-%d %H:%M}"
+
+
+class Sale(BaseModel):
+    """A sale charged at the counter. ``created_by`` is the cashier who charged it.
+
+    Sales are never deleted; they are cancelled with a reason (``cancel_sale``).
+    """
+
+    class Status(models.TextChoices):
+        PENDING = "pending", _("Pending")
+        PARTIALLY_PAID = "partially_paid", _("Partially paid")
+        PAID = "paid", _("Paid")
+        CANCELLED = "cancelled", _("Cancelled")
+
+    number = models.CharField(_("number"), max_length=20)
+    branch = models.ForeignKey(
+        "core.Branch",
+        verbose_name=_("branch"),
+        on_delete=models.PROTECT,
+        related_name="sales",
+    )
+    cash_session = models.ForeignKey(
+        CashSession,
+        verbose_name=_("cash session"),
+        on_delete=models.PROTECT,
+        related_name="sales",
+    )
+    customer = models.ForeignKey(
+        "customers.Customer",
+        verbose_name=_("customer"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="sales",
+    )
+    mode = models.CharField(_("mode"), max_length=20, choices=Mode.choices)
+    status = models.CharField(
+        _("status"),
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    subtotal = models.DecimalField(_("subtotal"), max_digits=10, decimal_places=2)
+    discount_total = models.DecimalField(_("discount"), max_digits=10, decimal_places=2, default=0)
+    total = models.DecimalField(_("total"), max_digits=10, decimal_places=2)
+    balance = models.DecimalField(_("balance"), max_digits=10, decimal_places=2)
+    cancelled_at = models.DateTimeField(_("cancelled at"), null=True, blank=True)
+    cancelled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("cancelled by"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="cancelled_sales",
+    )
+    cancel_cash_session = models.ForeignKey(
+        CashSession,
+        verbose_name=_("cancelled in cash session"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="cancelled_sales",
+        help_text=_("Session that gave the money back; its cash count subtracts the payments."),
+    )
+    cancel_reason = models.TextField(_("cancellation reason"), blank=True)
+
+    class Meta:
+        verbose_name = _("sale")
+        verbose_name_plural = _("sales")
+        ordering = ["-created_at"]
+        permissions = [
+            ("charge", _("Can charge sales and print receipts")),
+            ("cancel_sale", _("Can cancel sales (with a reason)")),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=["branch", "number"], name="unique_sale_number"),
+            models.CheckConstraint(
+                condition=~Q(mode="drop_off") | Q(customer__isnull=False),
+                name="drop_off_sale_has_customer",
+            ),
+            models.CheckConstraint(
+                condition=Q(subtotal__gte=0, discount_total__gte=0, total__gte=0, balance__gte=0),
+                name="sale_amounts_not_negative",
+            ),
+            # A cancelled sale keeps when, who, where and why.
+            models.CheckConstraint(
+                condition=~Q(status="cancelled")
+                | (
+                    Q(
+                        cancelled_at__isnull=False,
+                        cancelled_by__isnull=False,
+                        cancel_cash_session__isnull=False,
+                    )
+                    & ~Q(cancel_reason="")
+                ),
+                name="cancelled_sale_has_details",
+            ),
+        ]
+
+    def __str__(self):
+        return self.number
+
+
+class SaleItem(BaseModel):
+    """A line of a sale: a service or a product, with the price it was charged at."""
+
+    sale = models.ForeignKey(
+        Sale,
+        verbose_name=_("sale"),
+        on_delete=models.PROTECT,
+        related_name="items",
+    )
+    service = models.ForeignKey(
+        Service,
+        verbose_name=_("service"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="sale_items",
+    )
+    product = models.ForeignKey(
+        "inventory.Product",
+        verbose_name=_("product"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="sale_items",
+    )
+    quantity = models.DecimalField(_("quantity"), max_digits=10, decimal_places=3)
+    unit_price = models.DecimalField(
+        _("unit price"),
+        max_digits=10,
+        decimal_places=2,
+        help_text=_("Copied from the catalog when charging; later price changes do not alter it."),
+    )
+    amount = models.DecimalField(_("amount"), max_digits=10, decimal_places=2)
+
+    class Meta:
+        verbose_name = _("sale item")
+        verbose_name_plural = _("sale items")
+        constraints = [
+            # A line is either a service or a product.
+            models.CheckConstraint(
+                condition=Q(service__isnull=False, product__isnull=True)
+                | Q(service__isnull=True, product__isnull=False),
+                name="sale_item_service_or_product",
+            ),
+            models.CheckConstraint(
+                condition=Q(quantity__gt=0),
+                name="sale_item_quantity_positive",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.quantity} x {self.service or self.product}"
+
+
+class Payment(BaseModel):
+    """A payment towards a sale; a sale can have several (an advance and the rest).
+
+    ``cash_session`` is the session open when it was received, which may differ from the
+    sale's when a drop-off pays its balance on a later shift. Payments are never deleted.
+    """
+
+    class Method(models.TextChoices):
+        CASH = "cash", _("Cash")
+        CREDIT_CARD = "credit_card", _("Credit card")
+        DEBIT_CARD = "debit_card", _("Debit card")
+
+    sale = models.ForeignKey(
+        Sale,
+        verbose_name=_("sale"),
+        on_delete=models.PROTECT,
+        related_name="payments",
+    )
+    cash_session = models.ForeignKey(
+        CashSession,
+        verbose_name=_("cash session"),
+        on_delete=models.PROTECT,
+        related_name="payments",
+    )
+    method = models.CharField(_("method"), max_length=20, choices=Method.choices)
+    amount = models.DecimalField(_("amount"), max_digits=10, decimal_places=2)
+    reference = models.CharField(
+        _("reference"),
+        max_length=100,
+        blank=True,
+        help_text=_("Card voucher reference."),
+    )
+
+    class Meta:
+        verbose_name = _("payment")
+        verbose_name_plural = _("payments")
+        ordering = ["created_at"]
+        constraints = [
+            models.CheckConstraint(condition=Q(amount__gt=0), name="payment_amount_positive"),
+        ]
+
+    def __str__(self):
+        return f"{self.get_method_display()} {self.amount}"
+
+
+class Discount(BaseModel):
+    """A discount of the catalog that employees can apply, such as "10% on self-service".
+
+    It applies to the whole sale or only to the lines of its services, optionally
+    limited to one mode and to a range of dates. Deactivate it instead of deleting it.
+    """
+
+    class Kind(models.TextChoices):
+        PERCENTAGE = "percentage", _("Percentage")
+        FIXED_AMOUNT = "fixed_amount", _("Fixed amount")
+
+    class Scope(models.TextChoices):
+        SALE = "sale", _("Whole sale")
+        SERVICE = "service", _("Services")
+
+    branch = models.ForeignKey(
+        "core.Branch",
+        verbose_name=_("branch"),
+        on_delete=models.PROTECT,
+        related_name="discounts",
+    )
+    name = models.CharField(_("name"), max_length=100)
+    kind = models.CharField(_("kind"), max_length=20, choices=Kind.choices)
+    value = models.DecimalField(
+        _("value"),
+        max_digits=10,
+        decimal_places=2,
+        help_text=_("Percentage (e.g. 10 for 10%) or amount in pesos."),
+    )
+    scope = models.CharField(
+        _("applies to"),
+        max_length=20,
+        choices=Scope.choices,
+        default=Scope.SALE,
+        help_text=_("A fixed amount on services is taken once from each line of those services."),
+    )
+    services = models.ManyToManyField(
+        Service,
+        verbose_name=_("services"),
+        blank=True,
+        related_name="discounts",
+    )
+    mode = models.CharField(
+        _("mode"),
+        max_length=20,
+        choices=Mode.choices,
+        blank=True,
+        help_text=_("Leave empty for both modes."),
+    )
+    valid_from = models.DateField(_("valid from"), null=True, blank=True)
+    valid_until = models.DateField(_("valid until"), null=True, blank=True)
+    is_active = models.BooleanField(_("active"), default=True)
+
+    class Meta:
+        verbose_name = _("discount")
+        verbose_name_plural = _("discounts")
+        ordering = ["name"]
+        permissions = [
+            ("apply_discount", _("Can apply catalog discounts")),
+            ("manage_discounts", _("Can create, edit or deactivate discounts")),
+        ]
+        constraints = [
+            models.CheckConstraint(condition=Q(value__gt=0), name="discount_value_positive"),
+            models.CheckConstraint(
+                condition=~Q(kind="percentage") | Q(value__lte=MAX_PERCENTAGE),
+                name="discount_percentage_up_to_100",
+            ),
+            models.CheckConstraint(
+                condition=Q(valid_from__isnull=True)
+                | Q(valid_until__isnull=True)
+                | Q(valid_until__gte=models.F("valid_from")),
+                name="discount_valid_until_after_valid_from",
+            ),
+        ]
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        super().clean()
+
+        too_high = self.value is not None and self.value > MAX_PERCENTAGE
+
+        if self.kind == self.Kind.PERCENTAGE and too_high:
+            raise ValidationError({"value": _("A percentage cannot be more than 100.")})
+
+        if self.valid_from and self.valid_until and self.valid_until < self.valid_from:
+            raise ValidationError(
+                {"valid_until": _("The end date cannot be before the start date.")},
+            )
+
+
+class AppliedDiscount(BaseModel):
+    """A discount applied to a sale, with the amount it took off.
+
+    ``created_by`` is who applied it. A discount on services has one row per line.
+    """
+
+    sale = models.ForeignKey(
+        Sale,
+        verbose_name=_("sale"),
+        on_delete=models.PROTECT,
+        related_name="applied_discounts",
+    )
+    sale_item = models.ForeignKey(
+        SaleItem,
+        verbose_name=_("sale item"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="applied_discounts",
+    )
+    discount = models.ForeignKey(
+        Discount,
+        verbose_name=_("discount"),
+        on_delete=models.PROTECT,
+        related_name="applied",
+    )
+    amount = models.DecimalField(_("amount"), max_digits=10, decimal_places=2)
+
+    class Meta:
+        verbose_name = _("applied discount")
+        verbose_name_plural = _("applied discounts")
+        constraints = [
+            # A discount is applied only once to each sale or line.
+            models.UniqueConstraint(
+                fields=["sale", "discount", "sale_item"],
+                nulls_distinct=False,
+                name="discount_applied_once",
+            ),
+            models.CheckConstraint(
+                condition=Q(amount__gt=0),
+                name="applied_discount_amount_positive",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.discount} -{self.amount}"

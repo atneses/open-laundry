@@ -15,7 +15,10 @@ pytestmark = pytest.mark.django_db
 @pytest.fixture
 def wash():
     return Service.objects.create(
-        name="Wash per load", kind="wash", machine_kind="washer", uses_machine=True
+        name="Wash per load",
+        kind="wash",
+        machine_kind="washer",
+        uses_machine=True,
     )
 
 
@@ -150,7 +153,7 @@ def test_database_allows_one_active_price_per_service_and_mode(branch, wash):
 
     with pytest.raises(IntegrityError):
         ServicePrice.objects.bulk_create(
-            [ServicePrice(price="60.00", **fields), ServicePrice(price="65.00", **fields)]
+            [ServicePrice(price="60.00", **fields), ServicePrice(price="65.00", **fields)],
         )
 
 

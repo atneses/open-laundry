@@ -27,11 +27,12 @@ Las casillas `[ ]` sirven para ir marcando el avance. Las reglas de trabajo (ram
 - [Etapa 9 – Máquinas y ciclos (modo manual y simulador)](#etapa-9--máquinas-y-ciclos-modo-manual-y-simulador)
 - [Etapa 10 – Tickets](#etapa-10--tickets)
 - [Etapa 11 – Reportes](#etapa-11--reportes)
-- [Etapa 12 – Caja (React)](#etapa-12--caja-react)
-- [Etapa 13 – Despliegue y arranque en el local (MVP)](#etapa-13--despliegue-y-arranque-en-el-local-mvp)
-- [Etapa 14 – Control de máquinas con la cajita](#etapa-14--control-de-máquinas-con-la-cajita)
-- [Etapa 15 – Medidores de consumo (opcional)](#etapa-15--medidores-de-consumo-opcional)
-- [Etapa 16 – Mercado Pago Point](#etapa-16--mercado-pago-point)
+- [Etapa 12 – API de la caja](#etapa-12--api-de-la-caja)
+- [Etapa 13 – Caja (React)](#etapa-13--caja-react)
+- [Etapa 14 – Despliegue y arranque en el local (MVP)](#etapa-14--despliegue-y-arranque-en-el-local-mvp)
+- [Etapa 15 – Control de máquinas con la cajita](#etapa-15--control-de-máquinas-con-la-cajita)
+- [Etapa 16 – Medidores de consumo (opcional)](#etapa-16--medidores-de-consumo-opcional)
+- [Etapa 17 – Mercado Pago Point](#etapa-17--mercado-pago-point)
 - [Después del plan (Fase 3 en mvp.md)](#después-del-plan-fase-3-en-mvpmd)
 
 ---
@@ -40,7 +41,7 @@ Las casillas `[ ]` sirven para ir marcando el avance. Las reglas de trabajo (ram
 
 ```mermaid
 flowchart TD
-    E0["Etapa 0<br/>Preparación en el local"] --> E14
+    E0["Etapa 0<br/>Preparación en el local"] --> E15
     E1["Etapa 1<br/>Base del proyecto"] --> E2["Etapa 2<br/>Personalización del admin"]
     E2 --> E3["Etapa 3<br/>Usuarios, roles y permisos"]
     E3 --> E4["Etapa 4<br/>Catálogo e inventario"]
@@ -52,11 +53,12 @@ flowchart TD
     E8 --> E10["Etapa 10<br/>Tickets"]
     E9 --> E10
     E10 --> E11["Etapa 11<br/>Reportes"]
-    E11 --> E12["Etapa 12<br/>Caja (React)"]
-    E12 --> E13["Etapa 13<br/>Despliegue y arranque<br/>en el local (MVP)"]
-    E13 --> E14["Etapa 14<br/>Control de máquinas<br/>con la cajita"]
-    E14 --> E15["Etapa 15<br/>Medidores de consumo<br/>(opcional)"]
-    E13 --> E16["Etapa 16<br/>Mercado Pago Point"]
+    E11 --> E12["Etapa 12<br/>API de la caja"]
+    E12 --> E13["Etapa 13<br/>Caja (React)"]
+    E13 --> E14["Etapa 14<br/>Despliegue y arranque<br/>en el local (MVP)"]
+    E14 --> E15["Etapa 15<br/>Control de máquinas<br/>con la cajita"]
+    E15 --> E16["Etapa 16<br/>Medidores de consumo<br/>(opcional)"]
+    E14 --> E17["Etapa 17<br/>Mercado Pago Point"]
 
     subgraph back["Backend y admin"]
         E1
@@ -70,26 +72,28 @@ flowchart TD
         E9
         E10
         E11
+        E12
     end
 ```
 
 | Etapa | Nombre                                          | Fase en `mvp.md` |
 |:-----:|-------------------------------------------------|:----------------:|
 |   0   | Preparación en el local                         |      Fase 0      |
-| 1–11  | Backend y admin (modelos, reglas, API y Unfold) |      Fase 1      |
-|  12   | Caja (React)                                    |      Fase 1      |
-|  13   | Despliegue y arranque en el local (MVP)         |      Fase 1      |
-| 14–16 | Control de máquinas e integraciones             |      Fase 2      |
+| 1–11  | Backend y admin (modelos, reglas y Unfold)      |      Fase 1      |
+|  12   | API de la caja                                  |      Fase 1      |
+|  13   | Caja (React)                                    |      Fase 1      |
+|  14   | Despliegue y arranque en el local (MVP)         |      Fase 1      |
+| 15–17 | Control de máquinas e integraciones             |      Fase 2      |
 
-Primero se construyen el **backend y el admin** (Etapas 1 a 11): todas las reglas de negocio, la API y las pantallas de administración con Unfold. Después, la **caja en React** (Etapa 12) usa esa API ya probada.
+Primero se construyen el **backend y el admin** (Etapas 1 a 11): todas las reglas de negocio, probadas sin HTTP, y las pantallas de administración con Unfold. Después, la **API de la caja** (Etapa 12) expone esas reglas, y la **caja en React** (Etapa 13) usa esa API ya probada.
 
-La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local que no bloquean el desarrollo. Solo la Etapa 14 necesita que la Etapa 0 esté terminada.
+La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local que no bloquean el desarrollo. Solo la Etapa 15 necesita que la Etapa 0 esté terminada.
 
 ---
 
 ## Etapa 0 – Preparación en el local
 
-**Objetivo:** reunir los datos y el material para controlar las máquinas con la cajita, y dejar lista la caja (PC e impresora). **No bloquea** el desarrollo de las Etapas 1 a 13.
+**Objetivo:** reunir los datos y el material para controlar las máquinas con la cajita, y dejar lista la caja (PC e impresora). **No bloquea** el desarrollo de las Etapas 1 a 14.
 
 ### 0.1 Datos de la configuración de Aitare
 - [ ] **Qué se hace:** abrir ControlEquipos en la PC del negocio (aunque la cajita esté apagada) y tomar capturas de la configuración de **cada equipo**: pulso de arranque, duración del pulso (ms), número de pulsos, tiempo, costo y número de relé.
@@ -271,7 +275,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 4 – Catálogo e inventario
 
-**Objetivo:** dar de alta qué se vende, a qué precio, y qué insumos se gastan. Se crean las apps `sales` (servicios y precios) e `inventory` (productos, consumo y movimientos). Esta etapa es **solo modelos, reglas y admin**: la API del catálogo se hace en la Etapa 7 (7.3) y la de stock bajo en la Etapa 11 (11.3).
+**Objetivo:** dar de alta qué se vende, a qué precio, y qué insumos se gastan. Se crean las apps `sales` (servicios y precios) e `inventory` (productos, consumo y movimientos). Esta etapa es **solo modelos, reglas y admin**: la API del catálogo y la de stock bajo se hacen en la Etapa 12 (12.3 y 12.10).
 
 ### 4.1 Servicios y precios
 - [x] **Qué se hace:** crear los modelos `Service` y `ServicePrice` (precio por modalidad: autoservicio / encargo; campo `program` opcional para el futuro).
@@ -327,7 +331,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 5 – Clientes
 
-**Objetivo:** registrar y buscar clientes desde el admin. Se crea la app `customers`. Esta etapa es **solo modelo y admin**: la clase de permiso de la API y la API de clientes se hacen en la Etapa 7 (7.1 y 7.4).
+**Objetivo:** registrar y buscar clientes desde el admin. Se crea la app `customers`. Esta etapa es **solo modelo y admin**: la clase de permiso de la API y la API de clientes se hacen en la Etapa 12 (12.1 y 12.4).
 
 ### 5.1 Modelo `Customer`
 - [x] **Qué se hace:** crear `Customer` con nombre y teléfono obligatorios (teléfono único por sucursal); dirección, correo y notas opcionales.
@@ -346,7 +350,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **Riesgos y pendientes:**
 - **Riesgo – borrar un cliente:** hoy se puede borrar; desde la Etapa 7 las ventas lo protegerán (`PROTECT`).
-- **Pendiente – uso por empleados:** el rol Empleado tiene `manage_customers`, pero un empleado normal no entra al admin (`is_staff`); registrará clientes desde la caja (API en 7.4, pantalla en la Etapa 12).
+- **Pendiente – uso por empleados:** el rol Empleado tiene `manage_customers`, pero un empleado normal no entra al admin (`is_staff`); registrará clientes desde la caja (API en 12.4, pantalla en la Etapa 13).
 
 **✅ Etapa 5 terminada cuando:** se pueden registrar y buscar clientes desde el admin.
 
@@ -354,7 +358,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 6 – Caja (turnos)
 
-**Objetivo:** las reglas del turno de caja: abrir con un fondo, una caja abierta por empleado y el corte con su diferencia. Esta etapa es **solo modelo, servicios, admin y pruebas**: la API de caja se hace en la Etapa 7 (7.2), junto con el cobro.
+**Objetivo:** las reglas del turno de caja: abrir con un fondo, una caja abierta por sucursal y el corte con su diferencia. Esta etapa es **solo modelo, servicios, admin y pruebas**: la API de caja se hace en la Etapa 12 (12.2).
 
 ### 6.1 Modelo `CashSession`
 - [x] **Qué se hace:** crear `CashSession` (apertura, fondo inicial, cierre, efectivo esperado, efectivo contado, diferencia, total de tarjeta, número de ventas y cancelaciones) y los permisos `sales.operate_cash_session` y `sales.view_all_cash_sessions`, con su migración para los roles.
@@ -368,7 +372,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 ### 6.3 Cerrar caja (corte)
 - [x] **Qué se hace:** servicio de cierre: el empleado captura el efectivo contado y el sistema calcula: efectivo esperado = fondo + pagos en efectivo del turno − cancelaciones; diferencia = contado − esperado; total de tarjeta para cuadrar contra Mercado Pago Point.
 - **Para qué:** detectar faltantes o sobrantes por turno.
-- **Listo cuando:** una prueba de un turno sin ventas da esperado = fondo y la diferencia correcta. La prueba con ventas en efectivo, tarjeta y una cancelación se hace en la Etapa 7 (7.6 y 7.9).
+- **Listo cuando:** una prueba de un turno sin ventas da esperado = fondo y la diferencia correcta. La prueba con ventas en efectivo, tarjeta y una cancelación se hace en la Etapa 7 (7.2 y 7.5).
 
 ### 6.4 Cortes en el admin
 - [x] **Qué se hace:** consulta de cortes en Unfold, en el área *Operación*, de solo lectura, visible con `sales.view_all_cash_sessions`.
@@ -380,12 +384,12 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - Al cerrar se guardan esperado, contado, diferencia, total de tarjeta y conteos. **Con diferencia ≠ 0 la nota es obligatoria** (validado en el servicio y en la base de datos).
 - Los totales del turno (`session_totals`) devuelven 0 hasta que existan ventas y pagos (Etapa 7).
 - **Permisos:** `sales.operate_cash_session` y `sales.view_all_cash_sessions`; la migración `sales/0004` se los da a Admin y `operate_cash_session` a Empleado. Cortes en el área *Operación* del menú.
+- **Permisos en los servicios:** abrir requiere `sales.operate_cash_session`; cerrar, ser quien abrió (con ese permiso) o tener `sales.view_all_cash_sessions`. Si no, `PermissionDenied`.
 - **Caja olvidada:** quien tiene `sales.view_all_cash_sessions` puede cerrar desde el admin una caja que quedó abierta (acción *Cerrar caja* en el detalle del corte), capturando el efectivo contado y, si hay diferencia, la nota. Cada corte guarda quién lo cerró (`closed_by`).
 
 **Riesgos y pendientes:**
-- **Pendiente – cálculo real del corte:** `session_totals` debe sumar pagos en efectivo y tarjeta, ventas y cancelaciones del turno (Etapa 7, 7.6 y 7.9).
-- **Pendiente – API de caja:** abrir, cerrar y consultar desde la caja (Etapa 7, 7.2). Hasta entonces solo se abre y cierra desde código o pruebas.
-- **Pendiente – quién cierra desde la caja:** el servicio no revisa que quien cierra sea quien abrió; lo controlará la API (7.2). Desde el admin la puede cerrar quien tenga `sales.view_all_cash_sessions`.
+- ~~**Pendiente – cálculo real del corte:**~~ resuelto en la Etapa 7 (7.2 y 7.5): `session_totals` suma pagos en efectivo y tarjeta, ventas y cancelaciones del turno.
+- **Pendiente – API de caja:** abrir, cerrar y consultar desde la caja (Etapa 12, 12.2). Hasta entonces solo se abre y cierra desde código o pruebas.
 - **Riesgo – acción del admin no probada en el navegador:** el diálogo de *Cerrar caja* se probó con pruebas automáticas, no a mano.
 
 **Cambio general – `BaseModel` (hecho durante la Etapa 6):**
@@ -393,7 +397,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - Se reemplazaron campos repetidos: `StockMovement.user` y `PermissionLog.performed_by` pasaron a ser `created_by` (migraciones con `RenameField`); los `created_at` propios se heredan. `CashSession.user` y `opened_at` se quedan porque son del negocio.
 - **Riesgo – registros sin usuario:** fuera de una petición (consola, `seed_demo`, migraciones y, más adelante, Celery o MQTT) `created_by` queda vacío salvo que se pase a mano. Por eso `StockMovement.created_by` ahora es opcional (antes era obligatorio).
 - **Riesgo – escrituras masivas:** `bulk_create` y `QuerySet.update` no pasan por `save`; deben llenar estos campos a mano (como `log_permission_changes`).
-- **Riesgo – API con JWT sin probar:** el middleware lee el usuario cuando se guarda, después de que DRF lo autentica, pero no hay endpoints todavía; se prueba en la Etapa 7.
+- **Riesgo – API con JWT sin probar:** el middleware lee el usuario cuando se guarda, después de que DRF lo autentica, pero no hay endpoints todavía; se prueba en la Etapa 12.
 - **Pendiente – modelos futuros:** el MVP define campos como `Sale.user_id` y `Payment.user_id`; al crearlos, decidir si se usa `created_by` en su lugar.
 
 **✅ Etapa 6 terminada cuando:** las reglas de abrir y cerrar caja y el cálculo del corte pasan sus pruebas.
@@ -402,52 +406,55 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 7 – Ventas, pagos y descuentos
 
-**Objetivo:** las reglas de cobro (ventas, pagos, descuentos y cancelaciones) en el backend, con su API y su consulta en el admin, y la API de caja y de los datos que usa la caja.
+**Objetivo:** las reglas de cobro (ventas, pagos, descuentos y cancelaciones) en el backend, con su consulta en el admin. Esta etapa es **solo modelos, servicios, admin y pruebas**: la API se hace en la Etapa 12. Los servicios reciben al usuario y **validan sus permisos** (p. ej. cobrar sin `sales.charge` da error), así que las reglas de permisos se prueban aquí.
 
-### 7.1 Clase de permiso para la API
-- [ ] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("sales.operate_cash_session")`, que se pone en cada endpoint. Es la primera etapa con endpoints protegidos por permiso (se movió aquí desde la Etapa 6).
-- **Para qué:** que la validación ocurra siempre en el servidor, no solo escondiendo botones.
-- **Listo cuando:** una prueba muestra que un usuario sin el permiso recibe error 403.
-
-### 7.2 API de caja
-- [ ] **Qué se hace:** `/api/cash-sessions/` para abrir y cerrar caja, ver el corte actual y el historial, usando los servicios de la Etapa 6 y protegida con `sales.operate_cash_session`. El empleado ve solo sus cortes; con `sales.view_all_cash_sessions` se ven todos (movida aquí desde la Etapa 6).
-- **Para qué:** que el empleado abra y cierre su turno desde la caja.
-- **Listo cuando:** sin el permiso responde 403, y un empleado no puede ver cortes de otros (pruebas).
-
-### 7.3 API del catálogo
-- [ ] **Qué se hace:** `/api/services/` (servicios activos con su precio por modalidad) y `/api/products/` (productos a la venta), de solo lectura para la caja. El catálogo se sigue editando en el admin (Etapa 4).
-- **Para qué:** que la caja sepa qué puede cobrar y a qué precio.
-- **Listo cuando:** al cambiar un precio en el admin, la API devuelve el nuevo.
-
-### 7.4 API de clientes
-- [ ] **Qué se hace:** `/api/customers/` con alta, edición y **búsqueda por teléfono o nombre**, protegida con `customers.manage_customers` (movida aquí desde la Etapa 5).
-- **Para qué:** en caja se busca al cliente por teléfono mientras se le atiende; los encargos lo necesitan.
-- **Listo cuando:** buscar los últimos dígitos del teléfono encuentra al cliente; sin el permiso responde 403.
-
-### 7.5 Modelos de venta
-- [ ] **Qué se hace:** crear `Sale` (modalidad, estado, subtotal, descuento, total, saldo, turno) y `SaleItem` (servicio o producto, cantidad, precio unitario copiado del catálogo). No se puede cobrar sin caja abierta.
+### 7.1 Modelos de venta
+- [x] **Qué se hace:** crear `Sale` (modalidad, estado, subtotal, descuento, total, saldo, turno) y `SaleItem` (servicio o producto, cantidad, precio unitario copiado del catálogo), y el servicio de cobro, que requiere `sales.charge` y una caja abierta.
 - **Para qué:** que el precio cobrado no cambie aunque después se modifique el catálogo.
-- **Listo cuando:** crear una venta de 3 cargas de lavado en autoservicio calcula el total con el precio de autoservicio, y sin caja abierta la venta se rechaza (pruebas).
+- **Listo cuando:** una venta de 3 cargas de lavado en autoservicio calcula el total con el precio de autoservicio; sin caja abierta o sin `sales.charge` la venta se rechaza (pruebas).
 
-### 7.6 Pagos
-- [ ] **Qué se hace:** crear `Payment` (efectivo, tarjeta de crédito, tarjeta de débito; monto; referencia del voucher). Una venta puede tener varios pagos; el saldo y el estado se recalculan solos (`pending`, `partially_paid`, `paid`).
+### 7.2 Pagos
+- [x] **Qué se hace:** crear `Payment` (efectivo, tarjeta de crédito, tarjeta de débito; monto; referencia del voucher). Una venta puede tener varios pagos; el saldo y el estado se recalculan solos (`pending`, `partially_paid`, `paid`). Conectar `session_totals` del corte (Etapa 6) con los pagos.
 - **Para qué:** permitir anticipos en encargos y pagos mixtos.
 - **Listo cuando:** dos pagos parciales dejan la venta en `paid` con saldo 0, y el corte del turno suma bien los pagos en efectivo y con tarjeta (pruebas).
 
-### 7.7 Regla de autoservicio
-- [ ] **Qué se hace:** en autoservicio la venta debe quedar pagada completa antes de poder activar máquinas.
-- **Listo cuando:** una prueba confirma que no se puede activar una máquina con saldo pendiente en autoservicio.
+### 7.3 Regla de autoservicio
+- **Movido al 9.5:** la regla se valida al activar una máquina, que se construye en la Etapa 9.
 
-### 7.8 Descuentos
-- [ ] **Qué se hace:** crear `Discount` (porcentaje o monto fijo, vigencia, modalidad, servicios) y `AppliedDiscount`. La API solo ofrece al empleado los descuentos vigentes que aplican a esa venta; crearlos requiere `sales.manage_discounts`.
+### 7.4 Descuentos
+- [x] **Qué se hace:** crear `Discount` (porcentaje o monto fijo, vigencia, modalidad, servicios) y `AppliedDiscount`. Un servicio lista los descuentos vigentes que aplican a una venta y otro los aplica (requiere `sales.apply_discount`). Crearlos y editarlos en el admin requiere `sales.manage_discounts`.
 - **Para qué:** que el empleado solo use descuentos autorizados.
-- **Listo cuando:** un descuento vencido o de otra modalidad no aparece ni se puede aplicar.
+- **Listo cuando:** un descuento vencido o de otra modalidad no aparece ni se puede aplicar (pruebas).
 
-### 7.9 Cancelaciones
-- [ ] **Qué se hace:** cancelar una venta con motivo obligatorio; queda quién, cuándo y por qué. Los pagos en efectivo cancelados se descuentan del corte.
-- **Listo cuando:** cancelar sin motivo da error, y el corte refleja la cancelación.
+### 7.5 Cancelaciones
+- [x] **Qué se hace:** servicio para cancelar una venta con motivo obligatorio (requiere `sales.cancel_sale`); queda quién, cuándo y por qué. Los pagos en efectivo cancelados se descuentan del corte.
+- **Listo cuando:** cancelar sin motivo o sin permiso da error, y el corte refleja la cancelación (pruebas).
 
-**✅ Etapa 7 terminada cuando:** la API permite abrir y cerrar caja, cobrar ventas en efectivo y tarjeta, con y sin descuento, y cancelarlas, con pruebas de cada regla.
+**Notas de la implementación:**
+- **7.1:** `Sale` y `SaleItem` en `sales`; el cajero es `created_by` (no hay campo `user`). Servicio `create_sale` (`sales/services.py`): requiere `sales.charge`, la caja abierta de la sucursal del usuario y, en encargo, un cliente de la misma sucursal. Copia el precio activo del catálogo (`active_price`) y la venta empieza en `pending` con saldo = total.
+- **Folio:** prefijo por sucursal (`Branch.sale_prefix`, por defecto `A`) + consecutivo de 6 dígitos (`A-000123`). El contador `Branch.last_sale_number` se bloquea dentro de la transacción del cobro, así que no hay huecos ni repetidos.
+- **Productos:** venderlos crea un `StockMovement` de venta ligado a la venta (`StockMovement.sale`) en la misma transacción. **No se puede vender más de lo que hay en stock** (los productos se bloquean durante el cobro, así dos ventas a la vez no venden las mismas últimas unidades). Los servicios se venden en unidades completas.
+- Ventas en el admin (área *Operación*), de solo lectura, con sus líneas; se ven con `sales.view_sale`. Permiso `sales.charge` para Admin y Empleado (migración `sales/0007`).
+- **7.2:** `Payment` en `sales`, con `cash_session` (no estaba en el MVP): el pago cuenta en el turno en que se recibió, así el saldo de un encargo cobrado en otro turno cae en el corte correcto. No hay `paid_at`: se usan `created_at` / `created_by`. Servicio `add_payment`: requiere `sales.charge` y la caja abierta de la sucursal; rechaza montos ≤ 0, mayores que el saldo y ventas canceladas o de otra sucursal; recalcula saldo y estado bloqueando la venta. La referencia del voucher es opcional. `session_totals` ya suma efectivo y tarjeta (crédito + débito) y cuenta las ventas del turno. Pagos de solo lectura en la ficha de la venta (sin entrada propia en el menú); migración `sales/0009` da al Admin los permisos de `Payment`.
+- **7.3:** movido al 9.5 (la regla se valida al activar una máquina).
+- **7.4:** `Discount` (con `branch`) y `AppliedDiscount` en `sales`; quien lo aplicó es `created_by` (no hay campo `user`). `available_discounts(sale)` lista los activos, vigentes hoy, de la sucursal y modalidad de la venta, no aplicados y, si son por servicio, con alguno de sus servicios en la venta. `apply_discount` requiere `sales.apply_discount`, solo con la venta en `pending` (antes del primer pago); recalcula descuento, total y saldo. Se suman varios descuentos distintos (cada uno una vez); ninguno baja el total de $0 ni un renglón de su importe. Porcentaje sobre el subtotal o el renglón; monto fijo por servicio, una vez por renglón. Si el total queda en $0 la venta pasa a `paid`. Descuentos en el admin (área *Catálogo*) con `sales.manage_discounts`, sin borrar (se desactivan); aplicados de solo lectura en la ficha de la venta. Migración `sales/0011`: Admin todos, Empleado `sales.apply_discount`. El nombre del descuento admite `%` (no usa `validate_name`).
+- **7.5:** servicio `cancel_sale` (requiere `sales.cancel_sale`, motivo obligatorio y la caja abierta de la sucursal). La venta guarda `cancelled_at`, `cancelled_by`, `cancel_reason` y `cancel_cash_session` (no estaba en el MVP): el turno donde se cancela devuelve los pagos, así una venta cobrada en un turno ya cerrado se descuenta del turno abierto y el corte cerrado no cambia. `session_totals` resta del efectivo y de la tarjeta los pagos de las ventas canceladas en el turno, cuenta las ventas no canceladas y las cancelaciones. Los productos regresan al stock con un movimiento nuevo `sale_cancellation`. Permiso para Admin y Empleado (migración `sales/0013`). El mensaje "abre la caja" ahora es genérico (cobrar y cancelar).
+
+**Riesgos y pendientes:**
+- **Pendiente – precio por programa (función futura):** `active_price` ya busca por programa de lavado con respaldo al precio general, pero el cobro siempre usa el general porque no hay precios por programa.
+- **Riesgo – cambiar el prefijo:** el consecutivo es por sucursal; si una sucursal cambia su `sale_prefix`, su numeración sigue (p. ej. de `A-000010` a `B-000011`).
+- **Pendiente – cambio en efectivo:** no se guarda el monto recibido ni el cambio; los calcula la caja (Etapa 12) y el ticket (Etapa 10).
+- **Pendiente – pagos en el admin:** solo se ven dentro de la venta; no hay lista de pagos con filtro por método (el MVP lo menciona para el dashboard y reportes, Etapa 11).
+- **Riesgo – tarjeta sin referencia:** la referencia es opcional, así que un pago con tarjeta puede no tener cómo cuadrarse contra el reporte de Mercado Pago Point.
+- **Pendiente – descuentos por día de la semana:** el MVP pone de ejemplo "10% martes", pero la vigencia es solo por fechas; falta un campo de días si el negocio lo necesita.
+- **Pendiente – quitar un descuento aplicado:** no se puede deshacer; habría que cancelar la venta (7.5) y cobrarla de nuevo.
+- **Riesgo – redondeo:** el porcentaje se redondea a centavos por renglón (redondeo bancario de `Decimal`), así que la suma por renglones puede diferir un centavo del porcentaje del total.
+- **Pendiente – bitácora de cancelaciones:** el MVP pide registrarlas en bitácora; por ahora quedan en la propia venta (quién, cuándo, por qué), visibles en el admin.
+- **Pendiente – ciclos y encargos:** cancelar no toca ciclos de máquina ni encargos, que llegan en las Etapas 8 y 9.
+- **Riesgo – devolución con tarjeta:** el sistema resta la tarjeta del corte, pero la devolución real se hace a mano en la terminal de Mercado Pago Point; si no se hace, el corte no cuadra con el reporte de Point.
+- **Riesgo – caja sin efectivo suficiente:** cancelar una venta de un turno anterior puede dejar el esperado del turno abierto por debajo de lo que hay en caja (incluso negativo); no se valida.
+
+**✅ Etapa 7 terminada cuando:** los servicios permiten cobrar ventas en efectivo y tarjeta, con y sin descuento, y cancelarlas, con pruebas de cada regla y permiso, y el corte de caja cuadra.
 
 ---
 
@@ -460,11 +467,11 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** no se puede crear un encargo sin cliente.
 
 ### 8.2 Flujo de estados
-- [ ] **Qué se hace:** endpoints para cambiar de estado. Entregar con saldo pendiente requiere `sales.deliver_with_balance`.
+- [ ] **Qué se hace:** servicios para cambiar de estado (requieren `customers.manage_customers`). Entregar con saldo pendiente requiere `sales.deliver_with_balance`.
 - **Para qué:** no entregar ropa sin cobrar, salvo autorización.
-- **Listo cuando:** un empleado sin permiso no puede entregar con saldo (prueba 403).
+- **Listo cuando:** un empleado sin permiso no puede entregar con saldo (prueba).
 
-**✅ Etapa 8 terminada cuando:** un encargo completo (recibir → lavar → listo → cobrar saldo → entregar) funciona de principio a fin por la API.
+**✅ Etapa 8 terminada cuando:** un encargo completo (recibir → lavar → listo → cobrar saldo → entregar) funciona de principio a fin con los servicios (prueba).
 
 ---
 
@@ -492,9 +499,9 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** existe la interfaz y una prueba que usa un driver falso.
 
 ### 9.5 Driver manual
-- [ ] **Qué se hace:** `ManualDriver`: al activar, marca el ciclo como `is_manual` y `running`; el empleado presiona Start en la máquina (modo PUSH).
+- [ ] **Qué se hace:** `ManualDriver`: al activar (el servicio requiere `machines.start_machine`), marca el ciclo como `is_manual` y `running`; el empleado presiona Start en la máquina (modo PUSH). **Regla de autoservicio** (movida desde el 7.3): una venta de autoservicio debe estar pagada completa antes de activar sus máquinas.
 - **Para qué:** es como operan hoy y es el respaldo permanente si falla la cajita.
-- **Listo cuando:** activar una máquina en modo manual deja el ciclo en curso.
+- **Listo cuando:** activar una máquina en modo manual deja el ciclo en curso, y no se puede activar con saldo pendiente en autoservicio (prueba).
 
 ### 9.6 Simulador
 - [ ] **Qué se hace:** `SimulatorDriver`: imita a la cajita, con confirmación tras unos segundos o falla al azar (configurable). Corre en una tarea de Celery.
@@ -505,12 +512,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - [ ] **Qué se hace:** al iniciar un ciclo de lavado sin `customer_supplies`, crear los movimientos de consumo según `LoadConsumption`.
 - **Listo cuando:** un lavado baja 150–200 ml de detergente y de suavizante; con `customer_supplies` no baja nada.
 
-### 9.8 API de entradas de inventario
-- [ ] **Qué se hace:** `/api/inventory/movements/`: `POST` para registrar una entrada de insumo (requiere `inventory.receive_stock`) y `GET` para el historial de movimientos. Los ajustes (`inventory.adjust_stock`) se siguen haciendo en el admin.
-- **Para qué:** que un empleado sin acceso al admin registre desde la caja los insumos que llegan.
-- **Listo cuando:** registrar una entrada por la API sube el stock; sin `inventory.receive_stock` responde 403 (pruebas).
-
-### 9.9 Cierre por tiempo
+### 9.8 Cierre por tiempo
 - [ ] **Qué se hace:** tarea periódica (Celery Beat) que pasa a `finished` los ciclos que superen la duración esperada del programa.
 - **Para qué:** que no queden ciclos "en curso" para siempre cuando no hay medidor.
 - **Listo cuando:** un ciclo viejo se cierra solo.
@@ -524,11 +526,11 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Objetivo:** que el backend entregue los datos del ticket listos para imprimir (`mvp.md` §4, *Ticket*).
 
 ### 10.1 Datos del ticket
-- [ ] **Qué se hace:** endpoint `/api/sales/{id}/receipt/` que devuelve todo calculado: encabezado, líneas, línea de promoción de detergente (siempre que haya lavado), totales, pagos, cambio, saldo y fecha de entrega.
+- [ ] **Qué se hace:** servicio que arma los datos del ticket con todo calculado: encabezado, líneas, línea de promoción de detergente (siempre que haya lavado), totales, pagos, cambio, saldo y fecha de entrega. El endpoint se hace en la Etapa 12.
 - **Para qué:** que el formato no dependa de cálculos en el navegador y sirva después para WhatsApp o PDF.
 - **Listo cuando:** una prueba compara el resultado con un ticket esperado.
 
-**✅ Etapa 10 terminada cuando:** el endpoint del ticket devuelve los datos correctos para cada tipo de venta (prueba).
+**✅ Etapa 10 terminada cuando:** el servicio del ticket devuelve los datos correctos para cada tipo de venta (prueba).
 
 ---
 
@@ -537,80 +539,131 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Objetivo:** que el admin vea cómo va el negocio desde el dashboard de Unfold.
 
 ### 11.1 Indicadores del dashboard
-- [ ] **Qué se hace:** reemplazar la página de inicio del admin por un dashboard propio (plantilla en `backend/templates/admin/` y `DASHBOARD_CALLBACK` de Unfold) con tarjetas y gráficas: ventas del día (efectivo / tarjeta), cargas por máquina, encargos pendientes y listos, stock bajo, diferencias de caja, cancelaciones y descuentos por empleado.
+- [ ] **Qué se hace:** crear el permiso `core.view_reports` y reemplazar la página de inicio del admin por un dashboard propio (plantilla en `backend/templates/admin/` y `DASHBOARD_CALLBACK` de Unfold) con tarjetas y gráficas: ventas del día (efectivo / tarjeta), cargas por máquina, encargos pendientes y listos, stock bajo, diferencias de caja, cancelaciones y descuentos por empleado.
 - **Listo cuando:** los números coinciden con los datos de prueba.
 
 ### 11.2 Consultas con filtros
 - [ ] **Qué se hace:** listas de ventas, ciclos y cortes en el admin con filtros por fecha, empleado, modalidad, método de pago y máquina. Todo de solo lectura.
 - **Listo cuando:** se puede ver, por ejemplo, "ventas en tarjeta de la semana pasada de un empleado".
 
-### 11.3 Endpoints de reportes
-- [ ] **Qué se hace:** crear el permiso `core.view_reports` y los endpoints `/api/reports/daily-sales/`, `/machine-usage/` e `/inventory/`, protegidos con él, y `/api/products/low-stock/` con los productos por debajo del mínimo (movido desde la Etapa 4).
-- **Listo cuando:** devuelven los mismos números que el dashboard.
-
 **✅ Etapa 11 terminada cuando:** el admin puede revisar el día y el mes sin pedir ayuda.
 
 ---
 
-## Etapa 12 – Caja (React)
+## Etapa 12 – API de la caja
 
-**Objetivo:** construir las pantallas de la caja sobre la API ya terminada. Se hace después del backend para que cada pantalla use reglas y endpoints ya probados.
+**Objetivo:** exponer por la API REST todo lo que usará la caja (React), sobre los servicios ya probados de las Etapas 6 a 11. Las vistas son delgadas: validan datos, llaman al servicio y responden; las reglas y permisos ya los validan los servicios, y la API los repite con su 403. Todo documentado con `drf-spectacular` para que la caja genere sus tipos.
+
+### 12.1 Clase de permiso para la API
+- [ ] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("sales.operate_cash_session")`, que se pone en cada endpoint.
+- **Para qué:** que la validación ocurra siempre en el servidor, no solo escondiendo botones.
+- **Listo cuando:** una prueba muestra que un usuario sin el permiso recibe error 403, y que con JWT se llena `created_by` (`CurrentUserMiddleware`).
+
+### 12.2 API de caja
+- [ ] **Qué se hace:** `/api/cash-sessions/` para abrir y cerrar caja, ver el corte actual y el historial, protegida con `sales.operate_cash_session`. El empleado ve y cierra solo su caja; con `sales.view_all_cash_sessions` se ven todas.
+- **Listo cuando:** sin el permiso responde 403, y un empleado no puede ver ni cerrar cortes de otros (pruebas).
+
+### 12.3 API del catálogo
+- [ ] **Qué se hace:** `/api/services/` (servicios activos con su precio por modalidad) y `/api/products/` (productos a la venta), de solo lectura. El catálogo se sigue editando en el admin.
+- **Listo cuando:** al cambiar un precio en el admin, la API devuelve el nuevo.
+
+### 12.4 API de clientes
+- [ ] **Qué se hace:** `/api/customers/` con alta, edición y **búsqueda por teléfono o nombre**, protegida con `customers.manage_customers`.
+- **Listo cuando:** buscar los últimos dígitos del teléfono encuentra al cliente; sin el permiso responde 403.
+
+### 12.5 API de ventas
+- [ ] **Qué se hace:** `/api/sales/` para cobrar (con pagos y descuentos), consultar y cancelar ventas, y `/api/discounts/` con los descuentos vigentes que aplican a una venta (servicios de la Etapa 7).
+- **Listo cuando:** se cobra una venta en efectivo y tarjeta, con descuento, y se cancela por la API; cada acción sin su permiso responde 403 (pruebas).
+
+### 12.6 API de encargos
+- [ ] **Qué se hace:** `/api/drop-off-orders/` para recibir, cambiar de estado y entregar encargos (servicios de la Etapa 8).
+- **Listo cuando:** un encargo completo funciona por la API; entregar con saldo sin `sales.deliver_with_balance` responde 403.
+
+### 12.7 API de máquinas
+- [ ] **Qué se hace:** `/api/machines/` con el estado de cada máquina y los ciclos pendientes, y la acción de activar un ciclo (servicios de la Etapa 9, requiere `machines.start_machine`).
+- **Listo cuando:** activar un ciclo por la API lo deja en curso; sin el permiso responde 403.
+
+### 12.8 API de entradas de inventario
+- [ ] **Qué se hace:** `/api/inventory/movements/`: `POST` para registrar una entrada de insumo (requiere `inventory.receive_stock`) y `GET` para el historial. Los ajustes se siguen haciendo en el admin.
+- **Para qué:** que un empleado sin acceso al admin registre desde la caja los insumos que llegan.
+- **Listo cuando:** registrar una entrada por la API sube el stock; sin `inventory.receive_stock` responde 403 (pruebas).
+
+### 12.9 API del ticket
+- [ ] **Qué se hace:** `/api/sales/{id}/receipt/` con los datos del ticket (servicio de la Etapa 10).
+- **Listo cuando:** devuelve lo mismo que el servicio para cada tipo de venta.
+
+### 12.10 API de reportes
+- [ ] **Qué se hace:** `/api/reports/daily-sales/`, `/machine-usage/` e `/inventory/`, protegidos con `core.view_reports`, y `/api/products/low-stock/` con los productos por debajo del mínimo.
+- **Listo cuando:** devuelven los mismos números que el dashboard.
+
+### 12.11 Usuario actual
+- [ ] **Qué se hace:** `/api/auth/me/` con el usuario actual y su lista de permisos efectivos.
+- **Para qué:** que la caja sepa quién entró y qué botones mostrar.
+- **Listo cuando:** devuelve los permisos del rol más los extra (prueba).
+
+**✅ Etapa 12 terminada cuando:** todos los endpoints que usará la caja existen, están documentados en `/api/docs/` y sus pruebas (incluidos los 403) pasan.
+
+---
+
+## Etapa 13 – Caja (React)
+
+**Objetivo:** construir las pantallas de la caja sobre la API ya terminada (Etapa 12). Se hace después del backend para que cada pantalla use reglas y endpoints ya probados.
 
 > En la Etapa 1 se hizo un primer esqueleto (Vite + React + TypeScript + Tailwind + shadcn/ui + TanStack Query + React Router, con proxy a la API y tipos generados) y luego se quitó de la rama. Se puede retomar de ese trabajo.
 
-### 12.1 Proyecto React
+### 13.1 Proyecto React
 - [ ] **Qué se hace:** crear el proyecto con Vite + React + TypeScript en `frontend/`. Instalar Tailwind + shadcn/ui, TanStack Query y React Router, con proxy de `/api` hacia el backend. Agregar el servicio `web` al `docker-compose.yml`.
 - **Para qué:** base de la pantalla de caja.
 - **Listo cuando:** `http://localhost:5173` muestra una página de inicio.
 
-### 12.2 Cliente de la API generado
+### 13.2 Cliente de la API generado
 - [ ] **Qué se hace:** generar los tipos TypeScript a partir del OpenAPI (`openapi-typescript` o similar) con un script `npm run api:gen`.
 - **Para qué:** que el frontend sepa exactamente qué datos manda y recibe cada endpoint, y avise si algo cambia.
 - **Listo cuando:** el script genera los tipos sin errores.
 
-### 12.3 Pruebas y CI del frontend
+### 13.3 Pruebas y CI del frontend
 - [ ] **Qué se hace:** configurar `vitest`, Testing Library y `oxlint` (lint, tipos, pruebas y compilación).
 - **Listo cuando:** `npm run lint`, `npm run typecheck`, `npm test` y `npm run build` pasan.
 
-### 12.4 Login en la caja
-- [ ] **Qué se hace:** endpoint `/api/auth/me/` (usuario actual + lista de permisos efectivos) y pantalla de inicio de sesión en React, guardado del token y renovación automática; cierre de sesión.
+### 13.4 Login en la caja
+- [ ] **Qué se hace:** pantalla de inicio de sesión en React (con `/api/auth/me/` de 12.11), guardado del token y renovación automática; cierre de sesión.
 - **Para qué:** que cada empleado entre con su cuenta en la PC de caja.
 - **Listo cuando:** un empleado entra, ve su nombre y, al cerrar sesión, vuelve al login.
 
-### 12.5 Búsqueda y alta rápida en la caja
+### 13.5 Búsqueda y alta rápida en la caja
 - [ ] **Qué se hace:** un buscador en React que, si no encuentra el teléfono, ofrece dar de alta al cliente ahí mismo.
 - **Listo cuando:** se registra un cliente nuevo en menos de 15 segundos sin salir de la venta.
 
-### 12.6 Abrir y cerrar caja
+### 13.6 Abrir y cerrar caja
 - [ ] **Qué se hace:** pantallas para abrir caja con el fondo inicial y para hacer el corte del turno (efectivo contado, diferencia, total de tarjeta).
 - **Listo cuando:** un empleado abre caja, cobra y hace su corte desde la caja.
 
-### 12.7 Pantalla de punto de venta
+### 13.7 Pantalla de punto de venta
 - [ ] **Qué se hace:** pantalla en React: elegir modalidad → (cliente) → agregar servicios y cantidades → aplicar descuento → cobrar (efectivo con cálculo de cambio, o tarjeta con referencia del voucher).
 - **Para qué:** es la pantalla que más se usará; tiene que ser rápida.
 - **Listo cuando:** se cobra una venta de autoservicio en pocos clics y aparece en el corte del turno.
 
-### 12.8 Tablero de encargos
+### 13.8 Tablero de encargos
 - [ ] **Qué se hace:** pantalla en React con columnas *Pendiente / Listo / Entregado*, búsqueda por cliente o folio y cobro del saldo al entregar.
 - **Listo cuando:** se recibe un encargo con anticipo, se marca listo y se entrega cobrando el resto.
 
-### 12.9 Tablero de máquinas en la caja
+### 13.9 Tablero de máquinas en la caja
 - [ ] **Qué se hace:** pantalla con las 6 máquinas (libre, en uso, fuera de servicio), el botón **"Activar"** junto a cada ciclo pendiente y los avisos ("Crédito enviado: presiona Start", "Sin respuesta: usa modo manual").
 - **Listo cuando:** se cobra, se activa una máquina y el tablero la muestra en uso.
 
-### 12.10 Vista de impresión
+### 13.10 Vista de impresión
 - [ ] **Qué se hace:** componente React con estilos `@media print` para papel de 80 mm (~48 caracteres por línea).
 - **Listo cuando:** la vista previa del navegador se ve como el ejemplo de `mvp.md`.
 
-### 12.11 Impresión y reimpresión
+### 13.11 Impresión y reimpresión
 - [ ] **Qué se hace:** imprimir automáticamente al cobrar, al recibir un encargo y al entregarlo; botón de reimpresión en el historial.
 - **Listo cuando:** sale el ticket en la POS-8360 de la caja.
 
-### 12.12 Entradas de inventario en la caja
-- [ ] **Qué se hace:** pantalla para registrar los insumos que llegan (producto y cantidad), con la API de 9.8.
+### 13.12 Entradas de inventario en la caja
+- [ ] **Qué se hace:** pantalla para registrar los insumos que llegan (producto y cantidad), con la API de 12.8.
 - **Listo cuando:** un empleado registra una entrada desde la caja y el stock sube.
 
-**✅ Etapa 12 terminada cuando:** un empleado hace en la caja todo su turno: abrir caja, cobrar, encargos, activar máquinas (manual), registrar entradas de inventario, imprimir tickets y corte.
+**✅ Etapa 13 terminada cuando:** un empleado hace en la caja todo su turno: abrir caja, cobrar, encargos, activar máquinas (manual), registrar entradas de inventario, imprimir tickets y corte.
 
 **Riesgos y pendientes:**
 - **Riesgo – dependencias del frontend:** `npm audit` reportaba 7 avisos "high" en dependencias internas de la herramienta de shadcn (`ts-morph` → `fast-glob` → `braces`), que no van en la app del navegador; revisar al retomar.
@@ -618,47 +671,47 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ---
 
-## Etapa 13 – Despliegue y arranque en el local (MVP)
+## Etapa 14 – Despliegue y arranque en el local (MVP)
 
 **Objetivo:** poner el sistema en internet y empezar a usarlo en la lavandería, con las máquinas en **modo manual**.
 
-### 13.1 Servidor
+### 14.1 Servidor
 - [ ] **Qué se hace:** crear una VM (AWS Lightsail/EC2), instalar Docker, configurar firewall (solo puertos 80, 443 y SSH) y un dominio.
 - **Listo cuando:** se entra por SSH y el dominio apunta a la VM.
 
-### 13.2 Producción con Docker
+### 14.2 Producción con Docker
 - [ ] **Qué se hace:** settings de producción (`config/settings/prod.py`: HTTPS, cookies seguras, documentación de la API solo para admins), servidor `gunicorn` (`requirements/prod.txt`), cómo se sirven los archivos estáticos (WhiteNoise o Nginx, por decidir), y `docker-compose.prod.yml` con Caddy (HTTPS automático), API, worker, beat, PostgreSQL, Redis y el frontend compilado. Variables en `.env` del servidor. Pasar `manage.py check --deploy`.
 - **Listo cuando:** `https://<dominio>/` abre la caja y `/admin/` el panel, con candado HTTPS.
 
-### 13.3 Respaldos
+### 14.3 Respaldos
 - [ ] **Qué se hace:** respaldo diario automático de PostgreSQL a S3 (o similar), conservando al menos 30 días, y **probar una restauración**.
 - **Para qué:** un respaldo que nunca se ha restaurado no garantiza nada.
 - **Listo cuando:** se restauró un respaldo en una base de prueba y los datos están completos.
 
-### 13.4 Revisión automática (CI) y despliegue automático
+### 14.4 Revisión automática (CI) y despliegue automático
 - [ ] **Qué se hace:** *workflows* de GitHub Actions (`.github/workflows/`) que:
   1. en cada *pull request* corren el lint, las migraciones, las pruebas del backend y del frontend, y la compilación;
   2. al mezclar a `main`, construyen las imágenes y actualizan el servidor.
 - **Para qué:** que ningún cambio llegue a `main` ni a producción sin pasar las pruebas, aunque alguien olvide correrlas.
 - **Listo cuando:** un *pull request* muestra la revisión en verde y un cambio pequeño llega a producción sin entrar al servidor a mano.
 
-### 13.5 Datos iniciales
+### 14.5 Datos iniciales
 - [ ] **Qué se hace:** cargar en producción la sucursal, las 6 máquinas (driver manual), servicios y precios reales, insumos con su stock, descuentos vigentes y las cuentas de cada empleado.
 - **Listo cuando:** el admin revisó y aprobó el catálogo y los precios.
 
-### 13.6 Capacitación
+### 14.6 Capacitación
 - [ ] **Qué se hace:** una sesión con los empleados: entrar, abrir caja, cobrar, encargos, activar máquinas (manual), ticket y corte. Una hoja de ayuda impresa de una página.
 - **Listo cuando:** cada empleado hizo una venta y un corte de práctica.
 
-### 13.7 Periodo de prueba
+### 14.7 Periodo de prueba
 - [ ] **Qué se hace:** usar el sistema 1 o 2 semanas en paralelo con la forma actual (o con respaldo en papel), revisar cada corte y anotar problemas.
 - **Listo cuando:** una semana completa sin diferencias de caja inexplicables ni errores bloqueantes.
 
-**✅ Etapa 13 terminada cuando:** el negocio opera con el sistema todos los días (con máquinas en modo manual). **Este es el MVP en producción.**
+**✅ Etapa 14 terminada cuando:** el negocio opera con el sistema todos los días (con máquinas en modo manual). **Este es el MVP en producción.**
 
 ---
 
-## Etapa 14 – Control de máquinas con la cajita
+## Etapa 15 – Control de máquinas con la cajita
 
 **Objetivo:** que al activar una máquina desde la caja, la cajita le dé el crédito por cable (`mvp.md` §5).
 
@@ -666,23 +719,23 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 > **Precaución:** durante las pruebas en mesa, **desconectar los 6 cables de las máquinas** de la cajita (o dejar las máquinas en modo PUSH) para no regalar créditos por accidente.
 > **Carpetas:** al empezar esta etapa se crean `firmware/` (programa de la cajita) y `mosquitto/` (configuración del broker).
 
-### 14.1 Broker MQTT
+### 15.1 Broker MQTT
 - [ ] **Qué se hace:** agregar el servicio `mqtt` (Mosquitto) al docker compose, con TLS en el puerto 8883, usuario y contraseña por dispositivo y permisos por tema (`acl`): la cajita solo lee `laundry/<id>/cmd` y escribe en `laundry/<id>/ack` y `.../status`; el backend publica órdenes.
 - **Para qué:** el punto de encuentro entre el servidor y la cajita, sin abrir puertos en el local.
 - **Listo cuando:** con un cliente de prueba (`mosquitto_pub` / `mosquitto_sub`) se publica y recibe un mensaje con TLS, y un usuario no autorizado es rechazado.
 - **Nota:** el ESP8266 valida el certificado por su "huella" (*fingerprint*). Si el certificado se renueva (Let's Encrypt, cada 90 días), hay que actualizar la huella en la cajita. Se puede decidir entre un certificado de larga duración solo para MQTT o automatizar la actualización.
 
-### 14.2 Respaldo del programa de Aitare
+### 15.2 Respaldo del programa de Aitare
 - [ ] **Qué se hace:** con la cajita desconectada de las máquinas, conectar el adaptador USB-serie a los pines `TXD`, `RXD`, `GND` (cruzados: TX→RXD, RX→TXD), poner `IO0` a tierra al encender para entrar en modo de carga, y leer toda la memoria con `esptool.py read_flash 0 0x400000 aitare_backup.bin`.
 - **Para qué:** poder volver al sistema de Aitare si algo sale mal.
 - **Listo cuando:** existe `firmware/aitare_backup.bin` (unos 4 MB) guardado en dos lugares (no en git).
 
-### 14.3 Identificar los pines de los relés
+### 15.3 Identificar los pines de los relés
 - [ ] **Qué se hace:** averiguar qué pin del ESP8266 controla cada relé, siguiendo las pistas de la placa o con un programa de prueba que active los pines uno por uno mientras se escucha el clic de cada relé.
 - **Para qué:** el programa necesita saber qué pin mueve qué relé.
 - **Listo cuando:** hay una tabla pin → relé → máquina en `firmware/README.md`.
 
-### 14.4 Programa de la cajita
+### 15.4 Programa de la cajita
 - [ ] **Qué se hace:** escribir el programa (ESPHome en YAML, o firmware propio) que:
   1. se conecta al WiFi de 2.4 GHz y a Mosquitto con TLS;
   2. se suscribe a `laundry/<id>/cmd`;
@@ -693,77 +746,77 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
   7. se reconecta solo si se cae el WiFi o el broker.
 - **Listo cuando:** el código está en `firmware/` y compila.
 
-### 14.5 Prueba en mesa
+### 15.5 Prueba en mesa
 - [ ] **Qué se hace:** cargar el programa en la placa (aún desconectada de las máquinas) y, desde `mosquitto_pub`, mandar órdenes a cada relé. Probar: pulsos correctos, orden repetida (no debe repetir pulsos), desconexión de WiFi y reconexión.
 - **Listo cuando:** cada relé hace exactamente los clics pedidos y el `ack` llega; al desconectar la placa aparece "fuera de línea".
 
-### 14.6 Escucha MQTT en el backend
+### 15.6 Escucha MQTT en el backend
 - [ ] **Qué se hace:** servicio `mqtt-listener` (comando de Django siempre encendido) que recibe `ack` y `status` y actualiza `MachineCycle` (`credit_sent`), `MachineController` (`is_online`, `last_seen_at`) y guarda la respuesta en `driver_response`.
 - **Listo cuando:** un `ack` enviado a mano cambia el ciclo a `credit_sent`.
 
-### 14.7 RelayBoardDriver
+### 15.7 RelayBoardDriver
 - [ ] **Qué se hace:** implementar `RelayBoardDriver.start_cycle`: publica la orden con el `id` del ciclo y los pulsos de la máquina; si en 10 s no llega el `ack`, el ciclo pasa a `failed` y la caja muestra "usa modo manual".
 - **Listo cuando:** las pruebas cubren éxito, sin respuesta y orden repetida.
 
-### 14.8 Pantallas
+### 15.8 Pantallas
 - [ ] **Qué se hace:** en la caja, indicador "Cajita en línea / fuera de línea". En el admin, alta del `MachineController` (genera su usuario MQTT), configuración de relé y pulsos por máquina y acción **"Enviar pulso de prueba"** (`machines.manage_machines`).
 - **Listo cuando:** desde el admin se envía un pulso de prueba y se escucha el relé.
 
-### 14.9 Configurar una lavadora en modo de pago
+### 15.9 Configurar una lavadora en modo de pago
 - [ ] **Qué se hace:** en una lavadora: `Product Type = PAY`, `Vend Type = Coin`, `Coin Drop Type` igual al ancho de pulso, precio y `Coin 1 Value` según los valores de Aitare (paso 0.1). Anotar la configuración.
 - **Listo cuando:** la máquina muestra el precio en lugar de *PUSH*.
 
-### 14.10 Prueba real con una lavadora
+### 15.10 Prueba real con una lavadora
 - [ ] **Qué se hace:** conectar el cable de esa lavadora a la cajita, cambiar su `Machine.driver` a `relay_board` y hacer ventas reales de prueba desde la caja.
 - **Listo cuando:** en 10 ventas seguidas la lavadora recibe el crédito, pita y arranca con Start, sin pulsos de más ni de menos.
 
-### 14.11 Extender a las 6 máquinas
-- [ ] **Qué se hace:** repetir 14.9 y 14.10 con las otras 3 lavadoras y las 2 secadoras (según su manual).
+### 15.11 Extender a las 6 máquinas
+- [ ] **Qué se hace:** repetir 15.9 y 15.10 con las otras 3 lavadoras y las 2 secadoras (según su manual).
 - **Listo cuando:** las 6 máquinas funcionan desde la caja.
 
-### 14.12 Procedimiento de respaldo
+### 15.12 Procedimiento de respaldo
 - [ ] **Qué se hace:** documentar en una hoja impresa cómo pasar una máquina a modo PUSH y registrar la venta en modo manual si falla la cajita o internet.
 - **Listo cuando:** un empleado lo practicó una vez.
 
-### 14.13 Observación
+### 15.13 Observación
 - [ ] **Qué se hace:** 2 semanas revisando la bitácora de órdenes, ciclos fallidos y desconexiones de la cajita.
-- **Listo cuando:** la tasa de fallos es aceptable. Si la señal del ESP8266 da problemas, cambiar la placa por una **ESP32 de 8 relés con antena externa** y repetir 14.3–14.5.
+- **Listo cuando:** la tasa de fallos es aceptable. Si la señal del ESP8266 da problemas, cambiar la placa por una **ESP32 de 8 relés con antena externa** y repetir 15.3–15.5.
 
-**✅ Etapa 14 terminada cuando:** las 6 máquinas se activan desde la caja y solo arrancan después de cobrar.
+**✅ Etapa 15 terminada cuando:** las 6 máquinas se activan desde la caja y solo arrancan después de cobrar.
 
 ---
 
-## Etapa 15 – Medidores de consumo (opcional)
+## Etapa 16 – Medidores de consumo (opcional)
 
 **Objetivo:** saber si cada máquina realmente arrancó y cuándo terminó, y detectar centrifugados débiles.
 
-### 15.1 Calibración
+### 16.1 Calibración
 - [ ] **Qué se hace:** con la gráfica del paso 0.10, definir los umbrales de "trabajando" y "terminado" para lavadoras y secadoras.
 
-### 15.2 Conexión
+### 16.2 Conexión
 - [ ] **Qué se hace:** instalar un Shelly por máquina, configurarlo para publicar en Mosquitto con su propio usuario, y asociarlo a la máquina (`Machine.meter_id`).
 
-### 15.3 Lógica de estados
+### 16.3 Lógica de estados
 - [ ] **Qué se hace:** en la escucha MQTT, pasar el ciclo a `running` cuando el consumo sube y a `finished` cuando baja; marcar el ciclo si no hubo pico de centrifugado.
 - **Listo cuando:** en el tablero las máquinas cambian solas a "en uso" y "libre".
 
-### 15.4 Conciliación
+### 16.4 Conciliación
 - [ ] **Qué se hace:** reporte de ciclos detectados por el medidor que no tienen venta (posibles usos sin cobrar).
 
 ---
 
-## Etapa 16 – Mercado Pago Point
+## Etapa 17 – Mercado Pago Point
 
 **Objetivo:** que el cobro con tarjeta se mande a la terminal desde la caja, sin teclear montos ni referencias.
 
-### 16.1 Vincular la terminal
+### 17.1 Vincular la terminal
 - [ ] **Qué se hace:** con la cuenta de desarrollador (paso 0.9), vincular la terminal Point y obtener las credenciales de producción.
 
-### 16.2 Integración
+### 17.2 Integración
 - [ ] **Qué se hace:** al elegir "tarjeta", crear la intención de pago en la terminal desde el backend; recibir la confirmación por webhook y registrar el `Payment` con su `mp_payment_intent_id`.
 - **Listo cuando:** un cobro con tarjeta se completa sin capturar la referencia a mano.
 
-### 16.3 Respaldo
+### 17.3 Respaldo
 - [ ] **Qué se hace:** si la integración falla, permitir la captura manual de la referencia, como en el MVP.
 
 ---

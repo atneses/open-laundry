@@ -197,6 +197,7 @@ erDiagram
     CUSTOMER |o--o{ SALE : compra
     SALE ||--|{ SALE_ITEM : contiene
     SALE ||--o{ PAYMENT : "se paga con"
+    CASH_SESSION ||--o{ PAYMENT : "recibido en"
     SALE ||--o| DROP_OFF_ORDER : "si es encargo"
     SALE ||--o{ APPLIED_DISCOUNT : recibe
     DISCOUNT ||--o{ APPLIED_DISCOUNT : "se aplica como"
@@ -217,6 +218,8 @@ erDiagram
         string name
         string address
         string phone
+        string sale_prefix "prefijo del folio, p. ej. A"
+        int last_sale_number
     }
     USER {
         int id PK
@@ -286,7 +289,7 @@ erDiagram
     STOCK_MOVEMENT {
         int id PK
         int product_id FK
-        string kind "purchase | consumption | sale | adjustment"
+        string kind "purchase | consumption | sale | sale_cancellation | adjustment"
         decimal quantity
         decimal unit_cost "opcional"
         int machine_cycle_id FK "opcional"
@@ -296,10 +299,10 @@ erDiagram
     }
     SALE {
         int id PK
-        string number "folio"
+        string number "folio: prefijo de la sucursal + consecutivo (A-000123)"
         int customer_id FK "obligatorio en encargo"
         int branch_id FK
-        int user_id FK
+        int created_by FK "cajero"
         string mode "self_service | drop_off"
         string status "pending | partially_paid | paid | cancelled"
         decimal subtotal
@@ -310,6 +313,7 @@ erDiagram
         int cancelled_by FK "opcional"
         string cancel_reason "opcional"
         datetime cancelled_at "opcional"
+        int cancel_cash_session_id FK "turno que devolvió el dinero (opcional)"
         datetime created_at
     }
     DROP_OFF_ORDER {
@@ -332,14 +336,17 @@ erDiagram
     PAYMENT {
         int id PK
         int sale_id FK
+        int cash_session_id FK "turno en que se recibió"
         string method "cash | credit_card | debit_card"
         decimal amount
-        string reference "voucher de Mercado Pago Point"
+        string reference "voucher de Mercado Pago Point (opcional)"
         string mp_payment_intent_id "Fase 2"
-        datetime paid_at
+        int created_by FK "quién lo cobró"
+        datetime created_at "cuándo se pagó"
     }
     DISCOUNT {
         int id PK
+        int branch_id FK
         string name
         string kind "percentage | fixed_amount"
         decimal value
@@ -356,7 +363,7 @@ erDiagram
         int sale_item_id FK "opcional"
         int discount_id FK
         decimal amount
-        int user_id FK
+        int created_by FK "quién lo aplicó"
     }
     CASH_SESSION {
         int id PK
@@ -427,11 +434,12 @@ erDiagram
 - **Autoservicio:** se cobra completo, el empleado activa la máquina y el ciclo se inicia de inmediato.
 - **Encargo:** los ciclos quedan *pendientes de asignar* y el empleado los activa al procesar la ropa; el `DropOffOrder` avanza de estado con ellos. Se puede pagar en varios `Payment`. Un encargo con saldo solo lo entrega quien tenga `sales.deliver_with_balance`.
 - **Estados del ciclo:** `requested` → `credit_sent` (la cajita confirmó el crédito; falta presionar Start) → `running` (por el medidor de consumo, el empleado o por tiempo) → `finished`. Si la cajita no confirma pasa a `failed`. `is_manual = true` cuando se arrancó en modo PUSH.
-- **SaleItem:** un servicio **o** un producto. `unit_price` se copia de `ServicePrice` según la modalidad y se conserva aunque el precio cambie.
+- **SaleItem:** un servicio **o** un producto. `unit_price` se copia de `ServicePrice` según la modalidad (o de `Product.sale_price`) y se conserva aunque el precio cambie. Vender un producto lo descuenta del stock en el mismo cobro (`StockMovement` de venta).
+- **Folio:** cada sucursal define su prefijo (`Branch.sale_prefix`) y el consecutivo no tiene huecos (`A-000123`).
 
 **Precios y descuentos**
 - **ServicePrice:** hoy un precio fijo por servicio y modalidad (`program` vacío). Para cobrar distinto ciertos programas se agregan filas con `program`; si no hay, se usa el general. Un servicio nuevo es solo dar de alta registros. **Los precios no se editan:** para cambiar uno se agrega otro, que pasa a ser el activo, y el anterior queda inactivo como historial (con su fecha de captura). Solo hay un precio activo por servicio, modalidad, programa y sucursal.
-- **Discount:** los crea quien tenga `sales.manage_discounts`. El empleado elige de la lista los vigentes para esa modalidad y servicio (p. ej. "10% martes en autoservicio"). `AppliedDiscount` guarda el monto y quién lo aplicó.
+- **Discount:** los crea quien tenga `sales.manage_discounts`. El empleado elige de la lista los vigentes para esa modalidad y servicio (p. ej. "10% martes en autoservicio"). `AppliedDiscount` guarda el monto y quién lo aplicó. Se aplican **antes del primer pago** y se pueden sumar varios descuentos distintos (cada uno una vez), sin que el total baje de $0. El porcentaje se calcula sobre el subtotal (o sobre el renglón, si es por servicio); un monto fijo por servicio se descuenta **una vez por renglón**, no por carga.
 
 **Inventario**
 - **LoadConsumption:** solo para lavado (el secado no consume). Valor inicial 150–200 ml de detergente y 150–200 ml de suavizante, editable desde el admin.
@@ -439,7 +447,7 @@ erDiagram
 - **StockMovement:** `quantity` lleva signo (positivo suma, negativo resta): las compras suman, el consumo y las ventas restan, y los ajustes pueden ir en cualquier sentido. El stock de un producto solo cambia con movimientos; los movimientos no se editan ni se borran.
 
 **Caja y pagos**
-- **CashSession:** uno por turno, y solo una caja abierta por sucursal (el siguiente turno abre cuando el anterior cierra); no se puede cobrar sin caja abierta. Si al cerrar hay diferencia entre lo contado y lo esperado, la nota es obligatoria. Se guarda quién la cerró (`closed_by`); una caja olvidada la puede cerrar desde el admin quien tenga `sales.view_all_cash_sessions`. `expected_cash = opening_float + cash payments of the session` (menos cancelados). `card_total` se cuadra contra el reporte de Mercado Pago Point.
+- **CashSession:** uno por turno, y solo una caja abierta por sucursal (el siguiente turno abre cuando el anterior cierra); no se puede cobrar sin caja abierta. Si al cerrar hay diferencia entre lo contado y lo esperado, la nota es obligatoria. Se guarda quién la cerró (`closed_by`); una caja olvidada la puede cerrar desde el admin quien tenga `sales.view_all_cash_sessions`. `expected_cash = opening_float + cash payments of the session` (menos cancelados). Cada pago cuenta en el turno en que se recibió (`Payment.cash_session`), aunque la venta sea de otro turno (p. ej. el saldo de un encargo). Un pago no puede ser mayor que el saldo: el cambio en efectivo no se guarda. **Cancelar** una venta requiere caja abierta: ese turno devuelve sus pagos (su corte resta el efectivo y la tarjeta de la venta, aunque se hayan cobrado en un turno anterior, cuyo corte no cambia) y los productos vendidos regresan al stock (`StockMovement(kind=sale_cancellation)`). `card_total` se cuadra contra el reporte de Mercado Pago Point.
 - **Pago con tarjeta:** en el MVP se captura a mano la referencia del voucher; en la Fase 2 la integración con la API de Point la llena sola (`mp_payment_intent_id`).
 
 **Usuarios y máquinas**

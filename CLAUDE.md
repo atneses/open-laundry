@@ -46,6 +46,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 - Indentación de 4 espacios, dos líneas en blanco entre definiciones de nivel superior.
 - Docstrings en las clases y funciones públicas, en inglés.
 - El formato lo pone `ruff format`; no discutir estilo a mano.
+- **Coma final:** si una llamada, definición, lista o diccionario no cabe en una línea, va **un elemento por línea** con coma al final (nunca varios argumentos en una sola línea partida). Lo exige la regla `COM812` de `ruff` y `ruff check --fix` la agrega; `ruff format` avisa de un posible conflicto con esa regla, pero se puede ignorar.
 - **Líneas en blanco** (`ruff format` las conserva pero no las agrega; se escriben a mano):
   - después del docstring de funciones y métodos;
   - antes y después de cada bloque (`if`, `for`, `while`, `with`, `try`, `match`), salvo al inicio o al final del bloque que lo contiene;
@@ -76,7 +77,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 - **Migraciones:** siempre en el repositorio, generadas con `makemigrations`. Nunca editar la base de datos a mano. Verificar que no falten con `makemigrations --check`.
 - **Permisos:**
   - Cada acción se protege con los códigos de permiso de `mvp.md` §4 (p. ej. `sales.charge`, `sales.deliver_with_balance`).
-  - **La validación siempre en el backend** (clase de permiso en cada endpoint de DRF); el frontend solo oculta botones.
+  - **La validación siempre en el backend:** los servicios reciben al usuario y validan el permiso de la acción (así se prueban sin HTTP y protegen también admin y consola), y cada endpoint de DRF lo repite con su clase de permiso (403). El frontend solo oculta botones.
   - Quien tiene `core.manage_users` decide todos los permisos: puede darlo a un rol o como permiso extra.
   - Los permisos se definen en el `Meta.permissions` del modelo de su app. Los roles (*Admin*, *Empleado*) se crean con una migración de datos y después el admin los edita; `migrate` nunca deshace esos cambios. Cada etapa que define permisos agrega una migración de datos que llama a `core.roles.grant_permissions` (Admin: todos los de la app; Empleado: los marcados en la tabla de `mvp.md` §4), que solo agrega permisos.
 - **API:**
@@ -116,6 +117,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
   cd frontend && npm run lint && npm run typecheck && npm test && npm run build
   ```
 - Si algo no se pudo verificar, decirlo explícitamente.
+- **Claude no ejecuta las pruebas** (`pytest`, `npm test`): cuando haga falta correrlas, se las pide al usuario y espera el resultado. Los demás comandos (`ruff`, `makemigrations --check`, `lint`, `typecheck`, `build`) sí los ejecuta.
 
 ## Entorno de desarrollo
 

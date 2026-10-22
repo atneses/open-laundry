@@ -5,7 +5,7 @@ from unfold.widgets import UnfoldAdminTextareaWidget, UnfoldAdminTextInputWidget
 
 from core.forms import InputFilterModelForm
 
-from .models import Service, ServicePrice
+from .models import Discount, Service, ServicePrice
 
 
 class ServiceForm(InputFilterModelForm):
@@ -24,6 +24,37 @@ class ServicePriceForm(InputFilterModelForm):
         fields = ["mode", "program", "price", "branch"]
 
 
+class DiscountForm(InputFilterModelForm):
+    input_filters = {"value": "decimal"}
+
+    class Meta:
+        model = Discount
+        fields = [
+            "name",
+            "kind",
+            "value",
+            "scope",
+            "services",
+            "mode",
+            "valid_from",
+            "valid_until",
+            "branch",
+            "is_active",
+        ]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        services = cleaned_data.get("services")
+
+        if cleaned_data.get("scope") == Discount.Scope.SERVICE and not services:
+            self.add_error("services", _("Choose the services the discount applies to."))
+
+        if cleaned_data.get("scope") == Discount.Scope.SALE and services:
+            self.add_error("services", _("A discount on the whole sale has no services."))
+
+        return cleaned_data
+
+
 class CloseCashSessionForm(BaseDialogForm):
     """Cash count captured in the admin to close a forgotten cash session."""
 
@@ -33,7 +64,7 @@ class CloseCashSessionForm(BaseDialogForm):
         decimal_places=2,
         min_value=0,
         widget=UnfoldAdminTextInputWidget(
-            attrs={"data-input-filter": "decimal", "inputmode": "decimal"}
+            attrs={"data-input-filter": "decimal", "inputmode": "decimal"},
         ),
     )
     notes = forms.CharField(

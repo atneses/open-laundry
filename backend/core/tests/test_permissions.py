@@ -163,7 +163,8 @@ def test_non_superuser_cannot_edit_a_superuser(client, manager):
     client.force_login(manager)
 
     response = client.post(
-        reverse("admin:core_user_change", args=[root.pk]), {"username": "hacked"}
+        reverse("admin:core_user_change", args=[root.pk]),
+        {"username": "hacked"},
     )
 
     assert response.status_code == 403
@@ -178,7 +179,9 @@ def test_users_cannot_be_deleted(admin_client, employee):
 @pytest.fixture
 def permission_log(employee):
     return PermissionLog.objects.create(
-        user=employee, permission=perm("view_branch"), action=PermissionLog.Action.GRANTED
+        user=employee,
+        permission=perm("view_branch"),
+        action=PermissionLog.Action.GRANTED,
     )
 
 

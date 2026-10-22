@@ -26,7 +26,7 @@ def staff_with_perms(db):
         for code in codes:
             app_label, codename = code.split(".", 1)
             user.user_permissions.add(
-                Permission.objects.get(content_type__app_label=app_label, codename=codename)
+                Permission.objects.get(content_type__app_label=app_label, codename=codename),
             )
 
         return user

@@ -62,7 +62,8 @@ class Command(BaseCommand):
             raise CommandError(msg)
 
         branch, _ = Branch.objects.get_or_create(
-            name="Sucursal Demo", defaults={"address": "Calle Falsa 123", "phone": "5555555555"}
+            name="Sucursal Demo",
+            defaults={"address": "Calle Falsa 123", "phone": "5555555555"},
         )
         admin = self._create_users(branch)
         services = self._create_services(branch)
@@ -79,13 +80,15 @@ class Command(BaseCommand):
         for data in CUSTOMERS:
             phone = normalize_phone(data["phone"])
             Customer.objects.get_or_create(
-                branch=branch, phone=phone, defaults={**data, "phone": phone}
+                branch=branch,
+                phone=phone,
+                defaults={**data, "phone": phone},
             )
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Demo data ready. Users {[u[0] for u in USERS]}, password '{DEMO_PASSWORD}'."
-            )
+                f"Demo data ready. Users {[u[0] for u in USERS]}, password '{DEMO_PASSWORD}'.",
+            ),
         )
 
     def _create_users(self, branch):
@@ -126,7 +129,10 @@ class Command(BaseCommand):
 
                 if not has_price.exists():
                     ServicePrice.objects.create(
-                        service=service, mode=mode, price=price, branch=branch
+                        service=service,
+                        mode=mode,
+                        price=price,
+                        branch=branch,
                     )
 
             services[name] = service
@@ -158,7 +164,7 @@ class Command(BaseCommand):
                         quantity=stock,
                         unit_cost=cost,
                         created_by=user,
-                    )
+                    ),
                 )
 
             products[name] = product

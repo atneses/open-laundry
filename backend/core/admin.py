@@ -114,7 +114,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
 @admin.register(Branch)
 class BranchAdmin(ModelAdmin):
     form = BranchForm
-    list_display = ["name", "phone"]
+    list_display = ["name", "phone", "sale_prefix"]
     search_fields = ["name"]
 
 
