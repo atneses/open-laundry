@@ -17,7 +17,7 @@ from inventory.models import LoadConsumption, Product, StockMovement
 from inventory.services import record_stock_movement
 from sales.models import Mode, Service, ServicePrice
 
-DEMO_PASSWORD = "demo1234"
+DEMO_PASSWORD = "demo1234"  # noqa: S105 (fictitious development data)
 
 USERS = [
     # username, first name, role, is_staff
@@ -26,7 +26,7 @@ USERS = [
 ]
 
 SERVICES = [
-    # name, kind, unit, machine_kind, {mode: price}
+    # Each service: name, kind, unit, machine kind and its price per mode.
     ("Lavado por carga", "wash", "load", "washer", {Mode.SELF_SERVICE: 60, Mode.DROP_OFF: 75}),
     ("Secado por carga", "dry", "load", "dryer", {Mode.SELF_SERVICE: 55, Mode.DROP_OFF: 70}),
     ("Lavado de tenis", "other", "pair", "none", {Mode.DROP_OFF: 90}),
@@ -58,7 +58,8 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         if not settings.DEBUG:
-            raise CommandError("Demo data is only for development (DEBUG must be on).")
+            msg = "Demo data is only for development (DEBUG must be on)."
+            raise CommandError(msg)
 
         branch, _ = Branch.objects.get_or_create(
             name="Sucursal Demo", defaults={"address": "Calle Falsa 123", "phone": "5555555555"}
@@ -66,6 +67,7 @@ class Command(BaseCommand):
         admin = self._create_users(branch)
         services = self._create_services(branch)
         products = self._create_products(branch, admin)
+
         for service_name, quantities in CONSUMPTION.items():
             for product_name, quantity in quantities.items():
                 LoadConsumption.objects.get_or_create(
@@ -73,6 +75,7 @@ class Command(BaseCommand):
                     product=products[product_name],
                     defaults={"quantity": quantity},
                 )
+
         for data in CUSTOMERS:
             phone = normalize_phone(data["phone"])
             Customer.objects.get_or_create(
@@ -88,20 +91,25 @@ class Command(BaseCommand):
     def _create_users(self, branch):
         user_model = get_user_model()
         users = {}
+
         for username, first_name, role, is_staff in USERS:
             user, created = user_model.objects.get_or_create(
                 username=username,
                 defaults={"first_name": first_name, "branch": branch, "is_staff": is_staff},
             )
+
             if created:
                 user.set_password(DEMO_PASSWORD)
                 user.save()
                 user.groups.add(Group.objects.get(name=role))
+
             users[username] = user
+
         return users["demo_admin"]
 
     def _create_services(self, branch):
         services = {}
+
         for name, kind, unit, machine_kind, prices in SERVICES:
             service, _ = Service.objects.get_or_create(
                 name=name,
@@ -112,17 +120,22 @@ class Command(BaseCommand):
                     "uses_machine": machine_kind != "none",
                 },
             )
+
             for mode, price in prices.items():
                 has_price = service.prices.filter(mode=mode, branch=branch, is_active=True)
+
                 if not has_price.exists():
                     ServicePrice.objects.create(
                         service=service, mode=mode, price=price, branch=branch
                     )
+
             services[name] = service
+
         return services
 
     def _create_products(self, branch, user):
         products = {}
+
         for name, unit, cost, min_stock, sale_price, stock in PRODUCTS:
             product, created = Product.objects.get_or_create(
                 name=name,
@@ -135,6 +148,7 @@ class Command(BaseCommand):
                     "sale_price": sale_price,
                 },
             )
+
             if created:
                 # Initial stock goes through a purchase, like any stock change.
                 record_stock_movement(
@@ -146,5 +160,7 @@ class Command(BaseCommand):
                         created_by=user,
                     )
                 )
+
             products[name] = product
+
         return products

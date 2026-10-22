@@ -19,6 +19,7 @@ def grant_permissions(apps, role_name, codes=(), app_labels=()) -> None:
     ``codes`` are "app_label.codename" codes and ``app_labels`` adds every permission
     of those apps. Permissions are only added, never removed.
     """
+
     # Django creates permissions after migrate finishes; create them now so this
     # migration can use them.
     for app_config in global_apps.get_app_configs():
@@ -33,7 +34,9 @@ def grant_permissions(apps, role_name, codes=(), app_labels=()) -> None:
 
 def _codes_query(codes) -> Q:
     query = Q(pk__in=[])
+
     for code in codes:
         app_label, codename = code.split(".", 1)
         query |= Q(content_type__app_label=app_label, codename=codename)
+
     return query

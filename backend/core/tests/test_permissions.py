@@ -20,8 +20,10 @@ def perm(codename):
 @pytest.fixture
 def manager():
     """Staff user with the Admin role (not a superuser)."""
+
     user = get_user_model().objects.create_user("manager", password="pass-123", is_staff=True)
     user.groups.add(Group.objects.get(name=ADMIN_ROLE))
+
     return user
 
 
@@ -29,17 +31,40 @@ def manager():
 def employee():
     user = get_user_model().objects.create_user("employee", password="pass-123", is_staff=True)
     user.groups.add(Group.objects.get(name=EMPLOYEE_ROLE))
+
     return user
 
 
+@pytest.fixture
+def user_form(employee):
+    """POST data for the employee's admin form, with no extra permissions."""
+
+    return {
+        "username": employee.username,
+        "is_active": "on",
+        "is_staff": "on",
+        "groups": [Group.objects.get(name=EMPLOYEE_ROLE).pk],
+        "user_permissions": [],
+        "date_joined_0": "2026-01-01",
+        "date_joined_1": "00:00:00",
+    }
+
+
 def test_manage_users_permission_exists():
-    assert perm("manage_users").content_type.app_label == "core"
+    permission = perm("manage_users")
+
+    assert permission.content_type.app_label == "core"
 
 
-def test_admin_role_has_all_permissions_and_employee_lacks_manage_users():
+def test_admin_role_has_all_permissions():
     admin_role = Group.objects.get(name=ADMIN_ROLE)
-    employee_role = Group.objects.get(name=EMPLOYEE_ROLE)
+
     assert admin_role.permissions.count() == Permission.objects.count()
+
+
+def test_employee_role_lacks_manage_users():
+    employee_role = Group.objects.get(name=EMPLOYEE_ROLE)
+
     assert not employee_role.permissions.filter(codename="manage_users").exists()
 
 
@@ -66,80 +91,115 @@ def test_grant_permissions_only_adds():
     assert codenames == before | {"view_permissionlog"}
 
 
-def test_roles_admin_requires_manage_users(client, employee, manager):
-    url = reverse("admin:auth_group_change", args=[Group.objects.get(name=EMPLOYEE_ROLE).pk])
+def test_roles_admin_rejects_change_group_without_manage_users(client, employee):
     employee.user_permissions.add(perm("change_group"))
     client.force_login(employee)
-    assert client.get(url).status_code == 403
+    url = reverse("admin:auth_group_change", args=[Group.objects.get(name=EMPLOYEE_ROLE).pk])
+
+    response = client.get(url)
+
+    assert response.status_code == 403
+
+
+def test_roles_admin_allows_manage_users(client, manager):
     client.force_login(manager)
-    assert client.get(url).status_code == 200
+    url = reverse("admin:auth_group_change", args=[Group.objects.get(name=EMPLOYEE_ROLE).pk])
+
+    response = client.get(url)
+
+    assert response.status_code == 200
 
 
-def test_user_admin_requires_manage_users(client, employee, manager):
-    url = reverse("admin:core_user_changelist")
+def test_user_admin_rejects_without_manage_users(client, employee):
     client.force_login(employee)
-    assert client.get(url).status_code == 403
-    client.force_login(manager)
-    assert client.get(url).status_code == 200
+
+    response = client.get(reverse("admin:core_user_changelist"))
+
+    assert response.status_code == 403
 
 
-def test_granting_and_revoking_extra_permissions_is_logged(client, manager, employee):
+def test_user_admin_allows_manage_users(client, manager):
     client.force_login(manager)
-    url = reverse("admin:core_user_change", args=[employee.pk])
-    data = {
-        "username": employee.username,
-        "is_active": "on",
-        "is_staff": "on",
-        "groups": [Group.objects.get(name=EMPLOYEE_ROLE).pk],
-        "user_permissions": [perm("view_branch").pk],
-        "date_joined_0": "2026-01-01",
-        "date_joined_1": "00:00:00",
-    }
-    response = client.post(url, data)
+
+    response = client.get(reverse("admin:core_user_changelist"))
+
+    assert response.status_code == 200
+
+
+def test_granting_an_extra_permission_is_logged(client, manager, employee, user_form):
+    client.force_login(manager)
+    user_form["user_permissions"] = [perm("view_branch").pk]
+
+    response = client.post(reverse("admin:core_user_change", args=[employee.pk]), user_form)
+
     assert response.status_code == 302, response.content
-
     granted = PermissionLog.objects.get(user=employee)
     assert granted.action == PermissionLog.Action.GRANTED
     assert granted.permission.codename == "view_branch"
     assert granted.created_by == manager
 
-    data["user_permissions"] = []
-    client.post(url, data)
-    revoked = PermissionLog.objects.filter(user=employee).first()
+
+def test_revoking_an_extra_permission_is_logged(client, manager, employee, user_form):
+    employee.user_permissions.add(perm("view_branch"))
+    client.force_login(manager)
+
+    client.post(reverse("admin:core_user_change", args=[employee.pk]), user_form)
+
+    revoked = PermissionLog.objects.get(user=employee)
     assert revoked.action == PermissionLog.Action.REVOKED
+    assert revoked.permission.codename == "view_branch"
 
 
 def test_non_superuser_cannot_see_superuser_field(client, manager, employee):
     client.force_login(manager)
-    form = (
-        client.get(reverse("admin:core_user_change", args=[employee.pk])).context["adminform"].form
-    )
-    assert "is_superuser" not in form.fields
+
+    response = client.get(reverse("admin:core_user_change", args=[employee.pk]))
+
+    assert "is_superuser" not in response.context["adminform"].form.fields
 
 
 def test_non_superuser_cannot_edit_a_superuser(client, manager):
     root = get_user_model().objects.create_superuser("root", password="pass-123")
     client.force_login(manager)
+
     response = client.post(
         reverse("admin:core_user_change", args=[root.pk]), {"username": "hacked"}
     )
+
     assert response.status_code == 403
 
 
 def test_users_cannot_be_deleted(admin_client, employee):
     response = admin_client.get(reverse("admin:core_user_delete", args=[employee.pk]))
+
     assert response.status_code == 403
 
 
-def test_permission_log_is_read_only(admin_client, employee):
-    log = PermissionLog.objects.create(
+@pytest.fixture
+def permission_log(employee):
+    return PermissionLog.objects.create(
         user=employee, permission=perm("view_branch"), action=PermissionLog.Action.GRANTED
     )
-    assert admin_client.get(reverse("admin:core_permissionlog_add")).status_code == 403
-    assert (
-        admin_client.get(reverse("admin:core_permissionlog_delete", args=[log.pk])).status_code
-        == 403
-    )
-    change_page = admin_client.get(reverse("admin:core_permissionlog_change", args=[log.pk]))
-    assert change_page.status_code == 200
-    assert 'name="_save"' not in change_page.content.decode()
+
+
+def test_permission_log_cannot_be_added(admin_client):
+    response = admin_client.get(reverse("admin:core_permissionlog_add"))
+
+    assert response.status_code == 403
+
+
+def test_permission_log_cannot_be_deleted(admin_client, permission_log):
+    url = reverse("admin:core_permissionlog_delete", args=[permission_log.pk])
+
+    response = admin_client.get(url)
+
+    assert response.status_code == 403
+
+
+def test_permission_log_detail_has_no_save_button(admin_client, permission_log):
+    url = reverse("admin:core_permissionlog_change", args=[permission_log.pk])
+
+    response = admin_client.get(url)
+
+    assert response.status_code == 200
+    assert 'name="_save"' not in response.content.decode()

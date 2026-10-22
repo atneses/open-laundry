@@ -3,19 +3,76 @@
 [project]
 name = "backend"
 version = "0.1.0"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 
 [tool.ruff]
-
 # PEP 8 allows teams to extend the limit up to 99 characters.
 line-length = 99
-target-version = "py313"
-extend-exclude = ["*/migrations/*"]
+target-version = "py314"
+extend-exclude = ["*/migrations/*.py"]
 
 [tool.ruff.lint]
-# E/W: pycodestyle (PEP 8) · F: pyflakes · I: import order · N: PEP 8 naming
-# B: bugbear · UP: pyupgrade · DJ: Django best practices · C4/SIM: simpler code
-select = ["E", "F", "W", "I", "N", "B", "UP", "DJ", "C4", "SIM"]
+# Rule groups: https://docs.astral.sh/ruff/rules/
+select = [
+    "F",
+    "E",
+    "W",
+    "C90",
+    "I",
+    "N",
+    "UP",
+    "YTT",
+    "ASYNC",
+    "S",
+    "BLE",
+    "FBT",
+    "B",
+    "A",
+    "C4",
+    "DTZ",
+    "T10",
+    "DJ",
+    "EM",
+    "EXE",
+    "FA",
+    "ISC",
+    "ICN",
+    "G",
+    "INP",
+    "PIE",
+    "T20",
+    "PYI",
+    "PT",
+    "Q",
+    "RSE",
+    "RET",
+    "SLF",
+    "SLOT",
+    "SIM",
+    "TID",
+    "TC",
+    "INT",
+    "PTH",
+    "ERA",
+    "PGH",
+    "PL",
+    "TRY",
+    "FLY",
+    "PERF",
+    "RUF",
+]
+ignore = [
+    "S101",  # assert is how pytest checks results
+    "RUF012",  # mutable class attributes would need typing.ClassVar annotations
+    "SIM102",  # sometimes nested ifs read better
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests compare against literal values and use fake passwords.
+"*/tests/*" = ["PLR2004", "S106"]
+"conftest.py" = ["S106"]
+# Django's generated manage.py imports inside main() on purpose.
+"manage.py" = ["PLC0415"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings.test"

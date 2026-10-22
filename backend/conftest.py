@@ -22,11 +22,13 @@ def staff_with_perms(db):
 
     def make(*codes, username="staff"):
         user = get_user_model().objects.create_user(username, password="pass-123", is_staff=True)
+
         for code in codes:
             app_label, codename = code.split(".", 1)
             user.user_permissions.add(
                 Permission.objects.get(content_type__app_label=app_label, codename=codename)
             )
+
         return user
 
     return make

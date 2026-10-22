@@ -117,7 +117,9 @@ class ServicePrice(BaseModel):
     def save(self, *args, **kwargs):
         if not self._state.adding:
             self._check_only_deactivated()
-            return super().save(*args, **kwargs)
+            super().save(*args, **kwargs)
+            return
+
         with transaction.atomic():
             ServicePrice.objects.filter(
                 service=self.service_id,
@@ -131,7 +133,9 @@ class ServicePrice(BaseModel):
 
     def _check_only_deactivated(self):
         """Reject any change to a saved price other than deactivating it."""
+
         original = ServicePrice.objects.get(pk=self.pk)
+
         # to_python compares "45.00" and Decimal("45.00") as equal.
         fields = [
             self._meta.get_field(name)
@@ -142,6 +146,7 @@ class ServicePrice(BaseModel):
             for f in fields
         )
         reactivated = self.is_active and not original.is_active
+
         if edited or reactivated:
             raise ValidationError(_("A price cannot be edited; add a new price instead."))
 

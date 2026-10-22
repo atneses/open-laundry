@@ -6,6 +6,7 @@ from .models import PermissionLog, User
 @transaction.atomic
 def log_permission_changes(user: User, before, after, performed_by: User | None) -> None:
     """Record in PermissionLog the extra permissions granted to or revoked from a user."""
+
     before, after = set(before), set(after)
 
     entries = [
