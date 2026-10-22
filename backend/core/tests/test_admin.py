@@ -9,7 +9,9 @@ from django.urls import reverse
 @pytest.fixture
 def staff_user():
     return get_user_model().objects.create_user(
-        "employee", password="secure-pass-123", is_staff=True
+        "employee",
+        password="secure-pass-123",
+        is_staff=True,
     )
 
 

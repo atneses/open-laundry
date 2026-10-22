@@ -36,7 +36,10 @@ def cashier(branch):
 @pytest.fixture
 def wash(branch):
     service = Service.objects.create(
-        name="Wash per load", kind="wash", machine_kind="washer", uses_machine=True
+        name="Wash per load",
+        kind="wash",
+        machine_kind="washer",
+        uses_machine=True,
     )
     ServicePrice.objects.create(service=service, mode=Mode.SELF_SERVICE, price=45, branch=branch)
     ServicePrice.objects.create(service=service, mode=Mode.DROP_OFF, price=60, branch=branch)
@@ -46,7 +49,12 @@ def wash(branch):
 @pytest.fixture
 def bag(branch):
     return Product.objects.create(
-        branch=branch, name="Bag", unit="piece", is_for_sale=True, sale_price=5, stock=10
+        branch=branch,
+        name="Bag",
+        unit="piece",
+        is_for_sale=True,
+        sale_price=5,
+        stock=10,
     )
 
 
@@ -138,7 +146,10 @@ def test_each_branch_has_its_own_sale_numbers(cashier, wash):
     other = employee("other", other_branch)
     open_cash_session(other, 500)
     ServicePrice.objects.create(
-        service=wash, mode=Mode.SELF_SERVICE, price=45, branch=other_branch
+        service=wash,
+        mode=Mode.SELF_SERVICE,
+        price=45,
+        branch=other_branch,
     )
     sell_service(cashier, wash)
 
@@ -184,7 +195,9 @@ def test_drop_off_requires_a_customer(cashier, wash):
 
 def test_customer_of_another_branch_is_rejected(cashier, wash):
     other = Customer.objects.create(
-        branch=Branch.objects.create(name="Norte"), name="Luis", phone="5500000000"
+        branch=Branch.objects.create(name="Norte"),
+        name="Luis",
+        phone="5500000000",
     )
 
     with pytest.raises(ValidationError):

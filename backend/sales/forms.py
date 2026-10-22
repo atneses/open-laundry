@@ -33,7 +33,7 @@ class CloseCashSessionForm(BaseDialogForm):
         decimal_places=2,
         min_value=0,
         widget=UnfoldAdminTextInputWidget(
-            attrs={"data-input-filter": "decimal", "inputmode": "decimal"}
+            attrs={"data-input-filter": "decimal", "inputmode": "decimal"},
         ),
     )
     notes = forms.CharField(

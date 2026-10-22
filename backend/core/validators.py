@@ -10,6 +10,7 @@ validate_person_name = RegexValidator(
     _("Use only letters, spaces, periods, hyphens and apostrophes."),
 )
 validate_code = RegexValidator(
-    r"^(?:[^\W_]|-)+$", _("Use only letters, numbers and hyphens, without spaces.")
+    r"^(?:[^\W_]|-)+$",
+    _("Use only letters, numbers and hyphens, without spaces."),
 )
 validate_phone = RegexValidator(r"^\d+$", _("Use only digits, without spaces or dashes."))

@@ -46,6 +46,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 - Indentación de 4 espacios, dos líneas en blanco entre definiciones de nivel superior.
 - Docstrings en las clases y funciones públicas, en inglés.
 - El formato lo pone `ruff format`; no discutir estilo a mano.
+- **Coma final:** si una llamada, definición, lista o diccionario no cabe en una línea, va **un elemento por línea** con coma al final (nunca varios argumentos en una sola línea partida). Lo exige la regla `COM812` de `ruff` y `ruff check --fix` la agrega; `ruff format` avisa de un posible conflicto con esa regla, pero se puede ignorar.
 - **Líneas en blanco** (`ruff format` las conserva pero no las agrega; se escriben a mano):
   - después del docstring de funciones y métodos;
   - antes y después de cada bloque (`if`, `for`, `while`, `with`, `try`, `match`), salvo al inicio o al final del bloque que lo contiene;
@@ -116,6 +117,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
   cd frontend && npm run lint && npm run typecheck && npm test && npm run build
   ```
 - Si algo no se pudo verificar, decirlo explícitamente.
+- **Claude no ejecuta las pruebas** (`pytest`, `npm test`): cuando haga falta correrlas, se las pide al usuario y espera el resultado. Los demás comandos (`ruff`, `makemigrations --check`, `lint`, `typecheck`, `build`) sí los ejecuta.
 
 ## Entorno de desarrollo
 

@@ -53,7 +53,10 @@ class Product(BaseModel):
         validators=[MinValueValidator(0)],
     )
     branch = models.ForeignKey(
-        "core.Branch", verbose_name=_("branch"), on_delete=models.PROTECT, related_name="products"
+        "core.Branch",
+        verbose_name=_("branch"),
+        on_delete=models.PROTECT,
+        related_name="products",
     )
 
     class Meta:
@@ -78,7 +81,7 @@ class Product(BaseModel):
 
             if saved_unit != self.unit:
                 raise ValidationError(
-                    {"unit": _("The unit cannot change once the product has stock movements.")}
+                    {"unit": _("The unit cannot change once the product has stock movements.")},
                 )
 
         super().save(*args, **kwargs)
@@ -101,7 +104,10 @@ class LoadConsumption(BaseModel):
         related_name="consumptions",
     )
     product = models.ForeignKey(
-        Product, verbose_name=_("product"), on_delete=models.PROTECT, related_name="consumptions"
+        Product,
+        verbose_name=_("product"),
+        on_delete=models.PROTECT,
+        related_name="consumptions",
     )
     quantity = models.DecimalField(
         _("quantity per load"),
@@ -116,7 +122,8 @@ class LoadConsumption(BaseModel):
         verbose_name_plural = _("consumption per load")
         constraints = [
             models.UniqueConstraint(
-                fields=["service", "product"], name="unique_consumption_per_service_product"
+                fields=["service", "product"],
+                name="unique_consumption_per_service_product",
             ),
             models.CheckConstraint(condition=Q(quantity__gt=0), name="load_consumption_positive"),
         ]
@@ -143,7 +150,10 @@ class StockMovement(BaseModel):
         ADJUSTMENT = "adjustment", _("Adjustment")
 
     product = models.ForeignKey(
-        Product, verbose_name=_("product"), on_delete=models.PROTECT, related_name="movements"
+        Product,
+        verbose_name=_("product"),
+        on_delete=models.PROTECT,
+        related_name="movements",
     )
     kind = models.CharField(_("kind"), max_length=20, choices=Kind.choices)
     quantity = models.DecimalField(
@@ -152,7 +162,7 @@ class StockMovement(BaseModel):
         decimal_places=3,
         help_text=_(
             "In the product's unit. Purchases are positive; an adjustment is negative "
-            "to remove stock."
+            "to remove stock.",
         ),
     )
     unit_cost = models.DecimalField(

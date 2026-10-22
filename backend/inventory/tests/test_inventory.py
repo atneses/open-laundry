@@ -26,8 +26,12 @@ def detergent(branch):
 def record(product, kind, quantity, user, reason=""):
     return record_stock_movement(
         StockMovement(
-            product=product, kind=kind, quantity=quantity, created_by=user, reason=reason
-        )
+            product=product,
+            kind=kind,
+            quantity=quantity,
+            created_by=user,
+            reason=reason,
+        ),
     )
 
 
@@ -98,7 +102,9 @@ def test_unit_is_editable_in_the_admin_without_movements(admin_client, detergent
 
 
 def test_unit_is_read_only_in_the_admin_once_there_are_movements(
-    admin_client, detergent, admin_user
+    admin_client,
+    detergent,
+    admin_user,
 ):
     record(detergent, "purchase", 5000, admin_user)
     url = reverse("admin:inventory_product_change", args=[detergent.pk])
@@ -110,7 +116,10 @@ def test_unit_is_read_only_in_the_admin_once_there_are_movements(
 
 def test_only_wash_services_consume_supplies(detergent):
     dry = Service.objects.create(
-        name="Dry per load", kind="dry", machine_kind="dryer", uses_machine=True
+        name="Dry per load",
+        kind="dry",
+        machine_kind="dryer",
+        uses_machine=True,
     )
     consumption = LoadConsumption(service=dry, product=detergent, quantity=150)
 

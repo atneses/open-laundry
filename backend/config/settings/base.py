@@ -176,7 +176,7 @@ UNFOLD = {
                         "icon": "contacts",
                         "link": reverse_lazy("admin:customers_customer_changelist"),
                         "permission": lambda request: request.user.has_perm(
-                            "customers.manage_customers"
+                            "customers.manage_customers",
                         ),
                     },
                     {
@@ -190,7 +190,7 @@ UNFOLD = {
                         "icon": "point_of_sale",
                         "link": reverse_lazy("admin:sales_cashsession_changelist"),
                         "permission": lambda request: request.user.has_perm(
-                            "sales.view_all_cash_sessions"
+                            "sales.view_all_cash_sessions",
                         ),
                     },
                 ],
@@ -204,7 +204,7 @@ UNFOLD = {
                         "icon": "local_laundry_service",
                         "link": reverse_lazy("admin:sales_service_changelist"),
                         "permission": lambda request: request.user.has_perm(
-                            "sales.manage_catalog"
+                            "sales.manage_catalog",
                         ),
                     },
                 ],
@@ -230,7 +230,7 @@ UNFOLD = {
                         "icon": "water_drop",
                         "link": reverse_lazy("admin:inventory_loadconsumption_changelist"),
                         "permission": lambda request: request.user.has_perm(
-                            "sales.manage_catalog"
+                            "sales.manage_catalog",
                         ),
                     },
                 ],
@@ -268,7 +268,7 @@ UNFOLD = {
                         "icon": "history",
                         "link": reverse_lazy("admin:core_permissionlog_changelist"),
                         "permission": lambda request: request.user.has_perm(
-                            "core.view_permissionlog"
+                            "core.view_permissionlog",
                         ),
                     },
                 ],

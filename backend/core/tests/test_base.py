@@ -43,7 +43,7 @@ def test_jwt_token(api_client):
 def test_api_requires_authentication_by_default(settings):
     # Every new endpoint requires a token unless stated otherwise.
     assert settings.REST_FRAMEWORK["DEFAULT_PERMISSION_CLASSES"] == [
-        "rest_framework.permissions.IsAuthenticated"
+        "rest_framework.permissions.IsAuthenticated",
     ]
 
 

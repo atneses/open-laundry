@@ -38,7 +38,10 @@ class Service(BaseModel):
     kind = models.CharField(_("kind"), max_length=10, choices=Kind.choices)
     unit = models.CharField(_("unit"), max_length=10, choices=Unit.choices, default=Unit.LOAD)
     machine_kind = models.CharField(
-        _("machine kind"), max_length=10, choices=MachineKind.choices, default=MachineKind.NONE
+        _("machine kind"),
+        max_length=10,
+        choices=MachineKind.choices,
+        default=MachineKind.NONE,
     )
     uses_machine = models.BooleanField(
         _("uses a machine"),
@@ -78,7 +81,10 @@ class ServicePrice(BaseModel):
     """
 
     service = models.ForeignKey(
-        Service, verbose_name=_("service"), on_delete=models.CASCADE, related_name="prices"
+        Service,
+        verbose_name=_("service"),
+        on_delete=models.CASCADE,
+        related_name="prices",
     )
     mode = models.CharField(_("mode"), max_length=20, choices=Mode.choices)
     program = models.CharField(
@@ -88,7 +94,10 @@ class ServicePrice(BaseModel):
         help_text=_("Leave empty for the general price. Reserved for prices per program."),
     )
     price = models.DecimalField(
-        _("price"), max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
+        _("price"),
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
     )
     branch = models.ForeignKey(
         "core.Branch",
@@ -181,10 +190,16 @@ class CashSession(BaseModel):
         help_text=_("Who closed it; another user when a forgotten session is closed."),
     )
     opening_float = models.DecimalField(
-        _("opening float"), max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
+        _("opening float"),
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
     )
     expected_cash = models.DecimalField(
-        _("expected cash"), max_digits=10, decimal_places=2, default=0
+        _("expected cash"),
+        max_digits=10,
+        decimal_places=2,
+        default=0,
     )
     counted_cash = models.DecimalField(
         _("counted cash"),
@@ -222,7 +237,8 @@ class CashSession(BaseModel):
                 name="one_open_cash_session_per_branch",
             ),
             models.CheckConstraint(
-                condition=Q(opening_float__gte=0), name="cash_session_float_not_negative"
+                condition=Q(opening_float__gte=0),
+                name="cash_session_float_not_negative",
             ),
             # A cash count that does not match must be explained.
             models.CheckConstraint(
@@ -249,7 +265,10 @@ class Sale(BaseModel):
 
     number = models.CharField(_("number"), max_length=20)
     branch = models.ForeignKey(
-        "core.Branch", verbose_name=_("branch"), on_delete=models.PROTECT, related_name="sales"
+        "core.Branch",
+        verbose_name=_("branch"),
+        on_delete=models.PROTECT,
+        related_name="sales",
     )
     cash_session = models.ForeignKey(
         CashSession,
@@ -267,7 +286,10 @@ class Sale(BaseModel):
     )
     mode = models.CharField(_("mode"), max_length=20, choices=Mode.choices)
     status = models.CharField(
-        _("status"), max_length=20, choices=Status.choices, default=Status.PENDING
+        _("status"),
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
     )
     subtotal = models.DecimalField(_("subtotal"), max_digits=10, decimal_places=2)
     discount_total = models.DecimalField(_("discount"), max_digits=10, decimal_places=2, default=0)
@@ -301,7 +323,10 @@ class SaleItem(BaseModel):
     """A line of a sale: a service or a product, with the price it was charged at."""
 
     sale = models.ForeignKey(
-        Sale, verbose_name=_("sale"), on_delete=models.PROTECT, related_name="items"
+        Sale,
+        verbose_name=_("sale"),
+        on_delete=models.PROTECT,
+        related_name="items",
     )
     service = models.ForeignKey(
         Service,
@@ -339,7 +364,8 @@ class SaleItem(BaseModel):
                 name="sale_item_service_or_product",
             ),
             models.CheckConstraint(
-                condition=Q(quantity__gt=0), name="sale_item_quantity_positive"
+                condition=Q(quantity__gt=0),
+                name="sale_item_quantity_positive",
             ),
         ]
 
@@ -360,7 +386,10 @@ class Payment(BaseModel):
         DEBIT_CARD = "debit_card", _("Debit card")
 
     sale = models.ForeignKey(
-        Sale, verbose_name=_("sale"), on_delete=models.PROTECT, related_name="payments"
+        Sale,
+        verbose_name=_("sale"),
+        on_delete=models.PROTECT,
+        related_name="payments",
     )
     cash_session = models.ForeignKey(
         CashSession,
@@ -371,7 +400,10 @@ class Payment(BaseModel):
     method = models.CharField(_("method"), max_length=20, choices=Method.choices)
     amount = models.DecimalField(_("amount"), max_digits=10, decimal_places=2)
     reference = models.CharField(
-        _("reference"), max_length=100, blank=True, help_text=_("Card voucher reference.")
+        _("reference"),
+        max_length=100,
+        blank=True,
+        help_text=_("Card voucher reference."),
     )
 
     class Meta:

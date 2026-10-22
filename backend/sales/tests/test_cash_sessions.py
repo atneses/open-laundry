@@ -245,7 +245,9 @@ def test_manager_closes_a_forgotten_session_from_the_admin(client, manager, open
 
 
 def test_closing_from_the_admin_requires_view_all_cash_sessions(
-    client, staff_with_perms, open_session
+    client,
+    staff_with_perms,
+    open_session,
 ):
     client.force_login(staff_with_perms("sales.operate_cash_session"))
 
@@ -257,7 +259,9 @@ def test_closing_from_the_admin_requires_view_all_cash_sessions(
 
 
 def test_closed_session_detail_does_not_offer_the_close_action(
-    admin_client, open_session, cashier
+    admin_client,
+    open_session,
+    cashier,
 ):
     session = close_cash_session(open_session, cashier, 500)
 

@@ -80,7 +80,7 @@ def close_cash_session(session: CashSession, user, counted_cash, notes: str = ""
 
     if session.difference and not session.notes:
         raise ValidationError(
-            {"notes": _("Explain the difference between the counted and the expected cash.")}
+            {"notes": _("Explain the difference between the counted and the expected cash.")},
         )
 
     session.closed_at = timezone.now()
@@ -166,7 +166,7 @@ def create_sale(user, mode: str, items: list[ItemRequest], customer=None) -> Sal
                     quantity=-line.quantity,
                     sale=sale,
                     created_by=user,
-                )
+                ),
             )
 
     return sale
@@ -253,7 +253,7 @@ def _check_stock(lines: list[SaleItem]) -> None:
         if product.stock < wanted[product.pk]:
             raise ValidationError(
                 _("Not enough %(product)s in stock: %(stock)s left.")
-                % {"product": product, "stock": product.stock.normalize()}
+                % {"product": product, "stock": product.stock.normalize()},
             )
 
 
@@ -275,7 +275,10 @@ def active_price(service: Service, mode: str, branch_id, program: str = "") -> S
     """Active price of a service for a mode; a program without its own uses the general one."""
 
     prices = ServicePrice.objects.filter(
-        service=service, mode=mode, branch_id=branch_id, is_active=True
+        service=service,
+        mode=mode,
+        branch_id=branch_id,
+        is_active=True,
     )
 
     return prices.filter(program=program).first() or (
@@ -306,7 +309,7 @@ def _sale_item(item: ItemRequest, mode: str, branch_id) -> SaleItem:
 
         if price is None:
             raise ValidationError(
-                _("%(service)s has no price for this mode.") % {"service": item.service}
+                _("%(service)s has no price for this mode.") % {"service": item.service},
             )
 
         unit_price = price.price

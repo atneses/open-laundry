@@ -69,7 +69,9 @@ class Branch(BaseModel):
     )
     # Last sale number given; only changed by sales.services.next_sale_number.
     last_sale_number = models.PositiveIntegerField(
-        _("last sale number"), default=0, editable=False
+        _("last sale number"),
+        default=0,
+        editable=False,
     )
 
     class Meta:
@@ -98,10 +100,16 @@ class User(AbstractUser, BaseModel):
 
     # Redefined only to add the validator; same as AbstractUser otherwise.
     first_name = models.CharField(
-        _("first name"), max_length=150, blank=True, validators=[validate_person_name]
+        _("first name"),
+        max_length=150,
+        blank=True,
+        validators=[validate_person_name],
     )
     last_name = models.CharField(
-        _("last name"), max_length=150, blank=True, validators=[validate_person_name]
+        _("last name"),
+        max_length=150,
+        blank=True,
+        validators=[validate_person_name],
     )
 
     class Meta:

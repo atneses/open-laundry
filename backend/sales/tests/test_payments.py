@@ -48,7 +48,10 @@ def sale(cashier, branch):
     """A self-service sale of 3 washes: $135.00, unpaid."""
 
     wash = Service.objects.create(
-        name="Wash per load", kind="wash", machine_kind="washer", uses_machine=True
+        name="Wash per load",
+        kind="wash",
+        machine_kind="washer",
+        uses_machine=True,
     )
     ServicePrice.objects.create(service=wash, mode=Mode.SELF_SERVICE, price=45, branch=branch)
 
