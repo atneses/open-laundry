@@ -175,6 +175,14 @@ UNFOLD = {
                             "customers.manage_customers"
                         ),
                     },
+                    {
+                        "title": _("Cash sessions"),
+                        "icon": "point_of_sale",
+                        "link": reverse_lazy("admin:sales_cashsession_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "sales.view_all_cash_sessions"
+                        ),
+                    },
                 ],
             },
             {

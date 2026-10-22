@@ -2,9 +2,15 @@
 # Unfold's strings live in locale_unfold/.
 msgid ""
 msgstr ""
-"Content-Type: text/plain; charset=UTF-8\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-21 15:32-0600\n"
 "Language: es_MX\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: config/settings/base.py:129 config/settings/base.py:130
+msgid "Laundry"
+msgstr "Lavandería"
 
 #: config/settings/base.py:131
 msgid "Administration"
@@ -18,51 +24,55 @@ msgstr "Operación"
 msgid "Customers"
 msgstr "Clientes"
 
-#: config/settings/base.py:181
+#: config/settings/base.py:179
+msgid "Cash sessions"
+msgstr "Cortes de caja"
+
+#: config/settings/base.py:189
 msgid "Catalog"
 msgstr "Catálogo"
 
-#: config/settings/base.py:185
+#: config/settings/base.py:193
 msgid "Services and prices"
 msgstr "Servicios y precios"
 
-#: config/settings/base.py:195 inventory/apps.py:8
+#: config/settings/base.py:203 inventory/apps.py:8
 msgid "Inventory"
 msgstr "Inventario"
 
-#: config/settings/base.py:199
+#: config/settings/base.py:207
 msgid "Products"
 msgstr "Productos"
 
-#: config/settings/base.py:205
+#: config/settings/base.py:213
 msgid "Stock movements"
 msgstr "Movimientos de inventario"
 
-#: config/settings/base.py:211
+#: config/settings/base.py:219
 msgid "Consumption per load"
 msgstr "Consumo por carga"
 
-#: config/settings/base.py:221
+#: config/settings/base.py:229
 msgid "Users and permissions"
 msgstr "Usuarios y permisos"
 
-#: config/settings/base.py:225
+#: config/settings/base.py:233
 msgid "Users"
 msgstr "Usuarios"
 
-#: config/settings/base.py:231
+#: config/settings/base.py:239
 msgid "Roles"
 msgstr "Roles"
 
-#: config/settings/base.py:237
+#: config/settings/base.py:245
 msgid "Branches"
 msgstr "Sucursales"
 
-#: config/settings/base.py:245
+#: config/settings/base.py:253
 msgid "Logs"
 msgstr "Bitácoras"
 
-#: config/settings/base.py:249
+#: config/settings/base.py:257
 msgid "Permissions"
 msgstr "Permisos"
 
@@ -87,7 +97,7 @@ msgid "General settings"
 msgstr "Configuración general"
 
 #: core/models.py:11 customers/models.py:16 inventory/models.py:24
-#: sales/models.py:35
+#: sales/models.py:36
 msgid "name"
 msgstr "nombre"
 
@@ -100,7 +110,7 @@ msgid "phone"
 msgstr "teléfono"
 
 #: core/models.py:16 core/models.py:32 customers/models.py:14
-#: inventory/models.py:56 sales/models.py:93
+#: inventory/models.py:56 sales/models.py:94 sales/models.py:157
 msgid "branch"
 msgstr "sucursal"
 
@@ -117,6 +127,7 @@ msgid "last name"
 msgstr "apellidos"
 
 #: core/models.py:47 core/models.py:63 inventory/models.py:172
+#: sales/models.py:163
 msgid "user"
 msgstr "usuario"
 
@@ -149,7 +160,7 @@ msgid "performed by"
 msgstr "realizado por"
 
 #: core/models.py:81 customers/models.py:23 inventory/models.py:176
-#: sales/models.py:98
+#: sales/models.py:99
 msgid "date"
 msgstr "fecha"
 
@@ -185,7 +196,7 @@ msgstr "Solo dígitos."
 msgid "email"
 msgstr "correo electrónico"
 
-#: customers/models.py:22
+#: customers/models.py:22 sales/forms.py:40 sales/models.py:203
 msgid "notes"
 msgstr "notas"
 
@@ -225,7 +236,7 @@ msgstr "Litro"
 msgid "Milliliter"
 msgstr "Mililitro"
 
-#: inventory/models.py:21 sales/models.py:27
+#: inventory/models.py:21 sales/models.py:28
 msgid "Piece"
 msgstr "Pieza"
 
@@ -237,7 +248,7 @@ msgstr "Unidad"
 msgid "SKU"
 msgstr "SKU"
 
-#: inventory/models.py:26 sales/models.py:37
+#: inventory/models.py:26 sales/models.py:38
 msgid "unit"
 msgstr "unidad"
 
@@ -255,7 +266,9 @@ msgstr "a la venta"
 
 #: inventory/models.py:45
 msgid "Leave unchecked for supplies used in the loads (detergent, softener)."
-msgstr "Déjalo sin marcar para los insumos que se usan en las cargas (detergente, suavizante)."
+msgstr ""
+"Déjalo sin marcar para los insumos que se usan en las cargas (detergente, "
+"suavizante)."
 
 #: inventory/models.py:48
 msgid "sale price"
@@ -271,13 +284,15 @@ msgstr "productos"
 
 #: inventory/models.py:80
 msgid "The unit cannot change once the product has stock movements."
-msgstr "La unidad no puede cambiar una vez que el producto tiene movimientos de inventario."
+msgstr ""
+"La unidad no puede cambiar una vez que el producto tiene movimientos de "
+"inventario."
 
 #: inventory/models.py:86
 msgid "A product for sale needs a sale price."
 msgstr "Un producto a la venta necesita precio de venta."
 
-#: inventory/models.py:97 sales/models.py:49 sales/models.py:79
+#: inventory/models.py:97 sales/models.py:50 sales/models.py:80
 msgid "service"
 msgstr "servicio"
 
@@ -313,7 +328,7 @@ msgstr "Venta"
 msgid "Adjustment"
 msgstr "Ajuste"
 
-#: inventory/models.py:146 sales/models.py:36
+#: inventory/models.py:146 sales/models.py:37
 msgid "kind"
 msgstr "tipo"
 
@@ -325,7 +340,9 @@ msgstr "cantidad"
 msgid ""
 "In the product's unit. Purchases are positive; an adjustment is negative to "
 "remove stock."
-msgstr "En la unidad del producto. Las compras son positivas; un ajuste es negativo para quitar stock."
+msgstr ""
+"En la unidad del producto. Las compras son positivas; un ajuste es negativo "
+"para quitar stock."
 
 #: inventory/models.py:157
 msgid "unit cost"
@@ -337,7 +354,8 @@ msgstr "motivo"
 
 #: inventory/models.py:168
 msgid "Required for adjustments: why the stock changed (spill, count, error)."
-msgstr "Obligatorio en los ajustes: por qué cambió el stock (derrame, conteo, error)."
+msgstr ""
+"Obligatorio en los ajustes: por qué cambió el stock (derrame, conteo, error)."
 
 #: inventory/models.py:179
 msgid "stock movement"
@@ -371,98 +389,203 @@ msgstr "Un ajuste no puede ser cero."
 msgid "An adjustment needs a reason."
 msgstr "Un ajuste necesita un motivo."
 
+#: sales/admin.py:99 sales/admin.py:104
+msgid "Close cash session"
+msgstr "Cerrar caja"
+
+#: sales/admin.py:105
+msgid "Capture the cash counted in the drawer of this forgotten session."
+msgstr "Captura el efectivo contado en el cajón de esta caja que quedó abierta."
+
+#: sales/admin.py:107
+msgid "Close"
+msgstr "Cerrar"
+
+#: sales/admin.py:134
+msgid "The cash session was closed."
+msgstr "La caja se cerró."
+
 #: sales/apps.py:8
 msgid "Sales and catalog"
 msgstr "Ventas y catálogo"
 
-#: sales/models.py:13
+#: sales/forms.py:31 sales/models.py:185
+msgid "counted cash"
+msgstr "efectivo contado"
+
+#: sales/forms.py:43
+msgid "Required when the counted cash does not match the expected cash."
+msgstr "Obligatoria si el efectivo contado no coincide con el esperado."
+
+#: sales/models.py:14
 msgid "Self-service"
 msgstr "Autoservicio"
 
-#: sales/models.py:14
+#: sales/models.py:15
 msgid "Drop-off"
 msgstr "Encargo"
 
-#: sales/models.py:21
+#: sales/models.py:22
 msgid "Wash"
 msgstr "Lavado"
 
-#: sales/models.py:22
+#: sales/models.py:23
 msgid "Dry"
 msgstr "Secado"
 
-#: sales/models.py:23
+#: sales/models.py:24
 msgid "Other"
 msgstr "Otro"
 
-#: sales/models.py:26
+#: sales/models.py:27
 msgid "Load"
 msgstr "Carga"
 
-#: sales/models.py:28
+#: sales/models.py:29
 msgid "Pair"
 msgstr "Par"
 
-#: sales/models.py:31
+#: sales/models.py:32
 msgid "Washer"
 msgstr "Lavadora"
 
-#: sales/models.py:32
+#: sales/models.py:33
 msgid "Dryer"
 msgstr "Secadora"
 
-#: sales/models.py:33
+#: sales/models.py:34
 msgid "None"
 msgstr "Ninguna"
 
-#: sales/models.py:39
+#: sales/models.py:40
 msgid "machine kind"
 msgstr "tipo de máquina"
 
-#: sales/models.py:42
+#: sales/models.py:43
 msgid "uses a machine"
 msgstr "usa una máquina"
 
-#: sales/models.py:44
+#: sales/models.py:45
 msgid "Each unit sold starts a machine cycle."
 msgstr "Cada unidad vendida inicia un ciclo de máquina."
 
-#: sales/models.py:46 sales/models.py:97
+#: sales/models.py:47 sales/models.py:98
 msgid "active"
 msgstr "activo"
 
-#: sales/models.py:50
+#: sales/models.py:51
 msgid "services"
 msgstr "servicios"
 
-#: sales/models.py:55
+#: sales/models.py:56
 msgid "Can manage services, prices, products and consumption per load"
 msgstr "Puede gestionar servicios, precios, productos y consumo por carga"
 
-#: sales/models.py:81
+#: sales/models.py:82
 msgid "mode"
 msgstr "modalidad"
 
-#: sales/models.py:83
+#: sales/models.py:84
 msgid "program"
 msgstr "programa"
 
-#: sales/models.py:86
+#: sales/models.py:87
 msgid "Leave empty for the general price. Reserved for prices per program."
-msgstr "Déjalo vacío para el precio general. Reservado para precios por programa."
+msgstr ""
+"Déjalo vacío para el precio general. Reservado para precios por programa."
 
-#: sales/models.py:89
+#: sales/models.py:90
 msgid "price"
 msgstr "precio"
 
-#: sales/models.py:101
+#: sales/models.py:102
 msgid "service price"
 msgstr "precio del servicio"
 
-#: sales/models.py:102
+#: sales/models.py:103
 msgid "service prices"
 msgstr "precios de servicios"
 
-#: sales/models.py:145
+#: sales/models.py:146
 msgid "A price cannot be edited; add a new price instead."
 msgstr "Un precio no se puede editar; agrega uno nuevo."
+
+#: sales/models.py:167
+msgid "opened at"
+msgstr "apertura"
+
+#: sales/models.py:168
+msgid "closed at"
+msgstr "cierre"
+
+#: sales/models.py:171
+msgid "closed by"
+msgstr "cerrada por"
+
+#: sales/models.py:176
+msgid "Who closed it; another user when a forgotten session is closed."
+msgstr "Quién la cerró; otro usuario si se cerró una caja olvidada."
+
+#: sales/models.py:179
+msgid "opening float"
+msgstr "fondo inicial"
+
+#: sales/models.py:182
+msgid "expected cash"
+msgstr "efectivo esperado"
+
+#: sales/models.py:193
+msgid "difference"
+msgstr "diferencia"
+
+#: sales/models.py:198
+msgid "Counted minus expected: negative is missing cash, positive is extra."
+msgstr "Contado menos esperado: negativo es faltante, positivo es sobrante."
+
+#: sales/models.py:200
+msgid "card total"
+msgstr "total con tarjeta"
+
+#: sales/models.py:201
+msgid "sales"
+msgstr "ventas"
+
+#: sales/models.py:202
+msgid "cancellations"
+msgstr "cancelaciones"
+
+#: sales/models.py:206
+msgid "cash session"
+msgstr "corte de caja"
+
+#: sales/models.py:207
+msgid "cash sessions"
+msgstr "cortes de caja"
+
+#: sales/models.py:210
+msgid "Can open and close their own cash session"
+msgstr "Puede abrir y cerrar su propia caja"
+
+#: sales/models.py:211
+msgid "Can view the cash sessions of every shift"
+msgstr "Puede ver los cortes de caja de todos los turnos"
+
+#: sales/services.py:14
+msgid "Your user has no branch assigned."
+msgstr "Tu usuario no tiene sucursal asignada."
+
+#: sales/services.py:18
+msgid "This branch already has an open cash session."
+msgstr "Esta sucursal ya tiene una caja abierta."
+
+#: sales/services.py:41
+msgid "This cash session is already closed."
+msgstr "Esta caja ya está cerrada."
+
+#: sales/services.py:43
+msgid "Enter the counted cash."
+msgstr "Captura el efectivo contado."
+
+#: sales/services.py:55
+msgid "Explain the difference between the counted and the expected cash."
+msgstr "Explica la diferencia entre el efectivo contado y el esperado."
