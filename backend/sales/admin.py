@@ -1,10 +1,20 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.core.exceptions import ValidationError
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 from unfold.admin import ModelAdmin, TabularInline
+from unfold.decorators import action
 
-from .forms import ServiceForm, ServicePriceForm
-from .models import Service, ServicePrice
+from core.admin_base import ReadOnlyModelAdmin
+
+from .forms import CloseCashSessionForm, ServiceForm, ServicePriceForm
+from .models import CashSession, Service, ServicePrice
+from .services import close_cash_session
 
 MANAGE_CATALOG = "sales.manage_catalog"
+VIEW_ALL_CASH_SESSIONS = "sales.view_all_cash_sessions"
 
 
 class CatalogPermissionMixin:
@@ -48,3 +58,80 @@ class ServiceAdmin(CatalogPermissionMixin, ModelAdmin):
     list_filter = ["kind", "machine_kind", "is_active"]
     search_fields = ["name"]
     inlines = [ServicePriceInline]
+
+
+@admin.register(CashSession)
+class CashSessionAdmin(ReadOnlyModelAdmin):
+    """Cash sessions are history: opened and closed from the POS, only viewed here."""
+
+    list_display = [
+        "opened_at",
+        "closed_at",
+        "user",
+        "closed_by",
+        "branch",
+        "opening_float",
+        "expected_cash",
+        "counted_cash",
+        "difference",
+        "card_total",
+    ]
+    list_filter = ["branch", "user"]
+    list_select_related = ["branch", "user", "closed_by"]
+    actions_detail = ["close_session"]
+
+    def has_module_permission(self, request):
+        return request.user.has_perm(VIEW_ALL_CASH_SESSIONS)
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.has_perm(VIEW_ALL_CASH_SESSIONS)
+
+    def has_close_session_permission(self, request, object_id=None):
+        """Whoever sees every cash session can close one that was left open."""
+        if not request.user.has_perm(VIEW_ALL_CASH_SESSIONS):
+            return False
+        return (
+            object_id is None
+            or CashSession.objects.filter(pk=object_id, closed_at__isnull=True).exists()
+        )
+
+    @action(
+        description=_("Close cash session"),
+        url_path="close",
+        icon="lock",
+        permissions=["close_session"],
+        dialog={
+            "title": _("Close cash session"),
+            "description": _("Capture the cash counted in the drawer of this forgotten session."),
+            "form_class": CloseCashSessionForm,
+            "form_submit_text": _("Close"),
+        },
+    )
+    def close_session(self, request, form, object_id):
+        session = get_object_or_404(CashSession, pk=object_id)
+        try:
+            close_cash_session(
+                session,
+                request.user,
+                form.cleaned_data["counted_cash"],
+                form.cleaned_data["notes"],
+            )
+        except ValidationError as error:
+            if hasattr(error, "error_dict"):
+                for field, field_errors in error.error_dict.items():
+                    form.add_error(field if field in form.fields else None, field_errors)
+            else:
+                form.add_error(None, error)
+            return render(
+                request,
+                "unfold/helpers/dialog.html",
+                {
+                    "dialog": self.close_session.dialog,
+                    "form": form,
+                    "form_submit_text": self.close_session.dialog["form_submit_text"],
+                },
+            )
+        messages.success(request, _("The cash session was closed."))
+        # The dialog posts with htmx, which follows this header with a full page load.
+        url = reverse("admin:sales_cashsession_change", args=[object_id])
+        return HttpResponse(headers={"HX-Redirect": url})

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
@@ -143,3 +144,87 @@ class ServicePrice(models.Model):
         reactivated = self.is_active and not original.is_active
         if edited or reactivated:
             raise ValidationError(_("A price cannot be edited; add a new price instead."))
+
+
+class CashSession(models.Model):
+    """A cash register shift: opened with a float and closed with the cash count.
+
+    Only one session can be open per branch. The totals are filled when it closes.
+    """
+
+    branch = models.ForeignKey(
+        "core.Branch",
+        verbose_name=_("branch"),
+        on_delete=models.PROTECT,
+        related_name="cash_sessions",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("user"),
+        on_delete=models.PROTECT,
+        related_name="cash_sessions",
+    )
+    opened_at = models.DateTimeField(_("opened at"), auto_now_add=True)
+    closed_at = models.DateTimeField(_("closed at"), null=True, blank=True)
+    closed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("closed by"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="closed_cash_sessions",
+        help_text=_("Who closed it; another user when a forgotten session is closed."),
+    )
+    opening_float = models.DecimalField(
+        _("opening float"), max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
+    )
+    expected_cash = models.DecimalField(
+        _("expected cash"), max_digits=10, decimal_places=2, default=0
+    )
+    counted_cash = models.DecimalField(
+        _("counted cash"),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
+    )
+    difference = models.DecimalField(
+        _("difference"),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Counted minus expected: negative is missing cash, positive is extra."),
+    )
+    card_total = models.DecimalField(_("card total"), max_digits=10, decimal_places=2, default=0)
+    sales_count = models.PositiveIntegerField(_("sales"), default=0)
+    cancellations_count = models.PositiveIntegerField(_("cancellations"), default=0)
+    notes = models.TextField(_("notes"), blank=True)
+
+    class Meta:
+        verbose_name = _("cash session")
+        verbose_name_plural = _("cash sessions")
+        ordering = ["-opened_at"]
+        permissions = [
+            ("operate_cash_session", _("Can open and close their own cash session")),
+            ("view_all_cash_sessions", _("Can view the cash sessions of every shift")),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["branch"],
+                condition=Q(closed_at__isnull=True),
+                name="one_open_cash_session_per_branch",
+            ),
+            models.CheckConstraint(
+                condition=Q(opening_float__gte=0), name="cash_session_float_not_negative"
+            ),
+            # A cash count that does not match must be explained.
+            models.CheckConstraint(
+                condition=Q(difference__isnull=True) | Q(difference=0) | ~Q(notes=""),
+                name="cash_session_difference_has_notes",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.user} · {self.opened_at:%Y-%m-%d %H:%M}"
