@@ -116,7 +116,7 @@ class BranchAdmin(ModelAdmin):
 
 @admin.register(PermissionLog)
 class PermissionLogAdmin(ReadOnlyModelAdmin):
-    list_display = ["created_at", "user", "permission", "action", "performed_by"]
+    list_display = ["created_at", "user", "permission", "action", "created_by"]
     list_filter = ["action"]
     search_fields = ["user__username", "permission__codename"]
-    list_select_related = ["user", "permission", "performed_by"]
+    list_select_related = ["user", "permission", "created_by"]

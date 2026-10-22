@@ -4,10 +4,11 @@ from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
+from core.models import BaseModel
 from core.validators import validate_person_name, validate_phone
 
 
-class Customer(models.Model):
+class Customer(BaseModel):
     """A laundry customer, found at the counter by phone number."""
 
     branch = models.ForeignKey(
@@ -20,7 +21,6 @@ class Customer(models.Model):
     email = models.EmailField(_("email"), blank=True)
     address = models.CharField(_("address"), max_length=255, blank=True)
     notes = models.TextField(_("notes"), blank=True)
-    created_at = models.DateTimeField(_("date"), auto_now_add=True)
 
     class Meta:
         verbose_name = _("customer")

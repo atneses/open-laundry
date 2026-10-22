@@ -5,6 +5,7 @@ from django.db import models, transaction
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
+from core.models import BaseModel
 from core.validators import validate_name
 
 
@@ -15,7 +16,7 @@ class Mode(models.TextChoices):
     DROP_OFF = "drop_off", _("Drop-off")
 
 
-class Service(models.Model):
+class Service(BaseModel):
     """Something the laundry sells, such as "Wash per load" or "Sneaker wash"."""
 
     class Kind(models.TextChoices):
@@ -69,7 +70,7 @@ class Service(models.Model):
         return self.name
 
 
-class ServicePrice(models.Model):
+class ServicePrice(BaseModel):
     """Price of a service for one mode. Prices are never edited, so they keep the history.
 
     The last price added is the active one: saving a new price deactivates the previous
@@ -96,7 +97,6 @@ class ServicePrice(models.Model):
         related_name="service_prices",
     )
     is_active = models.BooleanField(_("active"), default=True)
-    created_at = models.DateTimeField(_("date"), auto_now_add=True)
 
     class Meta:
         verbose_name = _("service price")
@@ -146,7 +146,7 @@ class ServicePrice(models.Model):
             raise ValidationError(_("A price cannot be edited; add a new price instead."))
 
 
-class CashSession(models.Model):
+class CashSession(BaseModel):
     """A cash register shift: opened with a float and closed with the cash count.
 
     Only one session can be open per branch. The totals are filled when it closes.

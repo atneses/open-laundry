@@ -1,16 +1,16 @@
 from decimal import Decimal
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
+from core.models import BaseModel
 from core.validators import validate_code, validate_name
 
 
-class Product(models.Model):
+class Product(BaseModel):
     """A supply (detergent, softener, bags). Its stock only changes through movements."""
 
     class Unit(models.TextChoices):
@@ -89,7 +89,7 @@ class Product(models.Model):
         return self.pk is not None and self.movements.exists()
 
 
-class LoadConsumption(models.Model):
+class LoadConsumption(BaseModel):
     """How much of a product each load of a wash service uses."""
 
     service = models.ForeignKey(
@@ -128,7 +128,7 @@ class LoadConsumption(models.Model):
             raise ValidationError({"service": _("Only wash services consume supplies.")})
 
 
-class StockMovement(models.Model):
+class StockMovement(BaseModel):
     """A change in a product's stock. Never edited or deleted, so it keeps the history.
 
     ``quantity`` is signed: positive adds stock, negative removes it.
@@ -167,13 +167,6 @@ class StockMovement(models.Model):
         blank=True,
         help_text=_("Required for adjustments: why the stock changed (spill, count, error)."),
     )
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        verbose_name=_("user"),
-        on_delete=models.PROTECT,
-        related_name="stock_movements",
-    )
-    created_at = models.DateTimeField(_("date"), auto_now_add=True)
 
     class Meta:
         verbose_name = _("stock movement")

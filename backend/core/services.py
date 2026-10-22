@@ -13,7 +13,7 @@ def log_permission_changes(user: User, before, after, performed_by: User | None)
             user=user,
             permission=permission,
             action=PermissionLog.Action.GRANTED,
-            performed_by=performed_by,
+            created_by=performed_by,
         )
         for permission in after - before
     ] + [
@@ -21,7 +21,7 @@ def log_permission_changes(user: User, before, after, performed_by: User | None)
             user=user,
             permission=permission,
             action=PermissionLog.Action.REVOKED,
-            performed_by=performed_by,
+            created_by=performed_by,
         )
         for permission in before - after
     ]
