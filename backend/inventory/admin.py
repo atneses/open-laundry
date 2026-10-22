@@ -78,10 +78,10 @@ class LoadConsumptionAdmin(CatalogPermissionMixin, ModelAdmin):
 @admin.register(StockMovement)
 class StockMovementAdmin(ModelAdmin):
     form = StockMovementForm
-    list_display = ["created_at", "product", "kind", "quantity", "unit_cost", "user"]
+    list_display = ["created_at", "product", "kind", "quantity", "unit_cost", "created_by"]
     list_filter = ["kind", "product"]
     search_fields = ["product__name"]
-    list_select_related = ["product", "user"]
+    list_select_related = ["product", "created_by"]
     date_hierarchy = "created_at"
     fields = ["product", "kind", "quantity", "unit_cost", "reason"]
 
@@ -117,5 +117,5 @@ class StockMovementAdmin(ModelAdmin):
         return super().formfield_for_choice_field(db_field, request, **kwargs)
 
     def save_model(self, request, obj, form, change):
-        obj.user = request.user
+        obj.created_by = request.user
         record_stock_movement(obj)

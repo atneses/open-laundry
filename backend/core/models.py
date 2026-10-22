@@ -1,11 +1,56 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser, Permission
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from .middleware import get_current_user
 from .validators import validate_name, validate_person_name, validate_phone
 
 
-class Branch(models.Model):
+class BaseModel(models.Model):
+    """Base for every model: when and by whom each record was created and last changed.
+
+    The user comes from the current request (core.middleware.CurrentUserMiddleware);
+    outside a request (console, seed, migrations) it stays as given. ``bulk_create``
+    and ``QuerySet.update`` skip ``save``, so they must set these fields themselves.
+    """
+
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("created by"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name="+",
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("updated by"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name="+",
+    )
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        user = get_current_user()
+        if user is not None:
+            if self._state.adding and self.created_by_id is None:
+                self.created_by = user
+            self.updated_by = user
+        if self._state.adding and self.updated_by_id is None:
+            self.updated_by_id = self.created_by_id
+        super().save(*args, **kwargs)
+
+
+class Branch(BaseModel):
     """A laundry location. There is only one today, but most data hangs from it."""
 
     name = models.CharField(_("name"), max_length=120, validators=[validate_name])
@@ -20,7 +65,7 @@ class Branch(models.Model):
         return self.name
 
 
-class User(AbstractUser):
+class User(AbstractUser, BaseModel):
     """System user (admin or employee).
 
     Defined from the very first migration because Django does not allow swapping
@@ -50,8 +95,11 @@ class User(AbstractUser):
             ("manage_users", _("Can manage users, roles and permissions")),
         ]
 
+    def __str__(self):
+        return self.get_username()
 
-class PermissionLog(models.Model):
+
+class PermissionLog(BaseModel):
     """Audit trail of extra permissions granted to or revoked from a user."""
 
     class Action(models.TextChoices):
@@ -71,14 +119,6 @@ class PermissionLog(models.Model):
         related_name="+",
     )
     action = models.CharField(_("action"), max_length=10, choices=Action.choices)
-    performed_by = models.ForeignKey(
-        User,
-        verbose_name=_("performed by"),
-        on_delete=models.PROTECT,
-        null=True,
-        related_name="+",
-    )
-    created_at = models.DateTimeField(_("date"), auto_now_add=True)
 
     class Meta:
         verbose_name = _("permission log entry")

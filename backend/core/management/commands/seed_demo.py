@@ -139,7 +139,11 @@ class Command(BaseCommand):
                 # Initial stock goes through a purchase, like any stock change.
                 record_stock_movement(
                     StockMovement(
-                        product=product, kind="purchase", quantity=stock, unit_cost=cost, user=user
+                        product=product,
+                        kind="purchase",
+                        quantity=stock,
+                        unit_cost=cost,
+                        created_by=user,
                     )
                 )
             products[name] = product

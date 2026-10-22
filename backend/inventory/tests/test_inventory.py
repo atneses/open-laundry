@@ -22,7 +22,9 @@ def detergent(branch):
 
 def record(product, kind, quantity, user, reason=""):
     return record_stock_movement(
-        StockMovement(product=product, kind=kind, quantity=quantity, user=user, reason=reason)
+        StockMovement(
+            product=product, kind=kind, quantity=quantity, created_by=user, reason=reason
+        )
     )
 
 
@@ -129,7 +131,7 @@ def test_receive_stock_can_record_purchases_but_not_adjustments(
     response = client.post(url, {"product": detergent.pk, "kind": "purchase", "quantity": "5000"})
     assert response.status_code == 302
     movement = StockMovement.objects.get()
-    assert movement.user == clerk
+    assert movement.created_by == clerk
 
     response = client.post(url, {"product": detergent.pk, "kind": "adjustment", "quantity": "-1"})
     assert response.status_code == 200  # form error: kind not allowed

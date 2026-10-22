@@ -101,7 +101,7 @@ def test_granting_and_revoking_extra_permissions_is_logged(client, manager, empl
     granted = PermissionLog.objects.get(user=employee)
     assert granted.action == PermissionLog.Action.GRANTED
     assert granted.permission.codename == "view_branch"
-    assert granted.performed_by == manager
+    assert granted.created_by == manager
 
     data["user_permissions"] = []
     client.post(url, data)
