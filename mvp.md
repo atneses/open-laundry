@@ -178,6 +178,8 @@ El código está en inglés; la interfaz, en español. Equivalencias principales
 | Bitácora de permisos     | `PermissionLog`             | Ciclo de uso              | `MachineCycle`                 |
 | Autoservicio / encargo   | `self_service` / `drop_off` | Solicitud de autorización | `AuthorizationRequest`         |
 
+**Campos comunes:** todos los modelos heredan de `core.models.BaseModel`, que guarda cuándo y quién creó y modificó cada registro (`created_at`, `updated_at`, `created_by`, `updated_by`). El usuario se toma solo de la petición. En el diagrama solo aparecen cuando tienen un significado de negocio (p. ej. quién registró un movimiento).
+
 ### Entidades
 
 ```mermaid
@@ -232,7 +234,7 @@ erDiagram
         int user_id FK
         string permission
         string action "granted | revoked"
-        int performed_by FK "admin"
+        int created_by FK "admin"
         datetime created_at
     }
     CUSTOMER {
@@ -289,7 +291,7 @@ erDiagram
         decimal unit_cost "opcional"
         int machine_cycle_id FK "opcional"
         int sale_id FK "opcional"
-        int user_id FK
+        int created_by FK
         datetime created_at
     }
     SALE {

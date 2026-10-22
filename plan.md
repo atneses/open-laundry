@@ -388,6 +388,14 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Pendiente – quién cierra desde la caja:** el servicio no revisa que quien cierra sea quien abrió; lo controlará la API (7.2). Desde el admin la puede cerrar quien tenga `sales.view_all_cash_sessions`.
 - **Riesgo – acción del admin no probada en el navegador:** el diálogo de *Cerrar caja* se probó con pruebas automáticas, no a mano.
 
+**Cambio general – `BaseModel` (hecho durante la Etapa 6):**
+- Todos los modelos heredan de `core.models.BaseModel`, con `created_at`, `updated_at`, `created_by` y `updated_by`. `CurrentUserMiddleware` (`core/middleware.py`, con `contextvars`) da el usuario de la petición y `BaseModel.save` lo llena solo.
+- Se reemplazaron campos repetidos: `StockMovement.user` y `PermissionLog.performed_by` pasaron a ser `created_by` (migraciones con `RenameField`); los `created_at` propios se heredan. `CashSession.user` y `opened_at` se quedan porque son del negocio.
+- **Riesgo – registros sin usuario:** fuera de una petición (consola, `seed_demo`, migraciones y, más adelante, Celery o MQTT) `created_by` queda vacío salvo que se pase a mano. Por eso `StockMovement.created_by` ahora es opcional (antes era obligatorio).
+- **Riesgo – escrituras masivas:** `bulk_create` y `QuerySet.update` no pasan por `save`; deben llenar estos campos a mano (como `log_permission_changes`).
+- **Riesgo – API con JWT sin probar:** el middleware lee el usuario cuando se guarda, después de que DRF lo autentica, pero no hay endpoints todavía; se prueba en la Etapa 7.
+- **Pendiente – modelos futuros:** el MVP define campos como `Sale.user_id` y `Payment.user_id`; al crearlos, decidir si se usa `created_by` en su lugar.
+
 **✅ Etapa 6 terminada cuando:** las reglas de abrir y cerrar caja y el cálculo del corte pasan sus pruebas.
 
 ---

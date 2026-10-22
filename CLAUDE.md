@@ -63,6 +63,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 - **Apps:** `core` (sucursal, usuarios, permisos), `customers`, `inventory`, `sales` (catálogo, ventas, pagos, encargos, descuentos, caja), `machines` (cajita, máquinas, ciclos). **Cada app se crea en la etapa que la necesita**; no crear otras apps sin acordarlo.
 - **Modelos:**
   - Nombres en inglés y `verbose_name` / `verbose_name_plural` en inglés con `_()` en cada modelo y campo.
+  - Todo modelo hereda de `core.models.BaseModel` (`created_at`, `updated_at`, `created_by`, `updated_by`). El usuario lo pone `core.middleware.CurrentUserMiddleware`; `bulk_create` y `QuerySet.update` no pasan por `save`, así que deben llenar esos campos a mano. No agregar campos propios de "quién lo registró" o "fecha de alta": usar `created_by` / `created_at`.
   - Todo lo que pertenece a un local lleva `branch` (FK a `core.Branch`).
   - Montos con `DecimalField` (nunca `float`).
   - Los registros con historial (ventas, pagos, cortes, bitácoras) **no se borran**: se cancelan o desactivan.
