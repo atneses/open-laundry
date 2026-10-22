@@ -147,6 +147,7 @@ class StockMovement(BaseModel):
         PURCHASE = "purchase", _("Purchase")
         CONSUMPTION = "consumption", _("Consumption")
         SALE = "sale", _("Sale")
+        SALE_CANCELLATION = "sale_cancellation", _("Sale cancellation")
         ADJUSTMENT = "adjustment", _("Adjustment")
 
     product = models.ForeignKey(
@@ -197,9 +198,10 @@ class StockMovement(BaseModel):
             ("adjust_stock", _("Can adjust stock (losses, corrections)")),
         ]
         constraints = [
-            # Purchases add stock, consumption and sales remove it, adjustments go either way.
+            # Purchases and cancelled sales add stock, consumption and sales remove it,
+            # adjustments go either way.
             models.CheckConstraint(
-                condition=Q(kind="purchase", quantity__gt=0)
+                condition=Q(kind__in=["purchase", "sale_cancellation"], quantity__gt=0)
                 | Q(kind__in=["consumption", "sale"], quantity__lt=0)
                 | (Q(kind="adjustment") & ~Q(quantity=0)),
                 name="stock_movement_quantity_sign_matches_kind",
@@ -219,6 +221,9 @@ class StockMovement(BaseModel):
 
         if self.kind == self.Kind.PURCHASE and self.quantity <= 0:
             raise ValidationError({"quantity": _("A purchase must add stock (positive).")})
+
+        if self.kind == self.Kind.SALE_CANCELLATION and self.quantity <= 0:
+            raise ValidationError({"quantity": _("A cancelled sale must add stock back.")})
 
         if self.kind in (self.Kind.CONSUMPTION, self.Kind.SALE) and self.quantity >= 0:
             raise ValidationError({"quantity": _("This kind of movement removes stock.")})

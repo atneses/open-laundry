@@ -256,7 +256,7 @@ class CashSession(BaseModel):
 class Sale(BaseModel):
     """A sale charged at the counter. ``created_by`` is the cashier who charged it.
 
-    Sales are never deleted; they are cancelled (Stage 7.5).
+    Sales are never deleted; they are cancelled with a reason (``cancel_sale``).
     """
 
     class Status(models.TextChoices):
@@ -297,6 +297,25 @@ class Sale(BaseModel):
     discount_total = models.DecimalField(_("discount"), max_digits=10, decimal_places=2, default=0)
     total = models.DecimalField(_("total"), max_digits=10, decimal_places=2)
     balance = models.DecimalField(_("balance"), max_digits=10, decimal_places=2)
+    cancelled_at = models.DateTimeField(_("cancelled at"), null=True, blank=True)
+    cancelled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("cancelled by"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="cancelled_sales",
+    )
+    cancel_cash_session = models.ForeignKey(
+        CashSession,
+        verbose_name=_("cancelled in cash session"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="cancelled_sales",
+        help_text=_("Session that gave the money back; its cash count subtracts the payments."),
+    )
+    cancel_reason = models.TextField(_("cancellation reason"), blank=True)
 
     class Meta:
         verbose_name = _("sale")
@@ -304,6 +323,7 @@ class Sale(BaseModel):
         ordering = ["-created_at"]
         permissions = [
             ("charge", _("Can charge sales and print receipts")),
+            ("cancel_sale", _("Can cancel sales (with a reason)")),
         ]
         constraints = [
             models.UniqueConstraint(fields=["branch", "number"], name="unique_sale_number"),
@@ -314,6 +334,19 @@ class Sale(BaseModel):
             models.CheckConstraint(
                 condition=Q(subtotal__gte=0, discount_total__gte=0, total__gte=0, balance__gte=0),
                 name="sale_amounts_not_negative",
+            ),
+            # A cancelled sale keeps when, who, where and why.
+            models.CheckConstraint(
+                condition=~Q(status="cancelled")
+                | (
+                    Q(
+                        cancelled_at__isnull=False,
+                        cancelled_by__isnull=False,
+                        cancel_cash_session__isnull=False,
+                    )
+                    & ~Q(cancel_reason="")
+                ),
+                name="cancelled_sale_has_details",
             ),
         ]
 

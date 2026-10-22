@@ -388,7 +388,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Caja olvidada:** quien tiene `sales.view_all_cash_sessions` puede cerrar desde el admin una caja que quedó abierta (acción *Cerrar caja* en el detalle del corte), capturando el efectivo contado y, si hay diferencia, la nota. Cada corte guarda quién lo cerró (`closed_by`).
 
 **Riesgos y pendientes:**
-- **Pendiente – cálculo real del corte:** `session_totals` debe sumar pagos en efectivo y tarjeta, ventas y cancelaciones del turno (Etapa 7, 7.2 y 7.5).
+- ~~**Pendiente – cálculo real del corte:**~~ resuelto en la Etapa 7 (7.2 y 7.5): `session_totals` suma pagos en efectivo y tarjeta, ventas y cancelaciones del turno.
 - **Pendiente – API de caja:** abrir, cerrar y consultar desde la caja (Etapa 12, 12.2). Hasta entonces solo se abre y cierra desde código o pruebas.
 - **Riesgo – acción del admin no probada en el navegador:** el diálogo de *Cerrar caja* se probó con pruebas automáticas, no a mano.
 
@@ -427,7 +427,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** un descuento vencido o de otra modalidad no aparece ni se puede aplicar (pruebas).
 
 ### 7.5 Cancelaciones
-- [ ] **Qué se hace:** servicio para cancelar una venta con motivo obligatorio (requiere `sales.cancel_sale`); queda quién, cuándo y por qué. Los pagos en efectivo cancelados se descuentan del corte.
+- [x] **Qué se hace:** servicio para cancelar una venta con motivo obligatorio (requiere `sales.cancel_sale`); queda quién, cuándo y por qué. Los pagos en efectivo cancelados se descuentan del corte.
 - **Listo cuando:** cancelar sin motivo o sin permiso da error, y el corte refleja la cancelación (pruebas).
 
 **Notas de la implementación:**
@@ -438,6 +438,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **7.2:** `Payment` en `sales`, con `cash_session` (no estaba en el MVP): el pago cuenta en el turno en que se recibió, así el saldo de un encargo cobrado en otro turno cae en el corte correcto. No hay `paid_at`: se usan `created_at` / `created_by`. Servicio `add_payment`: requiere `sales.charge` y la caja abierta de la sucursal; rechaza montos ≤ 0, mayores que el saldo y ventas canceladas o de otra sucursal; recalcula saldo y estado bloqueando la venta. La referencia del voucher es opcional. `session_totals` ya suma efectivo y tarjeta (crédito + débito) y cuenta las ventas del turno. Pagos de solo lectura en la ficha de la venta (sin entrada propia en el menú); migración `sales/0009` da al Admin los permisos de `Payment`.
 - **7.3:** movido al 9.5 (la regla se valida al activar una máquina).
 - **7.4:** `Discount` (con `branch`) y `AppliedDiscount` en `sales`; quien lo aplicó es `created_by` (no hay campo `user`). `available_discounts(sale)` lista los activos, vigentes hoy, de la sucursal y modalidad de la venta, no aplicados y, si son por servicio, con alguno de sus servicios en la venta. `apply_discount` requiere `sales.apply_discount`, solo con la venta en `pending` (antes del primer pago); recalcula descuento, total y saldo. Se suman varios descuentos distintos (cada uno una vez); ninguno baja el total de $0 ni un renglón de su importe. Porcentaje sobre el subtotal o el renglón; monto fijo por servicio, una vez por renglón. Si el total queda en $0 la venta pasa a `paid`. Descuentos en el admin (área *Catálogo*) con `sales.manage_discounts`, sin borrar (se desactivan); aplicados de solo lectura en la ficha de la venta. Migración `sales/0011`: Admin todos, Empleado `sales.apply_discount`. El nombre del descuento admite `%` (no usa `validate_name`).
+- **7.5:** servicio `cancel_sale` (requiere `sales.cancel_sale`, motivo obligatorio y la caja abierta de la sucursal). La venta guarda `cancelled_at`, `cancelled_by`, `cancel_reason` y `cancel_cash_session` (no estaba en el MVP): el turno donde se cancela devuelve los pagos, así una venta cobrada en un turno ya cerrado se descuenta del turno abierto y el corte cerrado no cambia. `session_totals` resta del efectivo y de la tarjeta los pagos de las ventas canceladas en el turno, cuenta las ventas no canceladas y las cancelaciones. Los productos regresan al stock con un movimiento nuevo `sale_cancellation`. Permiso para Admin y Empleado (migración `sales/0013`). El mensaje "abre la caja" ahora es genérico (cobrar y cancelar).
 
 **Riesgos y pendientes:**
 - **Pendiente – precio por programa (función futura):** `active_price` ya busca por programa de lavado con respaldo al precio general, pero el cobro siempre usa el general porque no hay precios por programa.
@@ -448,6 +449,10 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Pendiente – descuentos por día de la semana:** el MVP pone de ejemplo "10% martes", pero la vigencia es solo por fechas; falta un campo de días si el negocio lo necesita.
 - **Pendiente – quitar un descuento aplicado:** no se puede deshacer; habría que cancelar la venta (7.5) y cobrarla de nuevo.
 - **Riesgo – redondeo:** el porcentaje se redondea a centavos por renglón (redondeo bancario de `Decimal`), así que la suma por renglones puede diferir un centavo del porcentaje del total.
+- **Pendiente – bitácora de cancelaciones:** el MVP pide registrarlas en bitácora; por ahora quedan en la propia venta (quién, cuándo, por qué), visibles en el admin.
+- **Pendiente – ciclos y encargos:** cancelar no toca ciclos de máquina ni encargos, que llegan en las Etapas 8 y 9.
+- **Riesgo – devolución con tarjeta:** el sistema resta la tarjeta del corte, pero la devolución real se hace a mano en la terminal de Mercado Pago Point; si no se hace, el corte no cuadra con el reporte de Point.
+- **Riesgo – caja sin efectivo suficiente:** cancelar una venta de un turno anterior puede dejar el esperado del turno abierto por debajo de lo que hay en caja (incluso negativo); no se valida.
 
 **✅ Etapa 7 terminada cuando:** los servicios permiten cobrar ventas en efectivo y tarjeta, con y sin descuento, y cancelarlas, con pruebas de cada regla y permiso, y el corte de caja cuadra.
 

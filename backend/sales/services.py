@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Q, Sum
+from django.db.models import Q, Sum
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -29,6 +29,7 @@ OPERATE_CASH_SESSION = "sales.operate_cash_session"
 VIEW_ALL_CASH_SESSIONS = "sales.view_all_cash_sessions"
 CHARGE = "sales.charge"
 APPLY_DISCOUNT = "sales.apply_discount"
+CANCEL_SALE = "sales.cancel_sale"
 CENTS = Decimal("0.01")
 
 
@@ -106,17 +107,26 @@ def session_totals(session: CashSession) -> dict:
     """Cash and card payments, sales and cancellations of the session.
 
     Payments count in the session that received them, whatever session the sale is from.
-    Cancellations arrive in Stage 7.5; until then there are none.
+    A cancelled sale gives its payments back in the session where it was cancelled.
     """
 
+    cash = Q(method=Payment.Method.CASH)
     card = Q(method__in=[Payment.Method.CREDIT_CARD, Payment.Method.DEBIT_CARD])
-    payments = session.payments.aggregate(
-        cash=Sum("amount", filter=Q(method=Payment.Method.CASH), default=Decimal(0)),
+    received = session.payments.aggregate(
+        cash=Sum("amount", filter=cash, default=Decimal(0)),
         card=Sum("amount", filter=card, default=Decimal(0)),
     )
-    sales = session.sales.aggregate(count=Count("pk"))["count"]
+    returned = Payment.objects.filter(sale__cancel_cash_session=session).aggregate(
+        cash=Sum("amount", filter=cash, default=Decimal(0)),
+        card=Sum("amount", filter=card, default=Decimal(0)),
+    )
 
-    return {**payments, "sales": sales, "cancellations": 0}
+    return {
+        "cash": received["cash"] - returned["cash"],
+        "card": received["card"] - returned["card"],
+        "sales": session.sales.exclude(status=Sale.Status.CANCELLED).count(),
+        "cancellations": session.cancelled_sales.count(),
+    }
 
 
 @dataclass
@@ -190,15 +200,69 @@ def _charging_session(user) -> CashSession:
     if not user.has_perm(CHARGE):
         raise PermissionDenied(_("You cannot charge sales."))
 
+    return _open_session(user)
+
+
+def _open_session(user) -> CashSession:
+    """Open cash session of the user's branch; charging and cancelling need one."""
+
     if user.branch_id is None:
         raise ValidationError(_("Your user has no branch assigned."))
 
     session = CashSession.objects.filter(branch_id=user.branch_id, closed_at__isnull=True).first()
 
     if session is None:
-        raise ValidationError(_("Open the cash session before charging."))
+        raise ValidationError(_("Open the cash session first."))
 
     return session
+
+
+@transaction.atomic
+def cancel_sale(user, sale: Sale, reason: str) -> Sale:
+    """Cancel a sale with a reason, in the open cash session of the user's branch.
+
+    That session gives the payments back: its cash count subtracts them, even when
+    they were received in an earlier session. Sold products go back to stock.
+    """
+
+    if not user.has_perm(CANCEL_SALE):
+        raise PermissionDenied(_("You cannot cancel sales."))
+
+    session = _open_session(user)
+
+    # Lock the sale so it cannot be paid or cancelled again at the same time.
+    sale = Sale.objects.select_for_update().get(pk=sale.pk)
+
+    if sale.branch_id != user.branch_id:
+        raise ValidationError(_("The sale belongs to another branch."))
+
+    if sale.status == Sale.Status.CANCELLED:
+        raise ValidationError(_("This sale is already cancelled."))
+
+    reason = reason.strip()
+
+    if not reason:
+        raise ValidationError({"cancel_reason": _("Explain why the sale is cancelled.")})
+
+    sale.status = Sale.Status.CANCELLED
+    sale.cancelled_at = timezone.now()
+    sale.cancelled_by = sale.updated_by = user
+    sale.cancel_cash_session = session
+    sale.cancel_reason = reason
+    sale.save()
+
+    for line in sale.items.filter(product__isnull=False).select_related("product"):
+        record_stock_movement(
+            StockMovement(
+                product=line.product,
+                kind=StockMovement.Kind.SALE_CANCELLATION,
+                quantity=line.quantity,
+                sale=sale,
+                created_by=user,
+            ),
+        )
+
+    return sale
 
 
 @transaction.atomic

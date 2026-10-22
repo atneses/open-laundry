@@ -289,7 +289,7 @@ erDiagram
     STOCK_MOVEMENT {
         int id PK
         int product_id FK
-        string kind "purchase | consumption | sale | adjustment"
+        string kind "purchase | consumption | sale | sale_cancellation | adjustment"
         decimal quantity
         decimal unit_cost "opcional"
         int machine_cycle_id FK "opcional"
@@ -313,6 +313,7 @@ erDiagram
         int cancelled_by FK "opcional"
         string cancel_reason "opcional"
         datetime cancelled_at "opcional"
+        int cancel_cash_session_id FK "turno que devolvió el dinero (opcional)"
         datetime created_at
     }
     DROP_OFF_ORDER {
@@ -446,7 +447,7 @@ erDiagram
 - **StockMovement:** `quantity` lleva signo (positivo suma, negativo resta): las compras suman, el consumo y las ventas restan, y los ajustes pueden ir en cualquier sentido. El stock de un producto solo cambia con movimientos; los movimientos no se editan ni se borran.
 
 **Caja y pagos**
-- **CashSession:** uno por turno, y solo una caja abierta por sucursal (el siguiente turno abre cuando el anterior cierra); no se puede cobrar sin caja abierta. Si al cerrar hay diferencia entre lo contado y lo esperado, la nota es obligatoria. Se guarda quién la cerró (`closed_by`); una caja olvidada la puede cerrar desde el admin quien tenga `sales.view_all_cash_sessions`. `expected_cash = opening_float + cash payments of the session` (menos cancelados). Cada pago cuenta en el turno en que se recibió (`Payment.cash_session`), aunque la venta sea de otro turno (p. ej. el saldo de un encargo). Un pago no puede ser mayor que el saldo: el cambio en efectivo no se guarda. `card_total` se cuadra contra el reporte de Mercado Pago Point.
+- **CashSession:** uno por turno, y solo una caja abierta por sucursal (el siguiente turno abre cuando el anterior cierra); no se puede cobrar sin caja abierta. Si al cerrar hay diferencia entre lo contado y lo esperado, la nota es obligatoria. Se guarda quién la cerró (`closed_by`); una caja olvidada la puede cerrar desde el admin quien tenga `sales.view_all_cash_sessions`. `expected_cash = opening_float + cash payments of the session` (menos cancelados). Cada pago cuenta en el turno en que se recibió (`Payment.cash_session`), aunque la venta sea de otro turno (p. ej. el saldo de un encargo). Un pago no puede ser mayor que el saldo: el cambio en efectivo no se guarda. **Cancelar** una venta requiere caja abierta: ese turno devuelve sus pagos (su corte resta el efectivo y la tarjeta de la venta, aunque se hayan cobrado en un turno anterior, cuyo corte no cambia) y los productos vendidos regresan al stock (`StockMovement(kind=sale_cancellation)`). `card_total` se cuadra contra el reporte de Mercado Pago Point.
 - **Pago con tarjeta:** en el MVP se captura a mano la referencia del voucher; en la Fase 2 la integración con la API de Point la llena sola (`mp_payment_intent_id`).
 
 **Usuarios y máquinas**

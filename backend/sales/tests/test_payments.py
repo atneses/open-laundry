@@ -14,6 +14,7 @@ from sales.models import Mode, Payment, Sale, Service, ServicePrice
 from sales.services import (
     ItemRequest,
     add_payment,
+    cancel_sale,
     close_cash_session,
     create_sale,
     open_cash_session,
@@ -119,8 +120,7 @@ def test_payment_method_must_be_valid(cashier, sale):
 
 
 def test_a_cancelled_sale_cannot_be_paid(cashier, sale):
-    sale.status = Sale.Status.CANCELLED
-    sale.save()
+    cancel_sale(cashier, sale, "Wrong service")
 
     with pytest.raises(ValidationError):
         add_payment(cashier, sale, CASH, "10.00")
