@@ -75,10 +75,12 @@ class Product(BaseModel):
         # afterwards would silently change their meaning (5000 ml -> 5000 L).
         if not self._state.adding and self.has_movements():
             saved_unit = Product.objects.values_list("unit", flat=True).get(pk=self.pk)
+
             if saved_unit != self.unit:
                 raise ValidationError(
                     {"unit": _("The unit cannot change once the product has stock movements.")}
                 )
+
         super().save(*args, **kwargs)
 
     def clean(self):
@@ -196,11 +198,15 @@ class StockMovement(BaseModel):
     def clean(self):
         if self.quantity is None or not self.kind:
             return
+
         if self.kind == self.Kind.PURCHASE and self.quantity <= 0:
             raise ValidationError({"quantity": _("A purchase must add stock (positive).")})
+
         if self.kind in (self.Kind.CONSUMPTION, self.Kind.SALE) and self.quantity >= 0:
             raise ValidationError({"quantity": _("This kind of movement removes stock.")})
+
         if self.kind == self.Kind.ADJUSTMENT and self.quantity == 0:
             raise ValidationError({"quantity": _("An adjustment cannot be zero.")})
+
         if self.kind == self.Kind.ADJUSTMENT and not self.reason.strip():
             raise ValidationError({"reason": _("An adjustment needs a reason.")})

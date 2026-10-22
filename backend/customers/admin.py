@@ -12,6 +12,7 @@ class CustomerAdmin(ModelAdmin):
     form = CustomerForm
     list_display = ["name", "phone", "email", "created_at"]
     list_filter = ["branch"]
+
     # Searching the phone also matches its last digits.
     search_fields = ["phone", "name"]
 

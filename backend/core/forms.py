@@ -29,13 +29,16 @@ class InputFilterModelForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         for name, input_filter in self.input_filters.items():
             # The admin leaves read-only fields out of the form.
             if name not in self.fields:
                 continue
+
             widget = self.fields[name].widget
             widget.attrs["data-input-filter"] = input_filter
             widget.attrs["inputmode"] = INPUT_MODES[input_filter]
+
             # Unfold renders decimals as type="number", where Firefox still lets letters
             # in and hides them from the script (value reads as ""); filter as text.
             widget.input_type = "text"

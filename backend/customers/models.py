@@ -51,4 +51,5 @@ class Customer(BaseModel):
 
 def normalize_phone(phone: str) -> str:
     """Keep only the digits of a phone number."""
+
     return re.sub(r"\D", "", phone or "")

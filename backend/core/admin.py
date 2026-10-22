@@ -78,6 +78,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         # A non-superuser must not edit a superuser (e.g. change their password).
         if obj is not None and obj.is_superuser and not request.user.is_superuser:
             return False
+
         return request.user.has_perm(MANAGE_USERS)
 
     def has_delete_permission(self, request, obj=None):
@@ -86,8 +87,10 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)
+
         if request.user.is_superuser or obj is None:
             return fieldsets
+
         # Only superusers can see or grant superuser status.
         return [
             (name, {**opts, "fields": [f for f in opts["fields"] if f != "is_superuser"]})
@@ -98,6 +101,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         if db_field.name == "user_permissions":
             # Each option's label shows its app, so load it in the same query.
             kwargs["queryset"] = Permission.objects.select_related("content_type")
+
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     def save_related(self, request, form, formsets, change):

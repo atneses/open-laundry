@@ -41,12 +41,16 @@ class BaseModel(models.Model):
 
     def save(self, *args, **kwargs):
         user = get_current_user()
+
         if user is not None:
             if self._state.adding and self.created_by_id is None:
                 self.created_by = user
+
             self.updated_by = user
+
         if self._state.adding and self.updated_by_id is None:
             self.updated_by_id = self.created_by_id
+
         super().save(*args, **kwargs)
 
 
@@ -80,6 +84,7 @@ class User(AbstractUser, BaseModel):
         blank=True,
         related_name="users",
     )
+
     # Redefined only to add the validator; same as AbstractUser otherwise.
     first_name = models.CharField(
         _("first name"), max_length=150, blank=True, validators=[validate_person_name]

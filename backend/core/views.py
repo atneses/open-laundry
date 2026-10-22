@@ -9,4 +9,5 @@ from rest_framework.response import Response
 @permission_classes([AllowAny])
 def health(request):
     """Liveness check for Docker and monitoring."""
+
     return Response({"status": "ok"})

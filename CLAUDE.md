@@ -46,6 +46,12 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 - Indentación de 4 espacios, dos líneas en blanco entre definiciones de nivel superior.
 - Docstrings en las clases y funciones públicas, en inglés.
 - El formato lo pone `ruff format`; no discutir estilo a mano.
+- **Líneas en blanco** (`ruff format` las conserva pero no las agrega; se escriben a mano):
+  - después del docstring de funciones y métodos;
+  - antes y después de cada bloque (`if`, `for`, `while`, `with`, `try`, `match`), salvo al inicio o al final del bloque que lo contiene;
+  - antes del `return` final de una función, si hay código antes.
+  - Las tres reglas anteriores no aplican a los cuerpos de clase (campos, `Meta`), que siguen el espaciado del formateador.
+  - Antes de un comentario de línea completa que va después de código (el comentario explica lo que sigue), en funciones, clases y módulos; salvo si abre un bloque o va después de otro comentario. No aplica a comentarios dentro de listas, diccionarios o llamadas.
 
 **Prácticas de Django:**
 - **Modelos:** orden de miembros como indica Django (campos → managers → `class Meta` → `__str__` → `save` → `get_absolute_url` → métodos propios). Todo modelo tiene `__str__`. Usar `TextChoices` / `IntegerChoices` para valores fijos (estados, tipos). `related_name` explícito en las relaciones. Restricciones e índices en `Meta.constraints` / `Meta.indexes` cuando una regla deba cumplirse siempre (p. ej. teléfono único por sucursal).
@@ -100,6 +106,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 
 - **Cada regla de negocio lleva su prueba** (cobro, saldo, corte de caja, permisos, ciclos, inventario). Incluir también el caso de error (p. ej. empleado sin permiso → 403).
 - Backend: `pytest` + `pytest-django` (pruebas en `<app>/tests/test_*.py`). Frontend: `vitest` + Testing Library (`*.test.tsx` junto al componente).
+- **Patrón AAA (Arrange, Act, Assert):** cada prueba prepara los datos, hace **una sola acción** y comprueba el resultado, con una línea en blanco entre cada parte (sin comentarios `# Arrange`). Si una prueba necesita varias acciones (p. ej. sin permiso → 403 y con permiso → 200), se separa en varias pruebas o se usa `parametrize`. La acción dentro de `pytest.raises` cuenta como el Act. Las pruebas de una o dos líneas pueden omitir las líneas en blanco.
 - Antes de dar algo por terminado, todo esto debe pasar:
   ```bash
   docker compose exec api ruff format . && docker compose exec api ruff check .

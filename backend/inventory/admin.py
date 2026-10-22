@@ -20,6 +20,7 @@ def has_any_perm(user, perms):
 
 def can_view_inventory(request):
     """Sidebar check for products and stock movements (see UNFOLD["SIDEBAR"])."""
+
     return has_any_perm(request.user, INVENTORY_PERMISSIONS)
 
 
@@ -33,6 +34,7 @@ class LowStockFilter(admin.SimpleListFilter):
     def queryset(self, request, queryset):
         if self.value() == "low":
             return queryset.filter(stock__lt=F("min_stock"))
+
         return queryset
 
 
@@ -42,6 +44,7 @@ class ProductAdmin(ModelAdmin):
     list_display = ["name", "unit", "stock", "min_stock", "is_for_sale", "sale_price"]
     list_filter = [LowStockFilter, "is_for_sale", "branch"]
     search_fields = ["name", "sku"]
+
     # Stock only changes through stock movements.
     readonly_fields = ["stock"]
 
@@ -49,6 +52,7 @@ class ProductAdmin(ModelAdmin):
         # Once there are movements, the unit gives them meaning and cannot change.
         if obj is not None and obj.has_movements():
             return [*self.readonly_fields, "unit"]
+
         return self.readonly_fields
 
     def has_module_permission(self, request):
@@ -103,17 +107,22 @@ class StockMovementAdmin(ModelAdmin):
 
     def allowed_kinds(self, request):
         """Kinds this user may record by hand; consumption and sales come from the system."""
+
         kinds = []
+
         if request.user.has_perm(RECEIVE_STOCK):
             kinds.append(StockMovement.Kind.PURCHASE)
+
         if request.user.has_perm(ADJUST_STOCK):
             kinds.append(StockMovement.Kind.ADJUSTMENT)
+
         return kinds
 
     def formfield_for_choice_field(self, db_field, request, **kwargs):
         if db_field.name == "kind":
             allowed = self.allowed_kinds(request)
             kwargs["choices"] = [c for c in StockMovement.Kind.choices if c[0] in allowed]
+
         return super().formfield_for_choice_field(db_field, request, **kwargs)
 
     def save_model(self, request, obj, form, change):

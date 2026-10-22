@@ -88,8 +88,10 @@ class CashSessionAdmin(ReadOnlyModelAdmin):
 
     def has_close_session_permission(self, request, object_id=None):
         """Whoever sees every cash session can close one that was left open."""
+
         if not request.user.has_perm(VIEW_ALL_CASH_SESSIONS):
             return False
+
         return (
             object_id is None
             or CashSession.objects.filter(pk=object_id, closed_at__isnull=True).exists()
@@ -109,6 +111,7 @@ class CashSessionAdmin(ReadOnlyModelAdmin):
     )
     def close_session(self, request, form, object_id):
         session = get_object_or_404(CashSession, pk=object_id)
+
         try:
             close_cash_session(
                 session,
@@ -122,6 +125,7 @@ class CashSessionAdmin(ReadOnlyModelAdmin):
                     form.add_error(field if field in form.fields else None, field_errors)
             else:
                 form.add_error(None, error)
+
             return render(
                 request,
                 "unfold/helpers/dialog.html",
@@ -131,7 +135,10 @@ class CashSessionAdmin(ReadOnlyModelAdmin):
                     "form_submit_text": self.close_session.dialog["form_submit_text"],
                 },
             )
+
         messages.success(request, _("The cash session was closed."))
+
         # The dialog posts with htmx, which follows this header with a full page load.
         url = reverse("admin:sales_cashsession_change", args=[object_id])
+
         return HttpResponse(headers={"HX-Redirect": url})

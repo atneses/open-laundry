@@ -15,6 +15,7 @@ from django.utils.translation import gettext_lazy as _
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 env = environ.Env()
+
 # Outside Docker, a .env file at the repository root can be used.
 environ.Env.read_env(BASE_DIR.parent / ".env", overwrite=False)
 
@@ -75,6 +76,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {"default": env.db("DATABASE_URL")}
 
 AUTH_USER_MODEL = "core.User"
+
 # Unfold's login form has no hidden "next" field, so logging in from
 # /admin/login/ directly would fall back to /accounts/profile/ (which does not exist).
 LOGIN_REDIRECT_URL = reverse_lazy("admin:index")
@@ -90,6 +92,7 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = "es-mx"
 TIME_ZONE = env("DJANGO_TIME_ZONE", default="America/Mexico_City")
 USE_I18N = True
+
 # Project translations (kept with makemessages), then the hand-made Spanish for
 # Unfold, which ships none. They live apart so makemessages does not obsolete them.
 LOCALE_PATHS = [BASE_DIR / "locale", BASE_DIR / "locale_unfold"]
