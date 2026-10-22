@@ -320,6 +320,7 @@ erDiagram
         string status "received | in_progress | ready | delivered"
         datetime promised_at
         datetime delivered_at "opcional"
+        int delivered_by FK "opcional"
         text notes
     }
     SALE_ITEM {
@@ -430,7 +431,7 @@ erDiagram
 **Ventas y ciclos**
 - **Cada carga vendida** de un servicio con `uses_machine = true` genera un `MachineCycle` (3 cargas → 3 ciclos). Así se **cuadran las ventas contra los usos reales** y se detectan ciclos no cobrados.
 - **Autoservicio:** se cobra completo, el empleado activa la máquina y el ciclo se inicia de inmediato.
-- **Encargo:** los ciclos quedan *pendientes de asignar* y el empleado los activa al procesar la ropa; el `DropOffOrder` avanza de estado con ellos. Se puede pagar en varios `Payment`. Un encargo con saldo solo lo entrega quien tenga `sales.deliver_with_balance`.
+- **Encargo:** el `DropOffOrder` se crea al cobrar, con fecha promesa obligatoria. Los ciclos quedan *pendientes de asignar* y el empleado los activa al procesar la ropa. El encargo avanza solo hacia adelante y sin saltos (recibido → en proceso → listo → entregado); solo se entrega uno listo, y con saldo solo lo entrega quien tenga `sales.deliver_with_balance`. Se puede pagar en varios `Payment`. Si se cancela la venta, el encargo ya no cambia; uno entregado no se puede cancelar.
 - **Estados del ciclo:** `requested` → `credit_sent` (la cajita confirmó el crédito; falta presionar Start) → `running` (por el medidor de consumo, el empleado o por tiempo) → `finished`. Si la cajita no confirma pasa a `failed`. `is_manual = true` cuando se arrancó en modo PUSH.
 - **SaleItem:** un servicio **o** un producto. `unit_price` se copia de `ServicePrice` según la modalidad (o de `Product.sale_price`) y se conserva aunque el precio cambie. Vender un producto lo descuenta del stock en el mismo cobro (`StockMovement` de venta).
 - **Folio:** cada sucursal define su prefijo (`Branch.sale_prefix`) y el consecutivo no tiene huecos (`A-000123`).

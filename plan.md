@@ -459,13 +459,25 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Objetivo:** recibir ropa, darle seguimiento y entregarla.
 
 ### 8.1 Modelo `DropOffOrder`
-- [ ] **Qué se hace:** crear `DropOffOrder` (ligado 1:1 a una venta de modalidad encargo), con estado (recibido, en proceso, listo, entregado) y fecha promesa. En encargo el cliente es obligatorio.
+- [x] **Qué se hace:** crear `DropOffOrder` (ligado 1:1 a una venta de modalidad encargo), con estado (recibido, en proceso, listo, entregado) y fecha promesa. En encargo el cliente es obligatorio.
 - **Listo cuando:** no se puede crear un encargo sin cliente.
 
 ### 8.2 Flujo de estados
-- [ ] **Qué se hace:** servicios para cambiar de estado (requieren `customers.manage_customers`). Entregar con saldo pendiente requiere `sales.deliver_with_balance`.
+- [x] **Qué se hace:** servicios para cambiar de estado (requieren `customers.manage_customers`). Entregar con saldo pendiente requiere `sales.deliver_with_balance`.
 - **Para qué:** no entregar ropa sin cobrar, salvo autorización.
 - **Listo cuando:** un empleado sin permiso no puede entregar con saldo (prueba).
+
+**Notas de la implementación:**
+- `DropOffOrder` en `sales`. **Se crea al cobrar:** `create_sale` en encargo recibe un `DropOffRequest` (fecha promesa y notas) y crea el encargo en la misma transacción, así no hay venta de encargo sin encargo. La fecha promesa es obligatoria y no puede estar en el pasado. Recibir un encargo pide `sales.charge` (es un cobro); moverlo y entregarlo, `customers.manage_customers`.
+- **Estados solo hacia adelante, sin saltos:** `advance_drop_off_order` pasa de recibido → en proceso → listo; `deliver_drop_off_order` entrega solo uno listo y, con saldo, exige `sales.deliver_with_balance`. Se guardan `delivered_at` y `delivered_by` (no estaba en el MVP).
+- **Cancelación:** el encargo de una venta cancelada ya no cambia; una venta con encargo entregado no se puede cancelar.
+- Encargos en el admin (área *Operación*), de solo lectura, y dentro de la ficha de la venta. Migración `sales/0015`: Admin todos los permisos (incluido `deliver_with_balance`).
+
+**Riesgos y pendientes:**
+- **Pendiente – "en proceso" automático:** hoy se cambia a mano; en la Etapa 9 activar los ciclos del encargo lo pasará a en proceso.
+- **Pendiente – bitácora de entregas con saldo:** quedan en el encargo (`delivered_by`, saldo de la venta), pero no hay bitácora aparte (mvp §6).
+- **Riesgo – sin regresar de estado:** si hay que relavar algo ya marcado como listo, no se puede regresar a en proceso.
+- **Riesgo – fecha promesa vencida:** no hay aviso de encargos con la fecha promesa ya pasada; se verá en el dashboard (Etapa 11).
 
 **✅ Etapa 8 terminada cuando:** un encargo completo (recibir → lavar → listo → cobrar saldo → entregar) funciona de principio a fin con los servicios (prueba).
 
