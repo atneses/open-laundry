@@ -492,9 +492,10 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Hecho:** app `machines` con `Machine` (`available` / `out_of_service`; "en uso" se calcula por el ciclo `running`) y `MachineCycle` ligado solo a `sale_item` (la venta sale de ahí); `program` y `driver_response` se agregan cuando se usen. `Service.expected_minutes` es opcional. Permisos `machines.manage_machines` (Admin) y `machines.start_machine` (Admin y Empleado) con `machines/0002_grant_role_permissions`. Admin: máquinas con `manage_machines` y sin borrar (se marcan fuera de servicio); ciclos de solo lectura. Menú: área *Máquinas*. `seed_demo` crea Lavadora 1–4 y Secadora 1–2 y pone 36 / 40 minutos a lavado y secado.
 
 ### 9.2 Ciclos generados por la venta
-- [ ] **Qué se hace:** al cobrar, cada carga de un servicio que usa máquina crea un `MachineCycle` `pending`, sin máquina (3 cargas → 3 ciclos), en autoservicio y en encargo. Al cancelar la venta, sus ciclos `pending` pasan a `cancelled`; no se puede cancelar si alguno ya se activó.
+- [x] **Qué se hace:** al cobrar, cada carga de un servicio que usa máquina crea un `MachineCycle` `pending`, sin máquina (3 cargas → 3 ciclos), en autoservicio y en encargo. Al cancelar la venta, sus ciclos `pending` pasan a `cancelled`; no se puede cancelar si alguno ya se activó.
 - **Para qué:** poder cuadrar ventas contra usos reales.
 - **Listo cuando:** una venta de 2 lavados y 1 secado crea 3 ciclos (prueba).
+- **Hecho:** `machines/services.py` con `create_cycles` (lo llama `create_sale`) y `cancel_cycles` (lo llama `cancel_sale`, que bloquea los ciclos de la venta mientras los revisa).
 
 ### 9.3 Activación manual
 - [ ] **Qué se hace:** servicio `start_cycle` (requiere `machines.start_machine`): el empleado elige la máquina y, si es lavado, marca `customer_supplies`. La máquina debe ser de la misma sucursal y del tipo del servicio, no estar fuera de servicio ni tener otro ciclo en curso. El ciclo queda `is_manual` y `running`; el empleado presiona Start en la máquina (modo PUSH). **Regla de autoservicio** (movida desde el 7.3): la venta debe estar pagada completa antes de activar sus máquinas; un encargo se puede activar con saldo. Activar no avanza el encargo: el empleado lo pasa a *en proceso* a mano.
@@ -514,7 +515,9 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Riesgos y pendientes:**
 - **Riesgo – servicio sin duración:** `expected_minutes` es opcional; un ciclo de un servicio sin minutos nunca se cerrará por tiempo (9.5) y quedará en curso, bloqueando su máquina.
 - **Pendiente – máquinas reales:** dar de alta en el admin las 6 máquinas del local con su modelo y número de serie (`seed_demo` solo crea las de prueba).
-- **Pendiente – resto de la etapa:** los ciclos aún no se crean al cobrar (9.2) ni se activan (9.3).
+- **Pendiente – ciclos en la ficha de la venta:** el admin de la venta todavía no muestra sus ciclos; por ahora se buscan por folio en *Ciclos de máquina*.
+- **Pendiente – activar y cancelar a la vez:** la activación (9.3) debe bloquear la venta, como la cancelación, para que no se active un ciclo de una venta que se está cancelando.
+- **Pendiente – resto de la etapa:** los ciclos aún no se activan (9.3).
 
 **✅ Etapa 9 terminada cuando:** cada venta genera sus ciclos, se activan en modo manual y el inventario se descuenta.
 
