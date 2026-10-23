@@ -4,6 +4,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from core.permissions import requires_perm
+from inventory.models import LoadConsumption, StockMovement
+from inventory.services import record_stock_movement
 from sales.models import Mode, Sale
 
 from .models import Machine, MachineCycle
@@ -64,8 +66,8 @@ def start_cycle(
     """Start a pending cycle on a machine in manual mode (the employee presses Start).
 
     A self-service sale must be fully paid first; a drop-off order can have a balance.
-    ``customer_supplies`` means the customer brought their own products, so the
-    laundry's are not taken from stock.
+    ``customer_supplies`` means the customer brought their own products; otherwise
+    the laundry's are taken from stock as set in ``LoadConsumption``.
     """
 
     # Lock the sale before its cycle, in the same order as a cancellation.
@@ -105,7 +107,34 @@ def start_cycle(
     cycle.started_at = timezone.now()
     cycle.save()
 
+    if not customer_supplies:
+        _consume_supplies(user, cycle)
+
     return cycle
+
+
+def _consume_supplies(user, cycle: MachineCycle) -> None:
+    """Take from stock the supplies one load of the cycle's service uses.
+
+    Only the products of the machine's branch. Stock may go below zero: a paid wash
+    is never stopped, and the minimum stock alert warns about it.
+    """
+
+    consumptions = LoadConsumption.objects.filter(
+        service_id=cycle.sale_item.service_id,
+        product__branch_id=cycle.machine.branch_id,
+    ).select_related("product")
+
+    for consumption in consumptions:
+        record_stock_movement(
+            StockMovement(
+                product=consumption.product,
+                kind=StockMovement.Kind.CONSUMPTION,
+                quantity=-consumption.quantity,
+                machine_cycle=cycle,
+                created_by=user,
+            ),
+        )
 
 
 @requires_perm(START_MACHINE, message=_("You cannot finish machine cycles."))

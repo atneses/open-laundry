@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 12:01-0600\n"
+"POT-Creation-Date: 2026-10-23 13:13-0600\n"
 "Language: es_MX\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -405,48 +405,52 @@ msgstr "costo unitario"
 msgid "sale"
 msgstr "venta"
 
-#: inventory/models.py:189
+#: inventory/models.py:190 machines/models.py:115
+msgid "machine cycle"
+msgstr "ciclo de máquina"
+
+#: inventory/models.py:197
 msgid "reason"
 msgstr "motivo"
 
-#: inventory/models.py:192
+#: inventory/models.py:200
 msgid "Required for adjustments: why the stock changed (spill, count, error)."
 msgstr ""
 "Obligatorio en los ajustes: por qué cambió el stock (derrame, conteo, error)."
 
-#: inventory/models.py:196
+#: inventory/models.py:204
 msgid "stock movement"
 msgstr "movimiento de inventario"
 
-#: inventory/models.py:197
+#: inventory/models.py:205
 msgid "stock movements"
 msgstr "movimientos de inventario"
 
-#: inventory/models.py:200
+#: inventory/models.py:208
 msgid "Can record stock entries"
 msgstr "Puede registrar entradas de inventario"
 
-#: inventory/models.py:201
+#: inventory/models.py:209
 msgid "Can adjust stock (losses, corrections)"
 msgstr "Puede ajustar el inventario (mermas, correcciones)"
 
-#: inventory/models.py:226
+#: inventory/models.py:239
 msgid "A purchase must add stock (positive)."
 msgstr "Una compra debe sumar stock (positivo)."
 
-#: inventory/models.py:229
+#: inventory/models.py:242
 msgid "A cancelled sale must add stock back."
 msgstr "Una venta cancelada debe regresar el stock."
 
-#: inventory/models.py:232
+#: inventory/models.py:245
 msgid "This kind of movement removes stock."
 msgstr "Este tipo de movimiento resta stock."
 
-#: inventory/models.py:235
+#: inventory/models.py:248
 msgid "An adjustment cannot be zero."
 msgstr "Un ajuste no puede ser cero."
 
-#: inventory/models.py:238
+#: inventory/models.py:251
 msgid "An adjustment needs a reason."
 msgstr "Un ajuste necesita un motivo."
 
@@ -559,10 +563,6 @@ msgstr "inicio"
 msgid "finished at"
 msgstr "fin"
 
-#: machines/models.py:115
-msgid "machine cycle"
-msgstr "ciclo de máquina"
-
 #: machines/models.py:116
 msgid "machine cycles"
 msgstr "ciclos de máquina"
@@ -576,47 +576,47 @@ msgstr "Puede activar máquinas y registrar ciclos"
 msgid "Cycle %(pk)s"
 msgstr "Ciclo %(pk)s"
 
-#: machines/services.py:45
+#: machines/services.py:47
 msgid "A sale with a started machine cycle cannot be cancelled."
 msgstr "No se puede cancelar una venta con un ciclo de máquina ya activado."
 
-#: machines/services.py:55
+#: machines/services.py:57
 msgid "You cannot start machines."
 msgstr "No puedes activar máquinas."
 
-#: machines/services.py:75 sales/services.py:260
+#: machines/services.py:77 sales/services.py:260
 msgid "The sale belongs to another branch."
 msgstr "La venta es de otra sucursal."
 
-#: machines/services.py:81
+#: machines/services.py:83
 msgid "This cycle was already started or cancelled."
 msgstr "Este ciclo ya se activó o se canceló."
 
-#: machines/services.py:84 machines/services.py:122
+#: machines/services.py:86 machines/services.py:156
 msgid "The machine belongs to another branch."
 msgstr "La máquina es de otra sucursal."
 
-#: machines/services.py:87
+#: machines/services.py:89
 msgid "This service needs another kind of machine."
 msgstr "Este servicio necesita otro tipo de máquina."
 
-#: machines/services.py:90
+#: machines/services.py:92
 msgid "This machine is out of service."
 msgstr "Esta máquina está fuera de servicio."
 
-#: machines/services.py:93
+#: machines/services.py:95
 msgid "This machine is already running a cycle."
 msgstr "Esta máquina ya tiene un ciclo en curso."
 
-#: machines/services.py:97
+#: machines/services.py:99
 msgid "Charge the whole self-service sale before starting its machines."
 msgstr "Cobra completa la venta de autoservicio antes de activar sus máquinas."
 
-#: machines/services.py:111
+#: machines/services.py:140
 msgid "You cannot finish machine cycles."
 msgstr "No puedes terminar ciclos de máquina."
 
-#: machines/services.py:119
+#: machines/services.py:153
 msgid "Only a running cycle can be finished."
 msgstr "Solo se puede terminar un ciclo en curso."
 

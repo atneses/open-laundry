@@ -185,6 +185,14 @@ class StockMovement(BaseModel):
         blank=True,
         related_name="stock_movements",
     )
+    machine_cycle = models.ForeignKey(
+        "machines.MachineCycle",
+        verbose_name=_("machine cycle"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="stock_movements",
+    )
     reason = models.CharField(
         _("reason"),
         max_length=255,
@@ -212,6 +220,11 @@ class StockMovement(BaseModel):
             models.CheckConstraint(
                 condition=~Q(kind="adjustment") | ~Q(reason=""),
                 name="stock_adjustment_has_reason",
+            ),
+            # Supplies are consumed by a machine cycle.
+            models.CheckConstraint(
+                condition=~Q(kind="consumption") | Q(machine_cycle__isnull=False),
+                name="stock_consumption_has_machine_cycle",
             ),
         ]
 

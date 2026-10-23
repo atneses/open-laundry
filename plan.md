@@ -487,7 +487,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Objetivo:** registrar cada uso de máquina ligado a la venta, sin depender todavía de la cajita. Se crea la app `machines`.
 
 ### 9.1 Modelos
-- [x] **Qué se hace:** crear `Machine` (sucursal, tipo, etiqueta, modelo, número de serie y estado) y `MachineCycle` con sus estados (`pending`, `requested`, `credit_sent`, `running`, `finished`, `failed`, `cancelled`), `customer_supplies`, `started_by` y la marca `is_manual`. Agregar `Service.expected_minutes` (duración esperada, para el 9.5). `MachineController`, `Machine.driver` y los campos de relé, pulsos y medidor se agregan en la Etapa 15.
+- [x] **Qué se hace:** crear `Machine` (sucursal, tipo, etiqueta, modelo, número de serie y estado) y `MachineCycle` con sus estados (`pending`, `requested`, `credit_sent`, `running`, `finished`, `failed`, `cancelled`), `customer_supplies`, `started_by` y la marca `is_manual`. Agregar `Service.expected_minutes` (duración esperada, para el cierre por tiempo del 14.3). `MachineController`, `Machine.driver` y los campos de relé, pulsos y medidor se agregan en la Etapa 15.
 - **Listo cuando:** las 4 lavadoras y 2 secadoras están dadas de alta en el admin.
 - **Hecho:** app `machines` con `Machine` (`available` / `out_of_service`; "en uso" se calcula por el ciclo `running`) y `MachineCycle` ligado solo a `sale_item` (la venta sale de ahí); `program` y `driver_response` se agregan cuando se usen. `Service.expected_minutes` es opcional. Permisos `machines.manage_machines` (Admin) y `machines.start_machine` (Admin y Empleado) con `machines/0002_grant_role_permissions`. Admin: máquinas con `manage_machines` y sin borrar (se marcan fuera de servicio); ciclos de solo lectura. Menú: área *Máquinas*. `seed_demo` crea Lavadora 1–4 y Secadora 1–2 y pone 36 / 40 minutos a lavado y secado.
 
@@ -505,21 +505,17 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Cambio en el inventario:** `LoadConsumption` ya acepta cualquier servicio que use máquina (antes solo lavado), para poder configurar consumo en el secado si se necesita; los servicios sin máquina siguen rechazados.
 
 ### 9.4 Consumo de insumos
-- [ ] **Qué se hace:** al activar un ciclo sin `customer_supplies` (hoy solo el lavado tiene consumo; el secado se puede configurar), crear los movimientos de consumo según `LoadConsumption`, ligados al ciclo (`StockMovement.machine_cycle`). El stock puede quedar negativo para no frenar un lavado pagado; la alerta de stock mínimo avisa.
+- [x] **Qué se hace:** al activar un ciclo sin `customer_supplies` (hoy solo el lavado tiene consumo; el secado se puede configurar), crear los movimientos de consumo según `LoadConsumption`, ligados al ciclo (`StockMovement.machine_cycle`). El stock puede quedar negativo para no frenar un lavado pagado; la alerta de stock mínimo avisa.
 - **Listo cuando:** un lavado baja 150–200 ml de detergente y de suavizante; con `customer_supplies` no baja nada.
-
-### 9.5 Cierre por tiempo
-- [ ] **Qué se hace:** comando de Django que pasa a `finished` los ciclos `running` que superen `Service.expected_minutes`. Se programa para correr solo en la Etapa 14.
-- **Para qué:** que no queden ciclos "en curso" para siempre cuando no hay medidor.
-- **Listo cuando:** un ciclo viejo se cierra solo.
-- **Dato del negocio:** hoy un lavado dura 36 min y un secado 40 min (valores iniciales de `expected_minutes`, editables en el admin).
+- **Hecho:** `start_cycle` crea un `StockMovement` de consumo por producto del `LoadConsumption` del servicio, ligado al ciclo (`inventory/0007`, con la restricción de que todo consumo tiene ciclo). Solo toma productos de la sucursal de la máquina, porque los servicios son de todas las sucursales y los productos de una.
 
 **Riesgos y pendientes:**
-- **Riesgo – servicio sin duración:** `expected_minutes` es opcional; un ciclo de un servicio sin minutos nunca se cerrará por tiempo (9.5) y quedará en curso, bloqueando su máquina.
+- **Riesgo – servicio sin duración:** `expected_minutes` es opcional; un ciclo de un servicio sin minutos nunca se cerrará por tiempo (14.3); habrá que terminarlo a mano.
 - **Pendiente – máquinas reales:** dar de alta en el admin las 6 máquinas del local con su modelo y número de serie (`seed_demo` solo crea las de prueba).
 - **Pendiente – ciclos en la ficha de la venta:** el admin de la venta todavía no muestra sus ciclos; por ahora se buscan por folio en *Ciclos de máquina*.
 - **Riesgo – sin probar la concurrencia real:** el orden de bloqueo (venta → ciclo → máquina) evita activar y cancelar a la vez, pero no hay prueba con dos peticiones simultáneas.
-- **Pendiente – resto de la etapa:** al activar aún no se descuentan insumos (9.4) ni se cierran ciclos por tiempo (9.5).
+- **Pendiente – consumo en el admin:** la lista de movimientos de inventario no muestra a qué ciclo pertenece cada consumo.
+- **Pendiente – cierre por tiempo:** se movió al 14.3 (necesita una tarea programada, que existe hasta el despliegue). Mientras, el empleado termina los ciclos a mano con `finish_cycle`; un ciclo olvidado deja su máquina "en curso" y sin hora de fin.
 
 **✅ Etapa 9 terminada cuando:** cada venta genera sus ciclos, se activan en modo manual y el inventario se descuenta.
 
@@ -684,30 +680,36 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** se entra por SSH y el dominio apunta a la VM.
 
 ### 14.2 Producción con Docker
-- [ ] **Qué se hace:** settings de producción (`config/settings/prod.py`: HTTPS, cookies seguras, documentación de la API solo para admins), servidor `gunicorn` (`requirements/prod.txt`), cómo se sirven los archivos estáticos (WhiteNoise o Nginx, por decidir), y `docker-compose.prod.yml` con Caddy (HTTPS automático), API, PostgreSQL y el frontend compilado, y programar el comando del cierre por tiempo (9.5). Variables en `.env` del servidor. Pasar `manage.py check --deploy`.
+- [ ] **Qué se hace:** settings de producción (`config/settings/prod.py`: HTTPS, cookies seguras, documentación de la API solo para admins), servidor `gunicorn` (`requirements/prod.txt`), cómo se sirven los archivos estáticos (WhiteNoise o Nginx, por decidir), y `docker-compose.prod.yml` con Caddy (HTTPS automático), API, PostgreSQL y el frontend compilado. Variables en `.env` del servidor. Pasar `manage.py check --deploy`.
 - **Listo cuando:** `https://<dominio>/` abre la caja y `/admin/` el panel, con candado HTTPS.
 
-### 14.3 Respaldos
+### 14.3 Cierre de ciclos por tiempo
+- [ ] **Qué se hace:** comando de Django que pasa a `finished` los ciclos `running` (en curso) que superen `Service.expected_minutes`, programado para correr solo en el servidor (cron, cada pocos minutos). *(Antes era el 9.5.)*
+- **Para qué:** que no queden ciclos "en curso" para siempre, con su máquina bloqueada, cuando al empleado se le olvida terminarlos y no hay medidor.
+- **Listo cuando:** un ciclo viejo se cierra solo.
+- **Dato del negocio:** hoy un lavado dura 36 min y un secado 40 min (valores iniciales de `expected_minutes`, editables en el admin).
+
+### 14.4 Respaldos
 - [ ] **Qué se hace:** respaldo diario automático de PostgreSQL a S3 (o similar), conservando al menos 30 días, y **probar una restauración**.
 - **Para qué:** un respaldo que nunca se ha restaurado no garantiza nada.
 - **Listo cuando:** se restauró un respaldo en una base de prueba y los datos están completos.
 
-### 14.4 Revisión automática (CI) y despliegue automático
+### 14.5 Revisión automática (CI) y despliegue automático
 - [ ] **Qué se hace:** *workflows* de GitHub Actions (`.github/workflows/`) que:
   1. en cada *pull request* corren el lint, las migraciones, las pruebas del backend y del frontend, y la compilación;
   2. al mezclar a `main`, construyen las imágenes y actualizan el servidor.
 - **Para qué:** que ningún cambio llegue a `main` ni a producción sin pasar las pruebas, aunque alguien olvide correrlas.
 - **Listo cuando:** un *pull request* muestra la revisión en verde y un cambio pequeño llega a producción sin entrar al servidor a mano.
 
-### 14.5 Datos iniciales
+### 14.6 Datos iniciales
 - [ ] **Qué se hace:** cargar en producción la sucursal, las 6 máquinas (driver manual), servicios y precios reales, insumos con su stock, descuentos vigentes y las cuentas de cada empleado.
 - **Listo cuando:** el admin revisó y aprobó el catálogo y los precios.
 
-### 14.6 Capacitación
+### 14.7 Capacitación
 - [ ] **Qué se hace:** una sesión con los empleados: entrar, abrir caja, cobrar, encargos, activar máquinas (manual), ticket y corte. Una hoja de ayuda impresa de una página.
 - **Listo cuando:** cada empleado hizo una venta y un corte de práctica.
 
-### 14.7 Periodo de prueba
+### 14.8 Periodo de prueba
 - [ ] **Qué se hace:** usar el sistema 1 o 2 semanas en paralelo con la forma actual (o con respaldo en papel), revisar cada corte y anotar problemas.
 - **Listo cuando:** una semana completa sin diferencias de caja inexplicables ni errores bloqueantes.
 
@@ -760,7 +762,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** la activación manual sigue pasando sus pruebas y hay una prueba con un driver falso.
 
 ### 15.7 Celery, Redis y simulador
-- [ ] **Qué se hace:** agregar Celery con Redis como broker (`config/celery.py`, servicios `redis`, `worker` y `beat` en `docker-compose.yml`, `REDIS_URL` en `.env.example`), pasar el cierre por tiempo (9.5) a Celery Beat y crear `SimulatorDriver`: imita a la cajita, con confirmación tras unos segundos o falla al azar (configurable). En las pruebas automáticas Celery corre en el mismo proceso, sin Redis. *(Antes estaba en la Etapa 9.)*
+- [ ] **Qué se hace:** agregar Celery con Redis como broker (`config/celery.py`, servicios `redis`, `worker` y `beat` en `docker-compose.yml`, `REDIS_URL` en `.env.example`), pasar el cierre por tiempo (14.3) a Celery Beat y crear `SimulatorDriver`: imita a la cajita, con confirmación tras unos segundos o falla al azar (configurable). En las pruebas automáticas Celery corre en el mismo proceso, sin Redis. *(Antes estaba en la Etapa 9.)*
 - **Para qué:** las órdenes a la cajita y la espera del `ack` corren en segundo plano, sin trabar la caja; el simulador permite probar ese flujo sin la placa.
 - **Listo cuando:** se ve el paso `requested` → `credit_sent` y, a veces, `failed`.
 
