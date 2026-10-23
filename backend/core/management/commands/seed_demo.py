@@ -1,7 +1,9 @@
 """Load fictitious demo data for development: ``python manage.py seed_demo``.
 
 It only creates what is missing, so it can be run again safely. It refuses to run
-with DEBUG off, so it never touches a production database.
+with DEBUG off, so it never touches a production database. The first time, it also
+creates a week of operation (cash sessions, sales, drop-off orders and cycles), so
+the read-only screens of the admin have something to show.
 """
 
 from django.conf import settings
@@ -10,13 +12,14 @@ from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
+from core.management.demo_history import DemoHistory
 from core.models import Branch
 from core.roles import ADMIN_ROLE, EMPLOYEE_ROLE
 from customers.models import Customer, normalize_phone
 from inventory.models import LoadConsumption, Product, StockMovement
 from inventory.services import record_stock_movement
 from machines.models import Machine
-from sales.models import Mode, Service, ServicePrice
+from sales.models import CashSession, Discount, Mode, Service, ServicePrice
 
 DEMO_PASSWORD = "demo1234"  # noqa: S105 (fictitious development data)
 
@@ -50,6 +53,12 @@ MACHINES = [
 # service name -> {product name: quantity per load}
 CONSUMPTION = {"Lavado por carga": {"Detergente": 180, "Suavizante": 150}}
 
+DISCOUNTS = [
+    # name, kind, value, mode, service name (None = the whole sale)
+    ("10% en autoservicio", "percentage", 10, Mode.SELF_SERVICE, None),
+    ("$20 en lavado por encargo", "fixed_amount", 20, Mode.DROP_OFF, "Lavado por carga"),
+]
+
 # Add or edit demo customers here. Only "name" and "phone" are required; the phone
 # identifies the customer, so a customer is created only if its phone is new.
 CUSTOMERS = [
@@ -72,9 +81,11 @@ class Command(BaseCommand):
             name="Sucursal Demo",
             defaults={"address": "Calle Falsa 123", "phone": "5555555555"},
         )
-        admin = self._create_users(branch)
+        users = self._create_users(branch)
+        admin = users["demo_admin"]
         services = self._create_services(branch)
         products = self._create_products(branch, admin)
+        self._create_discounts(branch, services)
 
         for service_name, quantities in CONSUMPTION.items():
             for product_name, quantity in quantities.items():
@@ -94,6 +105,12 @@ class Command(BaseCommand):
                 phone=phone,
                 defaults={**data, "phone": phone},
             )
+
+        # The history is created once: a second run would add a cash session per day
+        # on top of the existing ones.
+        if not CashSession.objects.filter(branch=branch).exists():
+            days = DemoHistory(branch, admin, users["demo_empleado"], services, products).create()
+            self.stdout.write(f"Created {days} days of cash sessions, sales and cycles.")
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -118,7 +135,7 @@ class Command(BaseCommand):
 
             users[username] = user
 
-        return users["demo_admin"]
+        return users
 
     def _create_services(self, branch):
         services = {}
@@ -149,6 +166,18 @@ class Command(BaseCommand):
             services[name] = service
 
         return services
+
+    def _create_discounts(self, branch, services):
+        for name, kind, value, mode, service_name in DISCOUNTS:
+            scope = Discount.Scope.SERVICE if service_name else Discount.Scope.SALE
+            discount, created = Discount.objects.get_or_create(
+                branch=branch,
+                name=name,
+                defaults={"kind": kind, "value": value, "mode": mode, "scope": scope},
+            )
+
+            if created and service_name:
+                discount.services.add(services[service_name])
 
     def _create_products(self, branch, user):
         products = {}
