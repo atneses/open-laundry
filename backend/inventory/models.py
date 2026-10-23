@@ -95,7 +95,7 @@ class Product(BaseModel):
 
 
 class LoadConsumption(BaseModel):
-    """How much of a product each load of a wash service uses."""
+    """How much of a product each load of a service that uses a machine consumes."""
 
     service = models.ForeignKey(
         "sales.Service",
@@ -132,9 +132,12 @@ class LoadConsumption(BaseModel):
         return f"{self.service}: {self.quantity} {self.product.unit} {self.product}"
 
     def clean(self):
-        # Only washing uses supplies; drying does not.
-        if self.service_id and self.service.kind != "wash":
-            raise ValidationError({"service": _("Only wash services consume supplies.")})
+        # Supplies are taken when a machine cycle starts, so a service without a
+        # machine would never consume them. Today only washing has consumption.
+        if self.service_id and not self.service.uses_machine:
+            raise ValidationError(
+                {"service": _("Only services that use a machine consume supplies.")},
+            )
 
 
 class StockMovement(BaseModel):

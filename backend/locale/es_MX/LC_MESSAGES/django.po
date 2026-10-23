@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 11:32-0600\n"
+"POT-Creation-Date: 2026-10-23 12:01-0600\n"
 "Language: es_MX\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -318,7 +318,7 @@ msgstr ""
 msgid "sale price"
 msgstr "precio de venta"
 
-#: inventory/models.py:63 inventory/models.py:108 inventory/models.py:155
+#: inventory/models.py:63 inventory/models.py:108 inventory/models.py:158
 #: sales/models.py:383
 msgid "product"
 msgstr "producto"
@@ -354,40 +354,40 @@ msgstr "En la unidad del producto, por ejemplo 150 ml."
 msgid "consumption per load"
 msgstr "consumo por carga"
 
-#: inventory/models.py:137
-msgid "Only wash services consume supplies."
-msgstr "Solo los servicios de lavado consumen insumos."
+#: inventory/models.py:139
+msgid "Only services that use a machine consume supplies."
+msgstr "Solo los servicios que usan máquina consumen insumos."
 
-#: inventory/models.py:147
+#: inventory/models.py:150
 msgid "Purchase"
 msgstr "Compra"
 
-#: inventory/models.py:148
+#: inventory/models.py:151
 msgid "Consumption"
 msgstr "Consumo"
 
-#: inventory/models.py:149
+#: inventory/models.py:152
 msgid "Sale"
 msgstr "Venta"
 
-#: inventory/models.py:150
+#: inventory/models.py:153
 msgid "Sale cancellation"
 msgstr "Cancelación de venta"
 
-#: inventory/models.py:151
+#: inventory/models.py:154
 msgid "Adjustment"
 msgstr "Ajuste"
 
-#: inventory/models.py:159 machines/models.py:27 sales/models.py:40
+#: inventory/models.py:162 machines/models.py:27 sales/models.py:40
 #: sales/models.py:485
 msgid "kind"
 msgstr "tipo"
 
-#: inventory/models.py:161 sales/models.py:389
+#: inventory/models.py:164 sales/models.py:389
 msgid "quantity"
 msgstr "cantidad"
 
-#: inventory/models.py:165
+#: inventory/models.py:168
 msgid ""
 "In the product's unit. Purchases are positive; an adjustment is negative to "
 "remove stock."
@@ -395,58 +395,58 @@ msgstr ""
 "En la unidad del producto. Las compras son positivas; un ajuste es negativo "
 "para quitar stock."
 
-#: inventory/models.py:170
+#: inventory/models.py:173
 msgid "unit cost"
 msgstr "costo unitario"
 
-#: inventory/models.py:179 machines/admin.py:59 sales/models.py:328
+#: inventory/models.py:182 machines/admin.py:59 sales/models.py:328
 #: sales/models.py:369 sales/models.py:432 sales/models.py:563
 #: sales/models.py:618
 msgid "sale"
 msgstr "venta"
 
-#: inventory/models.py:186
+#: inventory/models.py:189
 msgid "reason"
 msgstr "motivo"
 
-#: inventory/models.py:189
+#: inventory/models.py:192
 msgid "Required for adjustments: why the stock changed (spill, count, error)."
 msgstr ""
 "Obligatorio en los ajustes: por qué cambió el stock (derrame, conteo, error)."
 
-#: inventory/models.py:193
+#: inventory/models.py:196
 msgid "stock movement"
 msgstr "movimiento de inventario"
 
-#: inventory/models.py:194
+#: inventory/models.py:197
 msgid "stock movements"
 msgstr "movimientos de inventario"
 
-#: inventory/models.py:197
+#: inventory/models.py:200
 msgid "Can record stock entries"
 msgstr "Puede registrar entradas de inventario"
 
-#: inventory/models.py:198
+#: inventory/models.py:201
 msgid "Can adjust stock (losses, corrections)"
 msgstr "Puede ajustar el inventario (mermas, correcciones)"
 
-#: inventory/models.py:223
+#: inventory/models.py:226
 msgid "A purchase must add stock (positive)."
 msgstr "Una compra debe sumar stock (positivo)."
 
-#: inventory/models.py:226
+#: inventory/models.py:229
 msgid "A cancelled sale must add stock back."
 msgstr "Una venta cancelada debe regresar el stock."
 
-#: inventory/models.py:229
+#: inventory/models.py:232
 msgid "This kind of movement removes stock."
 msgstr "Este tipo de movimiento resta stock."
 
-#: inventory/models.py:232
+#: inventory/models.py:235
 msgid "An adjustment cannot be zero."
 msgstr "Un ajuste no puede ser cero."
 
-#: inventory/models.py:235
+#: inventory/models.py:238
 msgid "An adjustment needs a reason."
 msgstr "Un ajuste necesita un motivo."
 
@@ -576,9 +576,49 @@ msgstr "Puede activar máquinas y registrar ciclos"
 msgid "Cycle %(pk)s"
 msgstr "Ciclo %(pk)s"
 
-#: machines/services.py:38
+#: machines/services.py:45
 msgid "A sale with a started machine cycle cannot be cancelled."
 msgstr "No se puede cancelar una venta con un ciclo de máquina ya activado."
+
+#: machines/services.py:55
+msgid "You cannot start machines."
+msgstr "No puedes activar máquinas."
+
+#: machines/services.py:75 sales/services.py:260
+msgid "The sale belongs to another branch."
+msgstr "La venta es de otra sucursal."
+
+#: machines/services.py:81
+msgid "This cycle was already started or cancelled."
+msgstr "Este ciclo ya se activó o se canceló."
+
+#: machines/services.py:84 machines/services.py:122
+msgid "The machine belongs to another branch."
+msgstr "La máquina es de otra sucursal."
+
+#: machines/services.py:87
+msgid "This service needs another kind of machine."
+msgstr "Este servicio necesita otro tipo de máquina."
+
+#: machines/services.py:90
+msgid "This machine is out of service."
+msgstr "Esta máquina está fuera de servicio."
+
+#: machines/services.py:93
+msgid "This machine is already running a cycle."
+msgstr "Esta máquina ya tiene un ciclo en curso."
+
+#: machines/services.py:97
+msgid "Charge the whole self-service sale before starting its machines."
+msgstr "Cobra completa la venta de autoservicio antes de activar sus máquinas."
+
+#: machines/services.py:111
+msgid "You cannot finish machine cycles."
+msgstr "No puedes terminar ciclos de máquina."
+
+#: machines/services.py:119
+msgid "Only a running cycle can be finished."
+msgstr "Solo se puede terminar un ciclo en curso."
 
 #: sales/admin.py:111 sales/admin.py:116
 msgid "Close cash session"
@@ -1049,10 +1089,6 @@ msgstr "Agrega al menos un servicio o producto."
 #: sales/services.py:245
 msgid "Open the cash session first."
 msgstr "Primero abre la caja."
-
-#: sales/services.py:260
-msgid "The sale belongs to another branch."
-msgstr "La venta es de otra sucursal."
 
 #: sales/services.py:265
 msgid "You cannot cancel sales."

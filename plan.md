@@ -498,12 +498,14 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Hecho:** `machines/services.py` con `create_cycles` (lo llama `create_sale`) y `cancel_cycles` (lo llama `cancel_sale`, que bloquea los ciclos de la venta mientras los revisa).
 
 ### 9.3 Activación manual
-- [ ] **Qué se hace:** servicio `start_cycle` (requiere `machines.start_machine`): el empleado elige la máquina y, si es lavado, marca `customer_supplies`. La máquina debe ser de la misma sucursal y del tipo del servicio, no estar fuera de servicio ni tener otro ciclo en curso. El ciclo queda `is_manual` y `running`; el empleado presiona Start en la máquina (modo PUSH). **Regla de autoservicio** (movida desde el 7.3): la venta debe estar pagada completa antes de activar sus máquinas; un encargo se puede activar con saldo. Activar no avanza el encargo: el empleado lo pasa a *en proceso* a mano.
+- [x] **Qué se hace:** servicio `start_cycle` (requiere `machines.start_machine`): el empleado elige la máquina y marca `customer_supplies` si el cliente trajo sus productos (en cualquier ciclo: p. ej. sus hojas aromatizantes en el secado). La máquina debe ser de la misma sucursal y del tipo del servicio, no estar fuera de servicio ni tener otro ciclo en curso. El ciclo queda `is_manual` y `running` (en curso); el empleado presiona Start en la máquina (modo PUSH). **Regla de autoservicio** (movida desde el 7.3): la venta debe estar pagada completa antes de activar sus máquinas; un encargo se puede activar con saldo. Activar no avanza el encargo: el empleado lo pasa a *en proceso* a mano.
 - **Para qué:** es como operan hoy y es el respaldo permanente si falla la cajita.
 - **Listo cuando:** activar una máquina en modo manual deja el ciclo en curso, y no se puede activar con saldo pendiente en autoservicio (prueba).
+- **Agregado:** `finish_cycle` (mismo permiso): el empleado marca terminado un ciclo en curso y libera la máquina, si terminó antes del tiempo esperado o si el servicio no tiene minutos. Un registro de otra sucursal (venta o máquina) da `PermissionDenied`. `start_cycle` bloquea la venta, el ciclo y la máquina, en el mismo orden que la cancelación.
+- **Cambio en el inventario:** `LoadConsumption` ya acepta cualquier servicio que use máquina (antes solo lavado), para poder configurar consumo en el secado si se necesita; los servicios sin máquina siguen rechazados.
 
 ### 9.4 Consumo de insumos
-- [ ] **Qué se hace:** al activar un ciclo de lavado sin `customer_supplies`, crear los movimientos de consumo según `LoadConsumption`, ligados al ciclo (`StockMovement.machine_cycle`). El stock puede quedar negativo para no frenar un lavado pagado; la alerta de stock mínimo avisa.
+- [ ] **Qué se hace:** al activar un ciclo sin `customer_supplies` (hoy solo el lavado tiene consumo; el secado se puede configurar), crear los movimientos de consumo según `LoadConsumption`, ligados al ciclo (`StockMovement.machine_cycle`). El stock puede quedar negativo para no frenar un lavado pagado; la alerta de stock mínimo avisa.
 - **Listo cuando:** un lavado baja 150–200 ml de detergente y de suavizante; con `customer_supplies` no baja nada.
 
 ### 9.5 Cierre por tiempo
@@ -516,8 +518,8 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Riesgo – servicio sin duración:** `expected_minutes` es opcional; un ciclo de un servicio sin minutos nunca se cerrará por tiempo (9.5) y quedará en curso, bloqueando su máquina.
 - **Pendiente – máquinas reales:** dar de alta en el admin las 6 máquinas del local con su modelo y número de serie (`seed_demo` solo crea las de prueba).
 - **Pendiente – ciclos en la ficha de la venta:** el admin de la venta todavía no muestra sus ciclos; por ahora se buscan por folio en *Ciclos de máquina*.
-- **Pendiente – activar y cancelar a la vez:** la activación (9.3) debe bloquear la venta, como la cancelación, para que no se active un ciclo de una venta que se está cancelando.
-- **Pendiente – resto de la etapa:** los ciclos aún no se activan (9.3).
+- **Riesgo – sin probar la concurrencia real:** el orden de bloqueo (venta → ciclo → máquina) evita activar y cancelar a la vez, pero no hay prueba con dos peticiones simultáneas.
+- **Pendiente – resto de la etapa:** al activar aún no se descuentan insumos (9.4) ni se cierran ciclos por tiempo (9.5).
 
 **✅ Etapa 9 terminada cuando:** cada venta genera sus ciclos, se activan en modo manual y el inventario se descuenta.
 
