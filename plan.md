@@ -24,7 +24,7 @@ Las casillas `[ ]` sirven para ir marcando el avance. Las reglas de trabajo (ram
 - [Etapa 6 – Caja (turnos)](#etapa-6--caja-turnos)
 - [Etapa 7 – Ventas, pagos y descuentos](#etapa-7--ventas-pagos-y-descuentos)
 - [Etapa 8 – Encargos](#etapa-8--encargos)
-- [Etapa 9 – Máquinas y ciclos (modo manual y simulador)](#etapa-9--máquinas-y-ciclos-modo-manual-y-simulador)
+- [Etapa 9 – Máquinas y ciclos (modo manual)](#etapa-9--máquinas-y-ciclos-modo-manual)
 - [Etapa 10 – Tickets](#etapa-10--tickets)
 - [Etapa 11 – Reportes](#etapa-11--reportes)
 - [Etapa 12 – API de la caja](#etapa-12--api-de-la-caja)
@@ -49,7 +49,7 @@ flowchart TD
     E5 --> E6["Etapa 6<br/>Caja (turnos)"]
     E6 --> E7["Etapa 7<br/>Ventas, pagos y descuentos"]
     E7 --> E8["Etapa 8<br/>Encargos"]
-    E7 --> E9["Etapa 9<br/>Máquinas y ciclos<br/>(manual + simulador)"]
+    E7 --> E9["Etapa 9<br/>Máquinas y ciclos<br/>(modo manual)"]
     E8 --> E10["Etapa 10<br/>Tickets"]
     E9 --> E10
     E10 --> E11["Etapa 11<br/>Reportes"]
@@ -393,7 +393,6 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Riesgo – registros sin usuario:** fuera de una petición (consola, `seed_demo`, migraciones y, más adelante, Celery o MQTT) `created_by` queda vacío salvo que se pase a mano. Por eso `StockMovement.created_by` ahora es opcional (antes era obligatorio).
 - **Riesgo – escrituras masivas:** `bulk_create` y `QuerySet.update` no pasan por `save`; deben llenar estos campos a mano (como `log_permission_changes`).
 - **Riesgo – API con JWT sin probar:** el middleware lee el usuario cuando se guarda, después de que DRF lo autentica, pero no hay endpoints todavía; se prueba en la Etapa 12.
-- **Pendiente – `MachineCycle.user_id`:** el MVP lo define; al crearlo (Etapa 9), decidir si se usa `created_by` en su lugar, como en `Sale` y `Payment`.
 
 **✅ Etapa 6 terminada cuando:** las reglas de abrir y cerrar caja y el cálculo del corte pasan sus pruebas.
 
@@ -414,7 +413,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** dos pagos parciales dejan la venta en `paid` con saldo 0, y el corte del turno suma bien los pagos en efectivo y con tarjeta (pruebas).
 
 ### 7.3 Regla de autoservicio
-- **Movido al 9.5:** la regla se valida al activar una máquina, que se construye en la Etapa 9.
+- **Movido al 9.3:** la regla se valida al activar una máquina, que se construye en la Etapa 9.
 
 ### 7.4 Descuentos
 - [x] **Qué se hace:** crear `Discount` (porcentaje o monto fijo, vigencia, modalidad, servicios) y `AppliedDiscount`. Un servicio lista los descuentos vigentes que aplican a una venta y otro los aplica (requiere `sales.apply_discount`). Crearlos y editarlos en el admin requiere `sales.manage_discounts`.
@@ -434,7 +433,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Descuentos:** tienen `branch`, y su nombre admite `%` (no usa `validate_name`). Si los descuentos dejan el total en $0, la venta pasa a `paid`.
 - **Admin:** ventas en *Operación*, de solo lectura, con sus líneas, descuentos aplicados y pagos. Descuentos en *Catálogo*, con `sales.manage_discounts`, sin borrar.
 - **Migraciones de roles:** `sales/0007` (`charge`), `0009` (pagos, Admin), `0011` (descuentos; Empleado `apply_discount`) y `0013` (`cancel_sale`).
-- **7.3** se movió al 9.5.
+- **7.3** se movió al 9.3.
 
 **Riesgos y pendientes:**
 - **Pendiente – precio por programa (función futura):** `active_price` ya busca por programa de lavado con respaldo al precio general, pero el cobro siempre usa el general porque no hay precios por programa.
@@ -474,7 +473,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - Encargos en el admin (área *Operación*), de solo lectura, y dentro de la ficha de la venta. Migración `sales/0015`: Admin todos los permisos (incluido `deliver_with_balance`).
 
 **Riesgos y pendientes:**
-- **Pendiente – "en proceso" automático:** hoy se cambia a mano; en la Etapa 9 activar los ciclos del encargo lo pasará a en proceso.
+- **Pendiente – "en proceso" automático:** se cambia a mano; se decidió que activar los ciclos (Etapa 9) no lo avanza. Se puede revisar después del arranque.
 - **Pendiente – bitácora de entregas con saldo:** quedan en el encargo (`delivered_by`, saldo de la venta), pero no hay bitácora aparte (mvp §6).
 - **Riesgo – sin regresar de estado:** si hay que relavar algo ya marcado como listo, no se puede regresar a en proceso.
 - **Riesgo – fecha promesa vencida:** no hay aviso de encargos con la fecha promesa ya pasada; se verá en el dashboard (Etapa 11).
@@ -483,50 +482,41 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ---
 
-## Etapa 9 – Máquinas y ciclos (modo manual y simulador)
+## Etapa 9 – Máquinas y ciclos (modo manual)
 
 **Objetivo:** registrar cada uso de máquina ligado a la venta, sin depender todavía de la cajita. Se crea la app `machines`.
 
-### 9.1 Celery y Redis
-- [ ] **Qué se hace:** agregar Celery con Redis como broker (`config/celery.py`, servicios `redis`, `worker` y `beat` en `docker-compose.yml`, `REDIS_URL` en `.env.example`) y una tarea de prueba.
-- **Para qué:** las órdenes a las máquinas, el simulador y el cierre periódico de ciclos corren en segundo plano, sin trabar la caja. Es la primera etapa que lo necesita.
-- **Listo cuando:** la tarea de prueba se ejecuta y se ve en los logs del `worker`; en las pruebas automáticas corre en el mismo proceso, sin Redis.
-
-### 9.2 Modelos
-- [ ] **Qué se hace:** crear `MachineController`, `Machine` (con canal de relé y pulsos, aunque aún no se usen) y `MachineCycle` con sus estados (`pending`, `requested`, `credit_sent`, `running`, `finished`, `failed`, `cancelled`) y la marca `is_manual`.
+### 9.1 Modelos
+- [x] **Qué se hace:** crear `Machine` (sucursal, tipo, etiqueta, modelo, número de serie y estado) y `MachineCycle` con sus estados (`pending`, `requested`, `credit_sent`, `running`, `finished`, `failed`, `cancelled`), `customer_supplies`, `started_by` y la marca `is_manual`. Agregar `Service.expected_minutes` (duración esperada, para el 9.5). `MachineController`, `Machine.driver` y los campos de relé, pulsos y medidor se agregan en la Etapa 15.
 - **Listo cuando:** las 4 lavadoras y 2 secadoras están dadas de alta en el admin.
+- **Hecho:** app `machines` con `Machine` (`available` / `out_of_service`; "en uso" se calcula por el ciclo `running`) y `MachineCycle` ligado solo a `sale_item` (la venta sale de ahí); `program` y `driver_response` se agregan cuando se usen. `Service.expected_minutes` es opcional. Permisos `machines.manage_machines` (Admin) y `machines.start_machine` (Admin y Empleado) con `machines/0002_grant_role_permissions`. Admin: máquinas con `manage_machines` y sin borrar (se marcan fuera de servicio); ciclos de solo lectura. Menú: área *Máquinas*. `seed_demo` crea Lavadora 1–4 y Secadora 1–2 y pone 36 / 40 minutos a lavado y secado.
 
-### 9.3 Ciclos generados por la venta
-- [ ] **Qué se hace:** al cobrar, cada carga de un servicio que usa máquina crea un `MachineCycle` (3 cargas → 3 ciclos). En encargo quedan `pending`.
+### 9.2 Ciclos generados por la venta
+- [ ] **Qué se hace:** al cobrar, cada carga de un servicio que usa máquina crea un `MachineCycle` `pending`, sin máquina (3 cargas → 3 ciclos), en autoservicio y en encargo. Al cancelar la venta, sus ciclos `pending` pasan a `cancelled`; no se puede cancelar si alguno ya se activó.
 - **Para qué:** poder cuadrar ventas contra usos reales.
 - **Listo cuando:** una venta de 2 lavados y 1 secado crea 3 ciclos (prueba).
 
-### 9.4 Interfaz MachineDriver
-- [ ] **Qué se hace:** definir la interfaz `MachineDriver` (`get_status`, `start_cycle`, `stop_cycle`) y un registro que elige el driver según `Machine.driver`.
-- **Para qué:** que ventas y ciclos no sepan qué tecnología controla la máquina; después solo se agrega otro driver (p. ej. el de la cajita).
-- **Listo cuando:** existe la interfaz y una prueba que usa un driver falso.
-
-### 9.5 Driver manual
-- [ ] **Qué se hace:** `ManualDriver`: al activar (el servicio requiere `machines.start_machine`), marca el ciclo como `is_manual` y `running`; el empleado presiona Start en la máquina (modo PUSH). **Regla de autoservicio** (movida desde el 7.3): una venta de autoservicio debe estar pagada completa antes de activar sus máquinas.
+### 9.3 Activación manual
+- [ ] **Qué se hace:** servicio `start_cycle` (requiere `machines.start_machine`): el empleado elige la máquina y, si es lavado, marca `customer_supplies`. La máquina debe ser de la misma sucursal y del tipo del servicio, no estar fuera de servicio ni tener otro ciclo en curso. El ciclo queda `is_manual` y `running`; el empleado presiona Start en la máquina (modo PUSH). **Regla de autoservicio** (movida desde el 7.3): la venta debe estar pagada completa antes de activar sus máquinas; un encargo se puede activar con saldo. Activar no avanza el encargo: el empleado lo pasa a *en proceso* a mano.
 - **Para qué:** es como operan hoy y es el respaldo permanente si falla la cajita.
 - **Listo cuando:** activar una máquina en modo manual deja el ciclo en curso, y no se puede activar con saldo pendiente en autoservicio (prueba).
 
-### 9.6 Simulador
-- [ ] **Qué se hace:** `SimulatorDriver`: imita a la cajita, con confirmación tras unos segundos o falla al azar (configurable). Corre en una tarea de Celery.
-- **Para qué:** construir y probar las pantallas de máquinas sin tener la cajita conectada.
-- **Listo cuando:** se ve el paso `requested` → `credit_sent` y, a veces, `failed`.
-
-### 9.7 Consumo de insumos
-- [ ] **Qué se hace:** al iniciar un ciclo de lavado sin `customer_supplies`, crear los movimientos de consumo según `LoadConsumption`.
+### 9.4 Consumo de insumos
+- [ ] **Qué se hace:** al activar un ciclo de lavado sin `customer_supplies`, crear los movimientos de consumo según `LoadConsumption`, ligados al ciclo (`StockMovement.machine_cycle`). El stock puede quedar negativo para no frenar un lavado pagado; la alerta de stock mínimo avisa.
 - **Listo cuando:** un lavado baja 150–200 ml de detergente y de suavizante; con `customer_supplies` no baja nada.
-- **Por decidir antes de empezar:** ¿el consumo se bloquea si el stock llega a 0 (como la venta de productos, 7.1) o se permite negativo para no frenar un lavado pagado (decisión de la Etapa 4)?
 
-### 9.8 Cierre por tiempo
-- [ ] **Qué se hace:** tarea periódica (Celery Beat) que pasa a `finished` los ciclos que superen la duración esperada del programa.
+### 9.5 Cierre por tiempo
+- [ ] **Qué se hace:** comando de Django que pasa a `finished` los ciclos `running` que superen `Service.expected_minutes`. Se programa para correr solo en la Etapa 14.
 - **Para qué:** que no queden ciclos "en curso" para siempre cuando no hay medidor.
 - **Listo cuando:** un ciclo viejo se cierra solo.
+- **Dato del negocio:** hoy un lavado dura 36 min y un secado 40 min (valores iniciales de `expected_minutes`, editables en el admin).
 
-**✅ Etapa 9 terminada cuando:** cada venta genera sus ciclos, se activan en modo manual o simulado y el inventario se descuenta.
+**Riesgos y pendientes:**
+- **Riesgo – servicio sin duración:** `expected_minutes` es opcional; un ciclo de un servicio sin minutos nunca se cerrará por tiempo (9.5) y quedará en curso, bloqueando su máquina.
+- **Pendiente – máquinas reales:** dar de alta en el admin las 6 máquinas del local con su modelo y número de serie (`seed_demo` solo crea las de prueba).
+- **Pendiente – resto de la etapa:** los ciclos aún no se crean al cobrar (9.2) ni se activan (9.3).
+
+**✅ Etapa 9 terminada cuando:** cada venta genera sus ciclos, se activan en modo manual y el inventario se descuenta.
 
 ---
 
@@ -689,7 +679,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** se entra por SSH y el dominio apunta a la VM.
 
 ### 14.2 Producción con Docker
-- [ ] **Qué se hace:** settings de producción (`config/settings/prod.py`: HTTPS, cookies seguras, documentación de la API solo para admins), servidor `gunicorn` (`requirements/prod.txt`), cómo se sirven los archivos estáticos (WhiteNoise o Nginx, por decidir), y `docker-compose.prod.yml` con Caddy (HTTPS automático), API, worker, beat, PostgreSQL, Redis y el frontend compilado. Variables en `.env` del servidor. Pasar `manage.py check --deploy`.
+- [ ] **Qué se hace:** settings de producción (`config/settings/prod.py`: HTTPS, cookies seguras, documentación de la API solo para admins), servidor `gunicorn` (`requirements/prod.txt`), cómo se sirven los archivos estáticos (WhiteNoise o Nginx, por decidir), y `docker-compose.prod.yml` con Caddy (HTTPS automático), API, PostgreSQL y el frontend compilado, y programar el comando del cierre por tiempo (9.5). Variables en `.env` del servidor. Pasar `manage.py check --deploy`.
 - **Listo cuando:** `https://<dominio>/` abre la caja y `/admin/` el panel, con candado HTTPS.
 
 ### 14.3 Respaldos
@@ -759,35 +749,45 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - [ ] **Qué se hace:** cargar el programa en la placa (aún desconectada de las máquinas) y, desde `mosquitto_pub`, mandar órdenes a cada relé. Probar: pulsos correctos, orden repetida (no debe repetir pulsos), desconexión de WiFi y reconexión.
 - **Listo cuando:** cada relé hace exactamente los clics pedidos y el `ack` llega; al desconectar la placa aparece "fuera de línea".
 
-### 15.6 Escucha MQTT en el backend
+### 15.6 Interfaz MachineDriver
+- [ ] **Qué se hace:** agregar `Machine.driver` (`manual` por defecto), definir la interfaz `MachineDriver` (`get_status`, `start_cycle`, `stop_cycle`) con un registro que elige el driver según `Machine.driver`, y pasar la activación manual (9.3) a `ManualDriver`. *(Antes estaba en la Etapa 9.)*
+- **Para qué:** que ventas y ciclos no sepan qué tecnología controla la máquina; el simulador y la cajita son solo otros drivers.
+- **Listo cuando:** la activación manual sigue pasando sus pruebas y hay una prueba con un driver falso.
+
+### 15.7 Celery, Redis y simulador
+- [ ] **Qué se hace:** agregar Celery con Redis como broker (`config/celery.py`, servicios `redis`, `worker` y `beat` en `docker-compose.yml`, `REDIS_URL` en `.env.example`), pasar el cierre por tiempo (9.5) a Celery Beat y crear `SimulatorDriver`: imita a la cajita, con confirmación tras unos segundos o falla al azar (configurable). En las pruebas automáticas Celery corre en el mismo proceso, sin Redis. *(Antes estaba en la Etapa 9.)*
+- **Para qué:** las órdenes a la cajita y la espera del `ack` corren en segundo plano, sin trabar la caja; el simulador permite probar ese flujo sin la placa.
+- **Listo cuando:** se ve el paso `requested` → `credit_sent` y, a veces, `failed`.
+
+### 15.8 Escucha MQTT en el backend
 - [ ] **Qué se hace:** servicio `mqtt-listener` (comando de Django siempre encendido) que recibe `ack` y `status` y actualiza `MachineCycle` (`credit_sent`), `MachineController` (`is_online`, `last_seen_at`) y guarda la respuesta en `driver_response`.
 - **Listo cuando:** un `ack` enviado a mano cambia el ciclo a `credit_sent`.
 
-### 15.7 RelayBoardDriver
+### 15.9 RelayBoardDriver
 - [ ] **Qué se hace:** implementar `RelayBoardDriver.start_cycle`: publica la orden con el `id` del ciclo y los pulsos de la máquina; si en 10 s no llega el `ack`, el ciclo pasa a `failed` y la caja muestra "usa modo manual".
 - **Listo cuando:** las pruebas cubren éxito, sin respuesta y orden repetida.
 
-### 15.8 Pantallas
+### 15.10 Pantallas
 - [ ] **Qué se hace:** en la caja, indicador "Cajita en línea / fuera de línea". En el admin, alta del `MachineController` (genera su usuario MQTT), configuración de relé y pulsos por máquina y acción **"Enviar pulso de prueba"** (`machines.manage_machines`).
 - **Listo cuando:** desde el admin se envía un pulso de prueba y se escucha el relé.
 
-### 15.9 Configurar una lavadora en modo de pago
+### 15.11 Configurar una lavadora en modo de pago
 - [ ] **Qué se hace:** en una lavadora: `Product Type = PAY`, `Vend Type = Coin`, `Coin Drop Type` igual al ancho de pulso, precio y `Coin 1 Value` según los valores de Aitare (paso 0.1). Anotar la configuración.
 - **Listo cuando:** la máquina muestra el precio en lugar de *PUSH*.
 
-### 15.10 Prueba real con una lavadora
+### 15.12 Prueba real con una lavadora
 - [ ] **Qué se hace:** conectar el cable de esa lavadora a la cajita, cambiar su `Machine.driver` a `relay_board` y hacer ventas reales de prueba desde la caja.
 - **Listo cuando:** en 10 ventas seguidas la lavadora recibe el crédito, pita y arranca con Start, sin pulsos de más ni de menos.
 
-### 15.11 Extender a las 6 máquinas
-- [ ] **Qué se hace:** repetir 15.9 y 15.10 con las otras 3 lavadoras y las 2 secadoras (según su manual).
+### 15.13 Extender a las 6 máquinas
+- [ ] **Qué se hace:** repetir 15.11 y 15.12 con las otras 3 lavadoras y las 2 secadoras (según su manual).
 - **Listo cuando:** las 6 máquinas funcionan desde la caja.
 
-### 15.12 Procedimiento de respaldo
+### 15.14 Procedimiento de respaldo
 - [ ] **Qué se hace:** documentar en una hoja impresa cómo pasar una máquina a modo PUSH y registrar la venta en modo manual si falla la cajita o internet.
 - **Listo cuando:** un empleado lo practicó una vez.
 
-### 15.13 Observación
+### 15.15 Observación
 - [ ] **Qué se hace:** 2 semanas revisando la bitácora de órdenes, ciclos fallidos y desconexiones de la cajita.
 - **Listo cuando:** la tasa de fallos es aceptable. Si la señal del ESP8266 da problemas, cambiar la placa por una **ESP32 de 8 relés con antena externa** y repetir 15.3–15.5.
 

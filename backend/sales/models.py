@@ -50,6 +50,13 @@ class Service(BaseModel):
         default=False,
         help_text=_("Each unit sold starts a machine cycle."),
     )
+    expected_minutes = models.PositiveSmallIntegerField(
+        _("expected minutes"),
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1)],
+        help_text=_("How long a cycle usually lasts; after that it is closed as finished."),
+    )
     is_active = models.BooleanField(_("active"), default=True)
 
     class Meta:

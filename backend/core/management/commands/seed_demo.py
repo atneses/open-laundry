@@ -15,6 +15,7 @@ from core.roles import ADMIN_ROLE, EMPLOYEE_ROLE
 from customers.models import Customer, normalize_phone
 from inventory.models import LoadConsumption, Product, StockMovement
 from inventory.services import record_stock_movement
+from machines.models import Machine
 from sales.models import Mode, Service, ServicePrice
 
 DEMO_PASSWORD = "demo1234"  # noqa: S105 (fictitious development data)
@@ -26,10 +27,10 @@ USERS = [
 ]
 
 SERVICES = [
-    # Each service: name, kind, unit, machine kind and its price per mode.
-    ("Lavado por carga", "wash", "load", "washer", {Mode.SELF_SERVICE: 60, Mode.DROP_OFF: 75}),
-    ("Secado por carga", "dry", "load", "dryer", {Mode.SELF_SERVICE: 55, Mode.DROP_OFF: 70}),
-    ("Lavado de tenis", "other", "pair", "none", {Mode.DROP_OFF: 90}),
+    # Each service: name, kind, unit, machine kind, expected minutes and its price per mode.
+    ("Lavado por carga", "wash", "load", "washer", 36, {Mode.SELF_SERVICE: 60, Mode.DROP_OFF: 75}),
+    ("Secado por carga", "dry", "load", "dryer", 40, {Mode.SELF_SERVICE: 55, Mode.DROP_OFF: 70}),
+    ("Lavado de tenis", "other", "pair", "none", None, {Mode.DROP_OFF: 90}),
 ]
 
 PRODUCTS = [
@@ -38,6 +39,12 @@ PRODUCTS = [
     ("Suavizante", "ml", "0.04", 2000, None, 10000),
     ("Bolsa", "unit", "1.50", 50, None, 200),
     ("Bolsa Grande", "unit", "1.50", 50, None, 200),
+]
+
+# label, kind
+MACHINES = [
+    *((f"Lavadora {number}", "washer") for number in range(1, 5)),
+    *((f"Secadora {number}", "dryer") for number in range(1, 3)),
 ]
 
 # service name -> {product name: quantity per load}
@@ -53,7 +60,7 @@ CUSTOMERS = [
 
 
 class Command(BaseCommand):
-    help = "Load fictitious demo data (branch, users, customers, catalog and stock)."
+    help = "Load fictitious demo data (branch, users, customers, catalog, stock and machines)."
 
     @transaction.atomic
     def handle(self, *args, **options):
@@ -76,6 +83,9 @@ class Command(BaseCommand):
                     product=products[product_name],
                     defaults={"quantity": quantity},
                 )
+
+        for label, kind in MACHINES:
+            Machine.objects.get_or_create(branch=branch, label=label, defaults={"kind": kind})
 
         for data in CUSTOMERS:
             phone = normalize_phone(data["phone"])
@@ -113,7 +123,7 @@ class Command(BaseCommand):
     def _create_services(self, branch):
         services = {}
 
-        for name, kind, unit, machine_kind, prices in SERVICES:
+        for name, kind, unit, machine_kind, minutes, prices in SERVICES:
             service, _ = Service.objects.get_or_create(
                 name=name,
                 defaults={
@@ -121,6 +131,7 @@ class Command(BaseCommand):
                     "unit": unit,
                     "machine_kind": machine_kind,
                     "uses_machine": machine_kind != "none",
+                    "expected_minutes": minutes,
                 },
             )
 

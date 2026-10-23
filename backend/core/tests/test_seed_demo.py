@@ -3,10 +3,11 @@
 import pytest
 from django.core.management import CommandError, call_command
 
-from core.management.commands.seed_demo import CUSTOMERS, PRODUCTS
+from core.management.commands.seed_demo import CUSTOMERS, MACHINES, PRODUCTS
 from customers.models import Customer
 from inventory.models import Product, StockMovement
-from sales.models import ServicePrice
+from machines.models import Machine
+from sales.models import Service, ServicePrice
 
 pytestmark = pytest.mark.django_db
 
@@ -23,6 +24,18 @@ def test_seed_demo_can_run_twice_without_duplicates(settings):
     # One initial purchase per product.
     assert StockMovement.objects.count() == len(PRODUCTS)
     assert Customer.objects.count() == len(CUSTOMERS)
+    assert Machine.objects.count() == len(MACHINES)
+
+
+def test_seed_demo_sets_the_expected_minutes_of_wash_and_dry(settings):
+    settings.DEBUG = True
+
+    call_command("seed_demo")
+
+    minutes = dict(
+        Service.objects.filter(uses_machine=True).values_list("kind", "expected_minutes"),
+    )
+    assert minutes == {"wash": 36, "dry": 40}
 
 
 def test_seed_demo_refuses_to_run_without_debug(settings):

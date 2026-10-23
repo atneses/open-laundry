@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "customers",
     "sales",
     "inventory",
+    "machines",
 ]
 
 MIDDLEWARE = [
@@ -247,6 +248,28 @@ UNFOLD = {
                         "link": reverse_lazy("admin:inventory_loadconsumption_changelist"),
                         "permission": lambda request: request.user.has_perm(
                             "sales.manage_catalog",
+                        ),
+                    },
+                ],
+            },
+            {
+                "title": _("Machines"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Machines"),
+                        "icon": "precision_manufacturing",
+                        "link": reverse_lazy("admin:machines_machine_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "machines.manage_machines",
+                        ),
+                    },
+                    {
+                        "title": _("Machine cycles"),
+                        "icon": "autorenew",
+                        "link": reverse_lazy("admin:machines_machinecycle_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "machines.view_machinecycle",
                         ),
                     },
                 ],
