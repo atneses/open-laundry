@@ -113,7 +113,12 @@ def start_cycle(
 def finish_cycle(user, cycle: MachineCycle) -> MachineCycle:
     """Mark a running cycle as finished by hand, which frees its machine."""
 
-    cycle = MachineCycle.objects.select_for_update().select_related("machine").get(pk=cycle.pk)
+    # Lock only the cycle: Postgres cannot lock the optional machine of an outer join.
+    cycle = (
+        MachineCycle.objects.select_for_update(of=("self",))
+        .select_related("machine")
+        .get(pk=cycle.pk)
+    )
 
     if cycle.status != RUNNING:
         raise ValidationError(_("Only a running cycle can be finished."))
