@@ -114,17 +114,28 @@ def test_unit_is_read_only_in_the_admin_once_there_are_movements(
     assert "unit" not in response.context["adminform"].form.fields
 
 
-def test_only_wash_services_consume_supplies(detergent):
+def test_a_service_without_machine_does_not_consume_supplies(detergent):
+    sneakers = Service.objects.create(name="Sneaker wash", kind="other", unit="pair")
+    consumption = LoadConsumption(service=sneakers, product=detergent, quantity=150)
+
+    with pytest.raises(ValidationError) as error:
+        consumption.full_clean()
+
+    assert "service" in error.value.message_dict
+
+
+def test_a_dry_service_can_consume_supplies(detergent):
     dry = Service.objects.create(
         name="Dry per load",
         kind="dry",
         machine_kind="dryer",
         uses_machine=True,
     )
-    consumption = LoadConsumption(service=dry, product=detergent, quantity=150)
+    consumption = LoadConsumption(service=dry, product=detergent, quantity=1)
 
-    with pytest.raises(ValidationError):
-        consumption.full_clean()
+    consumption.full_clean()
+
+    assert consumption.service == dry
 
 
 def test_product_for_sale_needs_a_price(branch):

@@ -253,6 +253,7 @@ erDiagram
         string unit "load | piece | pair"
         string machine_kind "washer | dryer | none"
         bool uses_machine
+        int expected_minutes "duración esperada, para el cierre por tiempo"
         bool is_active
     }
     SERVICE_PRICE {
@@ -405,24 +406,21 @@ erDiagram
         int pulse_gap_ms
         string meter_id "opcional"
         string external_id
-        string status "available | in_use | out_of_service | unknown"
+        string status "available | out_of_service (in_use y unknown en la Fase 2)"
         datetime last_synced_at
     }
     MACHINE_CYCLE {
         int id PK
         int machine_id FK "opcional hasta asignarse"
-        int sale_id FK
-        int sale_item_id FK
-        int user_id FK
-        int customer_id FK "opcional"
-        string program "opcional"
+        int sale_item_id FK "la venta se obtiene de aquí"
+        int started_by FK "quien la activó (opcional)"
+        string program "opcional (precios por programa)"
         bool customer_supplies "default false"
-        datetime requested_at
         datetime started_at "opcional"
         datetime finished_at "opcional"
         string status "pending | requested | credit_sent | running | finished | failed | cancelled"
         bool is_manual "true si se arrancó en modo PUSH"
-        json driver_response
+        json driver_response "Fase 2"
     }
 ```
 
@@ -430,9 +428,10 @@ erDiagram
 
 **Ventas y ciclos**
 - **Cada carga vendida** de un servicio con `uses_machine = true` genera un `MachineCycle` (3 cargas → 3 ciclos). Así se **cuadran las ventas contra los usos reales** y se detectan ciclos no cobrados.
-- **Autoservicio:** se cobra completo, el empleado activa la máquina y el ciclo se inicia de inmediato.
-- **Encargo:** el `DropOffOrder` se crea al cobrar, con fecha promesa obligatoria. Los ciclos quedan *pendientes de asignar* y el empleado los activa al procesar la ropa. El encargo avanza solo hacia adelante y sin saltos (recibido → en proceso → listo → entregado); solo se entrega uno listo, y con saldo solo lo entrega quien tenga `sales.deliver_with_balance`. Se puede pagar en varios `Payment`. Si se cancela la venta, el encargo ya no cambia; uno entregado no se puede cancelar.
-- **Estados del ciclo:** `requested` → `credit_sent` (la cajita confirmó el crédito; falta presionar Start) → `running` (por el medidor de consumo, el empleado o por tiempo) → `finished`. Si la cajita no confirma pasa a `failed`. `is_manual = true` cuando se arrancó en modo PUSH.
+- **Ciclos al cobrar:** se crean `pending` y sin máquina, en ambas modalidades. El empleado activa cada uno eligiendo la máquina: de la misma sucursal y del tipo del servicio, que no esté fuera de servicio ni con otro ciclo en curso; marca si el cliente trajo sus productos (`customer_supplies`, en cualquier ciclo). El empleado puede marcar terminado un ciclo en curso para liberar la máquina.
+- **Autoservicio:** se cobra completo y después el empleado activa las máquinas; no se activan con saldo pendiente.
+- **Encargo:** el `DropOffOrder` se crea al cobrar, con fecha promesa obligatoria. Los ciclos quedan *pendientes de asignar* y el empleado los activa al procesar la ropa, aunque haya saldo; activarlos no cambia el estado del encargo. El encargo avanza solo hacia adelante y sin saltos (recibido → en proceso → listo → entregado); solo se entrega uno listo, y con saldo solo lo entrega quien tenga `sales.deliver_with_balance`. Se puede pagar en varios `Payment`. Si se cancela la venta, el encargo ya no cambia; uno entregado no se puede cancelar.
+- **Estados del ciclo:** `requested` → `credit_sent` (la cajita confirmó el crédito; falta presionar Start) → `running` (por el medidor de consumo, el empleado o por tiempo) → `finished`. Si la cajita no confirma pasa a `failed`. `is_manual = true` cuando se arrancó en modo PUSH (en el modo manual el ciclo pasa directo a `running`). Sin medidor, pasa a `finished` al superar `Service.expected_minutes`. Al cancelar la venta, sus ciclos `pending` pasan a `cancelled`; no se cancela si alguno ya se activó.
 - **SaleItem:** un servicio **o** un producto. `unit_price` se copia de `ServicePrice` según la modalidad (o de `Product.sale_price`) y se conserva aunque el precio cambie. Vender un producto lo descuenta del stock en el mismo cobro (`StockMovement` de venta).
 - **Folio:** cada sucursal define su prefijo (`Branch.sale_prefix`) y el consecutivo no tiene huecos (`A-000123`).
 
@@ -441,8 +440,8 @@ erDiagram
 - **Discount:** los crea quien tenga `sales.manage_discounts`. El empleado elige de la lista los vigentes para esa modalidad y servicio (p. ej. "10% martes en autoservicio"). `AppliedDiscount` guarda el monto y quién lo aplicó. Se aplican **antes del primer pago** y se pueden sumar varios descuentos distintos (cada uno una vez), sin que el total baje de $0. El porcentaje se calcula sobre el subtotal (o sobre el renglón, si es por servicio); un monto fijo por servicio se descuenta **una vez por renglón**, no por carga.
 
 **Inventario**
-- **LoadConsumption:** solo para lavado (el secado no consume). Valor inicial 150–200 ml de detergente y 150–200 ml de suavizante, editable desde el admin.
-- Al iniciar un ciclo con `customer_supplies = false` se genera un `StockMovement(kind=consumption)`. Así se ve el costo de la promoción y salen alertas de stock mínimo. Comparar cada mes el consumo teórico contra las compras ayuda a afinar la medida y detectar mermas.
+- **LoadConsumption:** para servicios que usan máquina. Hoy solo el lavado consume (el secado no, pero se puede configurar si un día usan hojas aromatizantes propias). Valor inicial 150–200 ml de detergente y 150–200 ml de suavizante, editable desde el admin.
+- Al iniciar un ciclo con `customer_supplies = false` se genera un `StockMovement(kind=consumption)` ligado al ciclo. El consumo no se bloquea por falta de stock (puede quedar negativo) para no frenar un lavado pagado. Así se ve el costo de la promoción y salen alertas de stock mínimo. Comparar cada mes el consumo teórico contra las compras ayuda a afinar la medida y detectar mermas.
 - **StockMovement:** `quantity` lleva signo (positivo suma, negativo resta): las compras y las ventas canceladas (`sale_cancellation`) suman, el consumo y las ventas restan, y los ajustes pueden ir en cualquier sentido. El stock de un producto solo cambia con movimientos; los movimientos no se editan ni se borran.
 
 **Caja y pagos**
@@ -454,7 +453,7 @@ erDiagram
 
 **Usuarios y máquinas**
 - **User:** una cuenta por persona; al irse se desactiva (no se borra). `role` = `Group` de Django; `extra_permissions` = `user_permissions`.
-- **MachineController / Machine:** una cajita controla las 6 máquinas, un relé por máquina (`relay_channel`). Los pulsos de cada máquina deben coincidir con su configuración de pago (ver §5).
+- **MachineController / Machine:** una cajita controla las 6 máquinas, un relé por máquina (`relay_channel`). Los pulsos de cada máquina deben coincidir con su configuración de pago (ver §5). `MachineController`, `Machine.driver` (con la interfaz `MachineDriver`) y los campos de relé, pulsos y medidor se agregan en la Fase 2. En el MVP una máquina está disponible o fuera de servicio; "en uso" se calcula por tener un ciclo `running`, no se guarda.
 
 ---
 
@@ -621,7 +620,7 @@ sequenceDiagram
 
 - **Caja:** "Activar Lavadora 3" → "Crédito enviado: presiona Start", con indicador de cajita en línea.
 - **Admin:** alta de la cajita, relé y pulsos por máquina, **pulso de prueba** y bitácora de órdenes.
-- **Sin ciclos colgados:** una tarea de Celery Beat cierra por tiempo los ciclos sin medidor.
+- **Sin ciclos colgados:** una tarea programada cierra por tiempo los ciclos sin medidor (en el MVP, un comando de Django; con la cajita, Celery Beat).
 - **Sin internet o con la cajita fallando:** la máquina se pasa a **OPL (PUSH)** y la venta se registra a mano (`MachineCycle.is_manual`), sin perderla.
 
 ### Configuración de las máquinas
@@ -650,7 +649,7 @@ Aitare ya tenía esta configuración: hay que copiar sus valores de ControlEquip
 | **D. Registro manual** (OPL / PUSH)                                   | Respaldo      | Sin riesgo técnico; solo bitácora.                                                                                                                            |
 | LG ThinQ / `pythinqconnect` / Home Assistant                          | Descartada    | Son para aparatos de casa; estos equipos usan Laundry Lounge.                                                                                                 |
 
-**Recomendación:** construir el MVP con **D + simulador**, conectar **A** en cuanto se pruebe con una lavadora y sumar **C** para confirmar arranque y fin. **B** queda según lo que responda LG.
+**Recomendación:** construir el MVP con **D** (el simulador llega con la cajita), conectar **A** en cuanto se pruebe con una lavadora y sumar **C** para confirmar arranque y fin. **B** queda según lo que responda LG.
 
 Sobre LG: la [página de LG México](https://www.lg.com/mx/business/lavanderia-comercial/smart-laundry-lounge/) ofrece Smart Laundry Lounge con la app **LG Laundry Crew** y una API (más de 40 endpoints: Dispositivo, Estadísticas, Tienda, Registro, Callback). El acceso pasa por acuerdos (confidencialidad, licencia), una clave de pruebas con app instaladora y una clave de producción, desde `smartsolution.developer.lge.com`. Ese portal público solo documenta la ThinQ Business API, para aparatos de casa.
 
@@ -673,8 +672,8 @@ Sobre LG: la [página de LG México](https://www.lg.com/mx/business/lavanderia-c
 El detalle por etapas y pasos está en [`plan.md`](plan.md). Resumen de las fases:
 
 - **Fase 0 – Preparación:** datos y material para la cajita y las máquinas, caja (PC e impresora) y cuentas externas (Mercado Pago, LG). Se hace en paralelo al desarrollo.
-- **Fase 1 – MVP operativo:** backend y admin con Unfold (usuarios y permisos, catálogo, inventario, clientes, caja, ventas, pagos, descuentos, encargos, máquinas con driver manual y simulador, tickets y reportes), API, caja en React y despliegue con respaldos.
-- **Fase 2 – Control de máquinas e integraciones:** cajita por MQTT (`RelayBoardDriver`), medidores de consumo (opcional), conciliación ventas ↔ ciclos, Mercado Pago Point y `LGCloudDriver` si LG da acceso.
+- **Fase 1 – MVP operativo:** backend y admin con Unfold (usuarios y permisos, catálogo, inventario, clientes, caja, ventas, pagos, descuentos, encargos, máquinas en modo manual, tickets y reportes), API, caja en React y despliegue con respaldos.
+- **Fase 2 – Control de máquinas e integraciones:** cajita por MQTT (`RelayBoardDriver`, con Celery y el simulador), medidores de consumo (opcional), conciliación ventas ↔ ciclos, Mercado Pago Point y `LGCloudDriver` si LG da acceso.
 - **Fase 3 – Crecimiento:** app móvil (Expo) y activación por el cliente con pago en línea; avisos por WhatsApp/SMS; precios por programa o por tiempo de secado (el modelo ya lo soporta); autorización remota y verificación en dos pasos (ver Anexo); permisos temporales y roles personalizados; CFDI, multisucursal y lealtad, si se necesitan.
 
 ---

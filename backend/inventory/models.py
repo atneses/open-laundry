@@ -95,7 +95,7 @@ class Product(BaseModel):
 
 
 class LoadConsumption(BaseModel):
-    """How much of a product each load of a wash service uses."""
+    """How much of a product each load of a service that uses a machine consumes."""
 
     service = models.ForeignKey(
         "sales.Service",
@@ -132,9 +132,12 @@ class LoadConsumption(BaseModel):
         return f"{self.service}: {self.quantity} {self.product.unit} {self.product}"
 
     def clean(self):
-        # Only washing uses supplies; drying does not.
-        if self.service_id and self.service.kind != "wash":
-            raise ValidationError({"service": _("Only wash services consume supplies.")})
+        # Supplies are taken when a machine cycle starts, so a service without a
+        # machine would never consume them. Today only washing has consumption.
+        if self.service_id and not self.service.uses_machine:
+            raise ValidationError(
+                {"service": _("Only services that use a machine consume supplies.")},
+            )
 
 
 class StockMovement(BaseModel):
@@ -182,6 +185,14 @@ class StockMovement(BaseModel):
         blank=True,
         related_name="stock_movements",
     )
+    machine_cycle = models.ForeignKey(
+        "machines.MachineCycle",
+        verbose_name=_("machine cycle"),
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="stock_movements",
+    )
     reason = models.CharField(
         _("reason"),
         max_length=255,
@@ -209,6 +220,11 @@ class StockMovement(BaseModel):
             models.CheckConstraint(
                 condition=~Q(kind="adjustment") | ~Q(reason=""),
                 name="stock_adjustment_has_reason",
+            ),
+            # Supplies are consumed by a machine cycle.
+            models.CheckConstraint(
+                condition=~Q(kind="consumption") | Q(machine_cycle__isnull=False),
+                name="stock_consumption_has_machine_cycle",
             ),
         ]
 

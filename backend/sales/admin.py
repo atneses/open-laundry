@@ -64,7 +64,7 @@ class ServicePriceInline(CatalogPermissionMixin, TabularInline):
 @admin.register(Service)
 class ServiceAdmin(CatalogPermissionMixin, ModelAdmin):
     form = ServiceForm
-    list_display = ["name", "kind", "unit", "machine_kind", "is_active"]
+    list_display = ["name", "kind", "unit", "machine_kind", "expected_minutes", "is_active"]
     list_filter = ["kind", "machine_kind", "is_active"]
     search_fields = ["name"]
     inlines = [ServicePriceInline]

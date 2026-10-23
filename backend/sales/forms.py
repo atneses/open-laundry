@@ -9,11 +9,19 @@ from .models import Discount, Service, ServicePrice
 
 
 class ServiceForm(InputFilterModelForm):
-    input_filters = {"name": "name"}
+    input_filters = {"name": "name", "expected_minutes": "digits"}
 
     class Meta:
         model = Service
-        fields = ["name", "kind", "unit", "machine_kind", "uses_machine", "is_active"]
+        fields = [
+            "name",
+            "kind",
+            "unit",
+            "machine_kind",
+            "uses_machine",
+            "expected_minutes",
+            "is_active",
+        ]
 
 
 class ServicePriceForm(InputFilterModelForm):

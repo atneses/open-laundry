@@ -13,6 +13,7 @@ from core.models import Branch
 from core.permissions import requires_perm
 from inventory.models import Product, StockMovement
 from inventory.services import record_stock_movement
+from machines.services import cancel_cycles, create_cycles
 
 from .models import (
     MAX_PERCENTAGE,
@@ -165,7 +166,8 @@ def create_sale(
 
     Copies each price from the catalog and takes sold products out of stock. The sale
     starts unpaid; payments are added with ``add_payment``. A drop-off sale also
-    receives its ``DropOffOrder`` from ``drop_off``.
+    receives its ``DropOffOrder`` from ``drop_off``. Each load of a service that uses
+    a machine gets a pending ``MachineCycle``.
     """
 
     session = _open_session(user)
@@ -206,6 +208,7 @@ def create_sale(
         line.created_by = line.updated_by = user
 
     SaleItem.objects.bulk_create(lines)
+    create_cycles(user, lines)
 
     if mode == Mode.DROP_OFF:
         DropOffOrder.objects.create(
@@ -265,7 +268,8 @@ def cancel_sale(user, sale: Sale, reason: str) -> Sale:
     """Cancel a sale with a reason, in the open cash session of the user's branch.
 
     That session gives the payments back: its cash count subtracts them, even when
-    they were received in an earlier session. Sold products go back to stock.
+    they were received in an earlier session. Sold products go back to stock and
+    pending machine cycles are cancelled; a sale with a started cycle cannot be cancelled.
     """
 
     session = _open_session(user)
@@ -284,6 +288,7 @@ def cancel_sale(user, sale: Sale, reason: str) -> Sale:
     if not reason:
         raise ValidationError({"cancel_reason": _("Explain why the sale is cancelled.")})
 
+    cancel_cycles(user, sale)
     sale.status = Sale.Status.CANCELLED
     sale.cancelled_at = timezone.now()
     sale.cancelled_by = sale.updated_by = user
