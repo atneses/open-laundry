@@ -1,0 +1,69 @@
+{% extends "admin/base.html" %}
+
+{% load i18n unfold %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title }}{% endblock %}
+
+{% block branding %}
+    {% include "unfold/helpers/site_branding.html" %}
+{% endblock %}
+
+{% block content %}
+    {% if dashboard %}
+        <div class="flex flex-col gap-6">
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                {% for card in collected_cards %}
+                    {% component "unfold/components/card.html" with title=card.title %}
+                        {% component "unfold/components/title.html" %}{{ card.today }}{% endcomponent %}
+                        {% component "unfold/components/text.html" with class="text-subtle" %}
+                            {% trans "This month:" %} {{ card.month }}
+                        {% endcomponent %}
+                    {% endcomponent %}
+                {% endfor %}
+
+                {% trans "Drop-off orders" as orders_title %}
+                {% component "unfold/components/card.html" with title=orders_title %}
+                    {% component "unfold/components/title.html" %}
+                        {{ dashboard.pending_orders }} {% trans "pending" %} · {{ dashboard.ready_orders }} {% trans "ready" %}
+                    {% endcomponent %}
+                    {% component "unfold/components/text.html" with class="text-subtle" %}
+                        {% trans "As of now" %}
+                    {% endcomponent %}
+                {% endcomponent %}
+            </div>
+
+            {% trans "Loads per machine" as loads_title %}
+            {% component "unfold/components/card.html" with title=loads_title %}
+                {% component "unfold/components/chart/bar.html" with data=loads_chart height=280 %}{% endcomponent %}
+            {% endcomponent %}
+
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {% trans "Low stock" as low_stock_title %}
+                {% component "unfold/components/card.html" with title=low_stock_title %}
+                    {% component "unfold/components/table.html" with table=low_stock_table card_included=1 %}{% endcomponent %}
+                {% endcomponent %}
+
+                {% trans "Cash differences this month" as differences_title %}
+                {% component "unfold/components/card.html" with title=differences_title %}
+                    {% component "unfold/components/table.html" with table=cash_differences_table card_included=1 %}{% endcomponent %}
+                {% endcomponent %}
+            </div>
+
+            {% trans "Cancellations by employee" as cancellations_title %}
+            {% component "unfold/components/card.html" with title=cancellations_title %}
+                {% component "unfold/components/table.html" with table=cancellations_table card_included=1 %}{% endcomponent %}
+            {% endcomponent %}
+
+            {% trans "Discounts by employee" as discounts_title %}
+            {% component "unfold/components/card.html" with title=discounts_title %}
+                {% component "unfold/components/table.html" with table=discounts_table card_included=1 %}{% endcomponent %}
+            {% endcomponent %}
+        </div>
+    {% else %}
+        {% if dashboard_error %}
+            {% component "unfold/components/text.html" with class="mb-6" %}{{ dashboard_error }}{% endcomponent %}
+        {% endif %}
+
+        {% include "unfold/helpers/dashboard_default.html" %}
+    {% endif %}
+{% endblock %}

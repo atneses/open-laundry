@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-26 12:39-0600\n"
+"POT-Creation-Date: 2026-10-26 13:06-0600\n"
 "Language: es_MX\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -16,83 +16,83 @@ msgstr "Lavandería"
 msgid "Administration"
 msgstr "Administración"
 
-#: config/settings/base.py:172
+#: config/settings/base.py:174
 msgid "Operation"
 msgstr "Operación"
 
-#: config/settings/base.py:176 customers/apps.py:8
+#: config/settings/base.py:178 customers/apps.py:8
 msgid "Customers"
 msgstr "Clientes"
 
-#: config/settings/base.py:184
+#: config/settings/base.py:186
 msgid "Sales"
 msgstr "Ventas"
 
-#: config/settings/base.py:190
+#: config/settings/base.py:192 templates/admin/index.html:24
 msgid "Drop-off orders"
 msgstr "Encargos"
 
-#: config/settings/base.py:198
+#: config/settings/base.py:200
 msgid "Cash sessions"
 msgstr "Cortes de caja"
 
-#: config/settings/base.py:208
+#: config/settings/base.py:210
 msgid "Catalog"
 msgstr "Catálogo"
 
-#: config/settings/base.py:212
+#: config/settings/base.py:214
 msgid "Services and prices"
 msgstr "Servicios y precios"
 
-#: config/settings/base.py:220
+#: config/settings/base.py:222
 msgid "Discounts"
 msgstr "Descuentos"
 
-#: config/settings/base.py:230 inventory/apps.py:8
+#: config/settings/base.py:232 inventory/apps.py:8
 msgid "Inventory"
 msgstr "Inventario"
 
-#: config/settings/base.py:234
+#: config/settings/base.py:236
 msgid "Products"
 msgstr "Productos"
 
-#: config/settings/base.py:240
+#: config/settings/base.py:242
 msgid "Stock movements"
 msgstr "Movimientos de inventario"
 
-#: config/settings/base.py:246
+#: config/settings/base.py:248
 msgid "Consumption per load"
 msgstr "Consumo por carga"
 
-#: config/settings/base.py:256 config/settings/base.py:260 machines/apps.py:8
+#: config/settings/base.py:258 config/settings/base.py:262 machines/apps.py:8
 msgid "Machines"
 msgstr "Máquinas"
 
-#: config/settings/base.py:268
+#: config/settings/base.py:270
 msgid "Machine cycles"
 msgstr "Ciclos de máquina"
 
-#: config/settings/base.py:278
+#: config/settings/base.py:280
 msgid "Users and permissions"
 msgstr "Usuarios y permisos"
 
-#: config/settings/base.py:282
+#: config/settings/base.py:284
 msgid "Users"
 msgstr "Usuarios"
 
-#: config/settings/base.py:288
+#: config/settings/base.py:290
 msgid "Roles"
 msgstr "Roles"
 
-#: config/settings/base.py:294
+#: config/settings/base.py:296
 msgid "Branches"
 msgstr "Sucursales"
 
-#: config/settings/base.py:302
+#: config/settings/base.py:304
 msgid "Logs"
 msgstr "Bitácoras"
 
-#: config/settings/base.py:306
+#: config/settings/base.py:308
 msgid "Permissions"
 msgstr "Permisos"
 
@@ -115,6 +115,70 @@ msgstr "rol"
 #: core/apps.py:8
 msgid "General settings"
 msgstr "Configuración general"
+
+#: core/dashboard.py:29
+msgid "Cash collected today"
+msgstr "Efectivo cobrado hoy"
+
+#: core/dashboard.py:34
+msgid "Card collected today"
+msgstr "Tarjeta cobrada hoy"
+
+#: core/dashboard.py:43
+msgid "Today"
+msgstr "Hoy"
+
+#: core/dashboard.py:44
+msgid "This month"
+msgstr "Este mes"
+
+#: core/dashboard.py:49
+msgid "Product"
+msgstr "Producto"
+
+#: core/dashboard.py:49
+msgid "Stock"
+msgstr "Existencia"
+
+#: core/dashboard.py:49
+msgid "Minimum"
+msgstr "Mínimo"
+
+#: core/dashboard.py:56
+msgid "Closed at"
+msgstr "Cierre"
+
+#: core/dashboard.py:56
+msgid "Cashier"
+msgstr "Cajero"
+
+#: core/dashboard.py:56
+msgid "Difference"
+msgstr "Diferencia"
+
+#: core/dashboard.py:56
+msgid "Notes"
+msgstr "Notas"
+
+#: core/dashboard.py:110
+msgid "Employee"
+msgstr "Empleado"
+
+#: core/dashboard.py:111
+msgid "Sales today"
+msgstr "Ventas de hoy"
+
+#: core/dashboard.py:112
+msgid "Amount today"
+msgstr "Monto hoy"
+
+#: core/dashboard.py:113
+msgid "Sales this month"
+msgstr "Ventas del mes"
+
+#: core/dashboard.py:114
+msgid "Amount this month"
+msgstr "Monto del mes"
 
 #: core/models.py:18
 msgid "created at"
@@ -175,7 +239,7 @@ msgstr "nombre"
 msgid "last name"
 msgstr "apellidos"
 
-#: core/models.py:116 core/models.py:135 sales/models.py:186
+#: core/models.py:116 core/models.py:136 sales/models.py:186
 msgid "user"
 msgstr "usuario"
 
@@ -187,33 +251,45 @@ msgstr "usuarios"
 msgid "Can manage users, roles and permissions"
 msgstr "Puede gestionar usuarios, roles y permisos"
 
-#: core/models.py:130
+#: core/models.py:120
+msgid "Can view reports"
+msgstr "Puede ver reportes"
+
+#: core/models.py:131
 msgid "Granted"
 msgstr "Otorgado"
 
-#: core/models.py:131
+#: core/models.py:132
 msgid "Revoked"
 msgstr "Revocado"
 
-#: core/models.py:141
+#: core/models.py:142
 msgid "permission"
 msgstr "permiso"
 
-#: core/models.py:145
+#: core/models.py:146
 msgid "action"
 msgstr "acción"
 
-#: core/models.py:148
+#: core/models.py:149
 msgid "permission log entry"
 msgstr "registro de permisos"
 
-#: core/models.py:149
+#: core/models.py:150
 msgid "permission log"
 msgstr "bitácora de permisos"
 
 #: core/permissions.py:21
 msgid "You do not have permission to do this."
 msgstr "No tienes permiso para hacer esto."
+
+#: core/reports.py:72
+msgid "You cannot view reports."
+msgstr "No puedes ver reportes."
+
+#: core/reports.py:77 sales/services.py:50 sales/services.py:240
+msgid "Your user has no branch assigned."
+msgstr "Tu usuario no tiene sucursal asignada."
 
 #: core/validators.py:6
 msgid "Use only letters, numbers, spaces, periods, hyphens and apostrophes."
@@ -1062,10 +1138,6 @@ msgstr "Pago"
 msgid "You cannot open a cash session."
 msgstr "No puedes abrir caja."
 
-#: sales/services.py:50 sales/services.py:240
-msgid "Your user has no branch assigned."
-msgstr "Tu usuario no tiene sucursal asignada."
-
 #: sales/services.py:54
 msgid "This branch already has an open cash session."
 msgstr "Esta sucursal ya tiene una caja abierta."
@@ -1218,3 +1290,39 @@ msgstr "%(service)s no tiene precio para esta modalidad."
 #, python-format
 msgid "%(product)s is not for sale."
 msgstr "%(product)s no está a la venta."
+
+#: templates/admin/index.html:19
+msgid "This month:"
+msgstr "Este mes:"
+
+#: templates/admin/index.html:27
+msgid "pending"
+msgstr "pendientes"
+
+#: templates/admin/index.html:27
+msgid "ready"
+msgstr "listos"
+
+#: templates/admin/index.html:30
+msgid "As of now"
+msgstr "En este momento"
+
+#: templates/admin/index.html:35
+msgid "Loads per machine"
+msgstr "Cargas por máquina"
+
+#: templates/admin/index.html:41
+msgid "Low stock"
+msgstr "Stock bajo"
+
+#: templates/admin/index.html:46
+msgid "Cash differences this month"
+msgstr "Diferencias de caja del mes"
+
+#: templates/admin/index.html:52
+msgid "Cancellations by employee"
+msgstr "Cancelaciones por empleado"
+
+#: templates/admin/index.html:57
+msgid "Discounts by employee"
+msgstr "Descuentos por empleado"

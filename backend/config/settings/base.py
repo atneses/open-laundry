@@ -60,7 +60,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -145,6 +145,8 @@ UNFOLD = {
         },
     ],
     "SHOW_HISTORY": True,
+    # Home page indicators for users with core.view_reports (templates/admin/index.html).
+    "DASHBOARD_CALLBACK": "core.dashboard.dashboard_callback",
     "SHOW_LANGUAGES": False,
     # Primary color (blue). To be adjusted to the laundry branding.
     "COLORS": {
