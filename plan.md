@@ -438,7 +438,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Riesgos y pendientes:**
 - **Pendiente – precio por programa (función futura):** `active_price` ya busca por programa de lavado con respaldo al precio general, pero el cobro siempre usa el general porque no hay precios por programa.
 - **Riesgo – cambiar el prefijo:** el consecutivo es por sucursal; si una sucursal cambia su `sale_prefix`, su numeración sigue (p. ej. de `A-000010` a `B-000011`).
-- **Pendiente – cambio en efectivo:** no se guarda el monto recibido ni el cambio; los calculan el ticket (Etapa 10) y la caja (Etapa 13).
+- **Pendiente – cambio en efectivo:** resuelto en la Etapa 10: `Payment.received` guarda el efectivo recibido y el ticket calcula el cambio; falta que la caja (Etapa 13) lo capture.
 - **Pendiente – pagos en el admin:** solo se ven dentro de la venta; no hay lista de pagos con filtro por método (el MVP lo menciona para el dashboard y reportes, Etapa 11).
 - **Riesgo – tarjeta sin referencia:** la referencia es opcional, así que un pago con tarjeta puede no tener cómo cuadrarse contra el reporte de Mercado Pago Point.
 - **Pendiente – descuentos por día de la semana:** el MVP pone de ejemplo "10% martes", pero la vigencia es solo por fechas; falta un campo de días si el negocio lo necesita.
@@ -526,9 +526,24 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Objetivo:** que el backend entregue los datos del ticket listos para imprimir (`mvp.md` §4, *Ticket*).
 
 ### 10.1 Datos del ticket
-- [ ] **Qué se hace:** servicio que arma los datos del ticket con todo calculado: encabezado, líneas, línea de promoción de detergente (siempre que haya lavado), totales, pagos, cambio, saldo y fecha de entrega. El endpoint se hace en la Etapa 12.
+- [x] **Qué se hace:** servicio que arma los datos del ticket con todo calculado: encabezado, líneas, línea de promoción de detergente (siempre que haya lavado), totales, pagos, cambio, saldo y fecha de entrega. El endpoint se hace en la Etapa 12.
 - **Para qué:** que el formato no dependa de cálculos en el navegador y sirva después para WhatsApp o PDF.
 - **Listo cuando:** una prueba compara el resultado con un ticket esperado.
+
+**Diferencias con lo planeado:**
+- El servicio es `build_receipt(user, sale)` en `sales/receipts.py`. Pide `sales.charge`, rechaza ventas de otra sucursal y devuelve datos estructurados (`Receipt`); React les da el formato de 80 mm.
+- `Payment` tiene el campo nuevo `received` (efectivo que entregó el cliente, opcional y solo en efectivo), para mostrar el cambio. `add_payment` lo recibe como `received=`.
+- Decisiones del ticket (`mvp.md` §4, *Ticket para el cliente*):
+  - una línea por descuento;
+  - en un encargo, el pago que deja saldo es "Anticipo" y el que lo liquida es "Pago";
+  - una venta cancelada se puede reimprimir, marcada y con el motivo;
+  - no se muestra la máquina de cada carga.
+
+**Riesgos y pendientes:**
+- **Pendiente – pie configurable:** el pie del ticket es fijo; si el negocio quiere horario, políticas o redes sociales, agregar un campo de texto a `Branch`.
+- **Pendiente – capturar el efectivo recibido:** es opcional; la caja (Etapa 13) debe pedirlo en los pagos en efectivo, o el ticket saldrá sin cambio. Los datos de demostración (`demo_history`) no lo llenan.
+- **Pendiente – endpoint:** `/api/sales/{id}/receipt/` se hace en la Etapa 12.
+- **Riesgo – formato sin probar:** no se ha impreso en la POS-8360; el ancho de 48 caracteres con nombres de servicio largos se revisará en la vista de impresión.
 
 **✅ Etapa 10 terminada cuando:** el servicio del ticket devuelve los datos correctos para cada tipo de venta (prueba).
 
