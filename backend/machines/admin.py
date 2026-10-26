@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 from unfold.admin import ModelAdmin
 
-from core.admin_base import ReadOnlyModelAdmin
+from core.admin_base import LocalDateRangeFilter, ReadOnlyModelAdmin
 
 from .forms import MachineForm
 from .models import Machine, MachineCycle
@@ -52,7 +52,14 @@ class MachineCycleAdmin(ReadOnlyModelAdmin):
         "started_at",
         "finished_at",
     ]
-    list_filter = ["status", "machine", "is_manual"]
+    list_filter = [
+        ("started_at", LocalDateRangeFilter),
+        "status",
+        "machine",
+        "started_by",
+        "is_manual",
+    ]
+    list_filter_submit = True
     list_select_related = ["sale_item__sale", "sale_item__service", "machine", "started_by"]
     search_fields = ["sale_item__sale__number"]
 

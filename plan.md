@@ -555,7 +555,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Objetivo:** que el admin vea cómo va el negocio desde el dashboard de Unfold.
 
 ### 11.1 Indicadores del dashboard
-- [ ] **Qué se hace:** crear el permiso `core.view_reports` y reemplazar la página de inicio del admin por un dashboard propio (plantilla en `backend/templates/admin/` y `DASHBOARD_CALLBACK` de Unfold) con tarjetas y gráficas: ventas del día (efectivo / tarjeta), cargas por máquina, encargos pendientes y listos, stock bajo, diferencias de caja, cancelaciones y descuentos por empleado.
+- [x] **Qué se hace:** crear el permiso `core.view_reports` y reemplazar la página de inicio del admin por un dashboard propio (plantilla en `backend/templates/admin/` y `DASHBOARD_CALLBACK` de Unfold) con tarjetas y gráficas: ventas del día (efectivo / tarjeta), cargas por máquina, encargos pendientes y listos, stock bajo, diferencias de caja, cancelaciones y descuentos por empleado.
 - **Listo cuando:** los números coinciden con los datos de prueba.
 
 **Diferencias con lo planeado y decisiones:**
@@ -577,8 +577,20 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Pendiente – selector de sucursal:** agregar al dashboard un selector para ver los indicadores de todas las sucursales juntas o solo los de una sucursal elegida.
 
 ### 11.2 Consultas con filtros
-- [ ] **Qué se hace:** listas de ventas, ciclos y cortes en el admin con filtros por fecha, empleado, modalidad, método de pago y máquina. Todo de solo lectura.
+- [x] **Qué se hace:** listas de ventas, ciclos y cortes en el admin con filtros por fecha, empleado, modalidad, método de pago y máquina. Todo de solo lectura.
 - **Listo cuando:** se puede ver, por ejemplo, "ventas en tarjeta de la semana pasada de un empleado".
+
+**Diferencias con lo planeado y decisiones:**
+- **Fechas:** filtro de rango desde/hasta en el panel de filtros: ventas por fecha de cobro, ciclos por fecha de inicio y cortes por fecha de apertura. Ventas ya no tiene la navegación por año, mes y día de arriba.
+  - `core.admin_base.LocalDateRangeFilter` compara solo la fecha local: el filtro de Unfold, con campos de fecha y hora, dejaba fuera los registros del último día.
+- **Método de pago:** filtro en ventas; muestra las ventas con al menos un pago de ese método (efectivo, tarjeta de crédito o tarjeta de débito). Una venta pagada con los dos sale en ambos.
+- **Empleado:** ventas por quién cobró, ciclos por quién inició la máquina y cortes por cajero. **Máquina** y **modalidad** ya existían (ciclos y ventas).
+- Las tres listas ya eran de solo lectura.
+- **Conteos en ventas:** cada filtro muestra siempre cuántos registros tiene (`show_facets = ALWAYS`), porque el enlace "Mostrar conteos" recargaba la página y cerraba el panel de filtros.
+
+**Riesgos y pendientes:**
+- **Pendiente – sumas de lo filtrado:** las listas no muestran el total de lo filtrado (p. ej. cuánto suman las ventas en tarjeta de la semana); por ahora las sumas están solo en el dashboard.
+- **Riesgo – fecha mal escrita:** si alguien escribe la fecha a mano en un formato que no se reconoce, el filtro se ignora sin avisar (el calendario siempre manda el formato correcto).
 
 **✅ Etapa 11 terminada cuando:** el admin puede revisar el día y el mes sin pedir ayuda.
 

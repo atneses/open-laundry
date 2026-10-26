@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-26 13:06-0600\n"
+"POT-Creation-Date: 2026-10-26 13:31-0600\n"
 "Language: es_MX\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -320,7 +320,7 @@ msgstr "correo electrónico"
 msgid "notes"
 msgstr "notas"
 
-#: customers/models.py:32 sales/admin.py:286 sales/models.py:290
+#: customers/models.py:32 sales/admin.py:314 sales/models.py:290
 msgid "customer"
 msgstr "cliente"
 
@@ -413,7 +413,7 @@ msgstr ""
 msgid "A product for sale needs a sale price."
 msgstr "Un producto a la venta necesita precio de venta."
 
-#: inventory/models.py:102 machines/admin.py:63 sales/models.py:63
+#: inventory/models.py:102 machines/admin.py:70 sales/models.py:63
 #: sales/models.py:94 sales/models.py:375
 msgid "service"
 msgstr "servicio"
@@ -475,7 +475,7 @@ msgstr ""
 msgid "unit cost"
 msgstr "costo unitario"
 
-#: inventory/models.py:182 machines/admin.py:59 sales/models.py:328
+#: inventory/models.py:182 machines/admin.py:66 sales/models.py:328
 #: sales/models.py:369 sales/models.py:432 sales/models.py:577
 #: sales/models.py:632
 msgid "sale"
@@ -696,24 +696,28 @@ msgstr "No puedes terminar ciclos de máquina."
 msgid "Only a running cycle can be finished."
 msgstr "Solo se puede terminar un ciclo en curso."
 
-#: sales/admin.py:111 sales/admin.py:116
+#: sales/admin.py:114 sales/admin.py:119
 msgid "Close cash session"
 msgstr "Cerrar caja"
 
-#: sales/admin.py:117
+#: sales/admin.py:120
 msgid "Capture the cash counted in the drawer of this forgotten session."
 msgstr ""
 "Captura el efectivo contado en el cajón de esta caja que quedó abierta."
 
-#: sales/admin.py:119
+#: sales/admin.py:122
 msgid "Close"
 msgstr "Cerrar"
 
-#: sales/admin.py:149
+#: sales/admin.py:152
 msgid "The cash session was closed."
 msgstr "La caja se cerró."
 
-#: sales/admin.py:290 sales/models.py:306
+#: sales/admin.py:227
+msgid "payment method"
+msgstr "método de pago"
+
+#: sales/admin.py:318 sales/models.py:306
 msgid "balance"
 msgstr "saldo"
 
