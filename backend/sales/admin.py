@@ -1,13 +1,15 @@
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
+from django.db.models import Exists, OuterRef
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from unfold.admin import ModelAdmin, StackedInline, TabularInline
+from unfold.contrib.filters.admin import DropdownFilter
 from unfold.decorators import action
 
-from core.admin_base import ReadOnlyModelAdmin
+from core.admin_base import LocalDateRangeFilter, ReadOnlyModelAdmin
 
 from .forms import CloseCashSessionForm, DiscountForm, ServiceForm, ServicePriceForm
 from .models import (
@@ -86,7 +88,8 @@ class CashSessionAdmin(ReadOnlyModelAdmin):
         "difference",
         "card_total",
     ]
-    list_filter = ["branch", "user"]
+    list_filter = [("opened_at", LocalDateRangeFilter), "branch", "user"]
+    list_filter_submit = True
     list_select_related = ["branch", "user", "closed_by"]
     actions_detail = ["close_session"]
 
@@ -218,6 +221,24 @@ class DropOffOrderInline(StackedInline):
         return False
 
 
+class PaymentMethodFilter(DropdownFilter):
+    """Sales with at least one payment of the method; a mixed sale shows under both."""
+
+    title = _("payment method")
+    parameter_name = "payment_method"
+
+    def lookups(self, request, model_admin):
+        return Payment.Method.choices
+
+    def queryset(self, request, queryset):
+        if not self.value():
+            return queryset
+
+        payments = Payment.objects.filter(sale=OuterRef("pk"), method=self.value())
+
+        return queryset.filter(Exists(payments))
+
+
 @admin.register(Sale)
 class SaleAdmin(ReadOnlyModelAdmin):
     """Sales are charged at the POS and only viewed here."""
@@ -232,10 +253,19 @@ class SaleAdmin(ReadOnlyModelAdmin):
         "balance",
         "created_by",
     ]
-    list_filter = ["status", "mode", "branch", "created_by"]
+    list_filter = [
+        ("created_at", LocalDateRangeFilter),
+        "status",
+        "mode",
+        PaymentMethodFilter,
+        "branch",
+        "created_by",
+    ]
+    list_filter_submit = True
+    # Counts always on: the "show counts" link reloads the page and closes the filters.
+    show_facets = admin.ShowFacets.ALWAYS
     search_fields = ["number", "customer__name", "customer__phone"]
     list_select_related = ["customer", "created_by"]
-    date_hierarchy = "created_at"
     inlines = [DropOffOrderInline, SaleItemInline, AppliedDiscountInline, PaymentInline]
 
 
