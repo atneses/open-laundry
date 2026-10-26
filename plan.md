@@ -322,6 +322,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Riesgo – borrar un servicio:** si nunca se ha vendido, borra también sus precios (con su historial) y su consumo por carga (`CASCADE`); uno vendido no se puede borrar. Para retirarlo se usa `is_active`.
 - **Riesgo – sucursal del precio:** cada precio pide su sucursal a mano. Con una sola sucursal no importa; con varias, un precio con la sucursal equivocada no se encontraría al cobrar.
 - **Pendiente – enlace al ciclo:** `StockMovement.machine_cycle` se agrega con `MachineCycle` (Etapa 9).
+- **Pendiente – tipo de movimiento con botones de opción:** en el admin, al crear un movimiento de inventario, el tipo (compra o ajuste) se elige en una lista desplegable; cambiarla por botones de opción (*radio*) para que solo se marque "Compra" o "Ajuste".
 
 **✅ Etapa 4 terminada cuando:** el catálogo y el inventario se administran desde el admin.
 
@@ -556,6 +557,24 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 ### 11.1 Indicadores del dashboard
 - [ ] **Qué se hace:** crear el permiso `core.view_reports` y reemplazar la página de inicio del admin por un dashboard propio (plantilla en `backend/templates/admin/` y `DASHBOARD_CALLBACK` de Unfold) con tarjetas y gráficas: ventas del día (efectivo / tarjeta), cargas por máquina, encargos pendientes y listos, stock bajo, diferencias de caja, cancelaciones y descuentos por empleado.
 - **Listo cuando:** los números coinciden con los datos de prueba.
+
+**Diferencias con lo planeado y decisiones:**
+- Los cálculos están en `core/reports.py` (`build_dashboard`, pide `core.view_reports`); el armado de tarjetas y tablas para Unfold en `core/dashboard.py`, y la plantilla en `backend/templates/admin/index.html`.
+- **Periodo:** cada indicador muestra hoy y lo que va del mes (del día 1 a hoy, hora de México), sin selector de fechas; para otros rangos están las consultas del 11.2.
+- **Dinero cobrado:** pagos recibidos en el periodo por método, menos los pagos de las ventas canceladas en el periodo (la misma regla del corte). Incluye saldos de encargos de días anteriores. Puede salir negativo si hoy se cancela una venta cobrada otro día.
+- **Cargas por máquina:** ciclos iniciados en el periodo en estado `running` o `finished` (no cuentan los `failed`); salen todas las máquinas, lavadoras primero.
+- **Encargos:** los que hay en este momento: pendientes = `received` o `in_progress`; listos = `ready`; no cuentan los de ventas canceladas.
+- **Stock bajo:** existencia menor que el mínimo, como el filtro del inventario.
+- **Diferencias de caja:** cortes cerrados en el mes con diferencia distinta de cero (incluye los de hoy).
+- **Cancelaciones y descuentos por empleado:** quién canceló o quién aplicó el descuento; se cuentan ventas (un descuento sobre varias líneas cuenta una vez) y su monto.
+- Un usuario sin `core.view_reports` ve la página de inicio normal de Unfold. Un usuario con el permiso pero sin sucursal ve un aviso.
+
+**Riesgos y pendientes:**
+- **Riesgo – rendimiento:** cada carga del inicio hace unas 17 consultas sobre todo el mes; con el volumen de una sucursal está bien, pero no se ha medido con datos de meses reales.
+- **Pendiente – descuentos de ventas canceladas:** se cuentan igual; si el negocio quiere excluirlos, filtrar por estado de la venta.
+- **Pendiente – permiso en la API:** el dashboard solo existe en el admin; si la caja necesita indicadores, se hará un endpoint aparte.
+- **Pendiente – admin sin sucursal:** validar con el negocio si un admin debe tener siempre una sucursal asignada. Hoy, sin sucursal, el dashboard muestra un aviso en lugar de los indicadores.
+- **Pendiente – selector de sucursal:** agregar al dashboard un selector para ver los indicadores de todas las sucursales juntas o solo los de una sucursal elegida.
 
 ### 11.2 Consultas con filtros
 - [ ] **Qué se hace:** listas de ventas, ciclos y cortes en el admin con filtros por fecha, empleado, modalidad, método de pago y máquina. Todo de solo lectura.

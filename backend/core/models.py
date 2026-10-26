@@ -117,6 +117,7 @@ class User(AbstractUser, BaseModel):
         verbose_name_plural = _("users")
         permissions = [
             ("manage_users", _("Can manage users, roles and permissions")),
+            ("view_reports", _("Can view reports")),
         ]
 
     def __str__(self):
