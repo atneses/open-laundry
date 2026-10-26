@@ -624,6 +624,15 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - [ ] **Qué se hace:** `/api/cash-sessions/` para abrir y cerrar caja, ver el corte actual y el historial, protegida con `sales.operate_cash_session`. El empleado ve y cierra solo su caja; con `sales.view_all_cash_sessions` se ven todas.
 - **Listo cuando:** sin el permiso responde 403, y un empleado no puede ver ni cerrar cortes de otros (pruebas).
 
+**Diferencias con lo planeado y decisiones:**
+- Endpoints (`sales/views.py`, `CashSessionViewSet`): `GET /api/cash-sessions/` (historial, del más reciente al más antiguo), `GET /api/cash-sessions/{id}/`, `POST /api/cash-sessions/` (abrir con `opening_float`), `GET /api/cash-sessions/current/` (la caja abierta de la sucursal; 404 si no hay) y `POST /api/cash-sessions/{id}/close/` (`counted_cash` y `notes`).
+- **Cierre a ciegas:** mientras la caja está abierta, el empleado recibe en `null` el efectivo esperado, el total de tarjeta y los conteos; quien tiene `sales.view_all_cash_sessions` los ve calculados al momento. Al cerrar, todos ven el corte completo.
+- **Caja abierta por otro empleado:** `current/` la muestra (quién y desde cuándo, sin montos) y los demás empleados cobran en ella, como ya hacían los servicios; solo quien la abrió, o quien tiene `view_all_cash_sessions`, la cierra.
+- Un corte de otro empleado responde 404 (no 403), para no revelar que existe.
+
+**Riesgos y pendientes:**
+- **Riesgo – cobros en caja ajena:** si un empleado cobra en la caja que abrió otro, el faltante o sobrante de esa caja queda a nombre de quien la abrió.
+
 ### 12.3 API del catálogo
 - [ ] **Qué se hace:** `/api/services/` (servicios activos con su precio por modalidad) y `/api/products/` (productos a la venta), de solo lectura. El catálogo se sigue editando en el admin.
 - **Listo cuando:** al cambiar un precio en el admin, la API devuelve el nuevo.

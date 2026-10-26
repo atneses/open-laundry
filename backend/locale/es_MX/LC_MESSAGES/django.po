@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-26 13:59-0600\n"
+"POT-Creation-Date: 2026-10-26 14:59-0600\n"
 "Language: es_MX\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -1294,6 +1294,10 @@ msgstr "%(service)s no tiene precio para esta modalidad."
 #, python-format
 msgid "%(product)s is not for sale."
 msgstr "%(product)s no está a la venta."
+
+#: sales/views.py:71
+msgid "There is no open cash session."
+msgstr "No hay caja abierta."
 
 #: templates/admin/index.html:19
 msgid "This month:"
