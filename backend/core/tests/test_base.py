@@ -29,6 +29,16 @@ def test_user_belongs_to_branch():
     assert branch.users.count() == 1
 
 
+@pytest.mark.parametrize(
+    ("first_name", "last_name", "expected"),
+    [("Laura", "Pérez", "Laura Pérez"), ("", "", "laura")],
+)
+def test_display_name_is_the_full_name_or_the_username(first_name, last_name, expected):
+    user = User(username="laura", first_name=first_name, last_name=last_name)
+
+    assert user.get_display_name() == expected
+
+
 @pytest.mark.django_db
 def test_jwt_token(api_client):
     get_user_model().objects.create_user("ana", password="secure-pass-123")

@@ -73,11 +73,11 @@ class CashSessionSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(str)
     def get_user(self, session):
-        return _name(session.user)
+        return session.user.get_display_name()
 
     @extend_schema_field({"type": "string", "nullable": True})
     def get_closed_by(self, session):
-        return _name(session.closed_by) if session.closed_by else None
+        return session.closed_by.get_display_name() if session.closed_by else None
 
 
 class OpenCashSessionSerializer(serializers.Serializer):
@@ -87,7 +87,3 @@ class OpenCashSessionSerializer(serializers.Serializer):
 class CloseCashSessionSerializer(serializers.Serializer):
     counted_cash = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
     notes = serializers.CharField(required=False, allow_blank=True, default="")
-
-
-def _name(user) -> str:
-    return user.get_full_name() or user.get_username()

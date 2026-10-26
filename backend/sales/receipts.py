@@ -96,7 +96,6 @@ def build_receipt(user, sale: Sale) -> Receipt:
         raise PermissionDenied(_("The sale belongs to another branch."))
 
     order: DropOffOrder | None = getattr(sale, "drop_off_order", None)
-    cashier = sale.created_by
 
     return Receipt(
         branch_name=sale.branch.name,
@@ -104,7 +103,7 @@ def build_receipt(user, sale: Sale) -> Receipt:
         branch_phone=sale.branch.phone,
         number=sale.number,
         charged_at=sale.created_at,
-        cashier=cashier.get_full_name() or cashier.get_username(),
+        cashier=sale.created_by.get_display_name(),
         customer_name=sale.customer.name if sale.customer else "",
         customer_phone=sale.customer.phone if sale.customer else "",
         mode=sale.get_mode_display(),
