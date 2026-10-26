@@ -447,6 +447,14 @@ class Payment(BaseModel):
         blank=True,
         help_text=_("Card voucher reference."),
     )
+    received = models.DecimalField(
+        _("cash received"),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Cash the customer handed over; the change is this minus the amount."),
+    )
 
     class Meta:
         verbose_name = _("payment")
@@ -454,6 +462,12 @@ class Payment(BaseModel):
         ordering = ["created_at"]
         constraints = [
             models.CheckConstraint(condition=Q(amount__gt=0), name="payment_amount_positive"),
+            # Only cash records what was handed over, and it covers the amount.
+            models.CheckConstraint(
+                condition=Q(received__isnull=True)
+                | Q(method="cash", received__gte=models.F("amount")),
+                name="payment_received_is_cash_covering_amount",
+            ),
         ]
 
     def __str__(self):

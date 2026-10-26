@@ -340,6 +340,7 @@ erDiagram
         string method "cash | credit_card | debit_card"
         decimal amount
         string reference "voucher de Mercado Pago Point (opcional)"
+        decimal received "efectivo que entregó el cliente (opcional, solo efectivo)"
         string mp_payment_intent_id "Fase 2"
         int created_by FK "quién lo cobró"
         datetime created_at "cuándo se pagó"
@@ -447,7 +448,7 @@ erDiagram
 **Caja y pagos**
 - **CashSession:** uno por turno, y solo una caja abierta por sucursal (el siguiente turno abre cuando el anterior cierra); no se puede cobrar sin caja abierta. Se guarda quién la cerró (`closed_by`); una caja olvidada la puede cerrar desde el admin quien tenga `sales.view_all_cash_sessions`.
 - **Corte:** `expected_cash = opening_float + cash payments of the session − cash returned by sales cancelled in the session`; `card_total` igual con la tarjeta y se cuadra contra el reporte de Mercado Pago Point. Si lo contado no coincide con lo esperado, la nota es obligatoria.
-- **Payment:** cada pago cuenta en el turno en que se recibió (`Payment.cash_session`), aunque la venta sea de otro turno (p. ej. el saldo de un encargo). Un pago no puede ser mayor que el saldo: el cambio en efectivo no se guarda.
+- **Payment:** cada pago cuenta en el turno en que se recibió (`Payment.cash_session`), aunque la venta sea de otro turno (p. ej. el saldo de un encargo). Un pago no puede ser mayor que el saldo. En efectivo se puede guardar lo que entregó el cliente (`received`, nunca menor que el monto) para que el ticket muestre el cambio; con tarjeta no se guarda.
 - **Cancelar** una venta requiere caja abierta: ese turno devuelve sus pagos (`Sale.cancel_cash_session`), aunque se hayan cobrado en un turno anterior, cuyo corte no cambia. Los productos vendidos regresan al stock.
 - **Pago con tarjeta:** en el MVP se captura a mano la referencia del voucher; en la Fase 2 la integración con la API de Point la llena sola (`mp_payment_intent_id`).
 
@@ -524,10 +525,14 @@ Entrega estimada: 18/10/2026 18:00
   Comprobante no fiscal · Gracias
 ```
 
-- **Autoservicio:** puede indicar la máquina asignada a cada carga ("Lavadora 3").
 - **Encargo:** el ticket de recepción sirve para recoger la ropa; al entregar se imprime otro con saldo en $0.
 - La línea "Detergente y suavizante (promoción) $0.00" sale **siempre** que haya cargas de lavado. Si el cliente trajo sus productos, el ticket no cambia (`customer_supplies` es solo interno).
-- Con tarjeta: tipo y referencia del voucher. En efectivo: monto recibido y cambio.
+- Con tarjeta: tipo y referencia del voucher. En efectivo: monto recibido y cambio, si se capturó lo que entregó el cliente.
+- **Descuentos:** una línea por descuento, con su nombre y el total que quitó (un descuento sobre servicios suma sus líneas).
+- **Pagos de un encargo:** un pago que deja saldo pendiente sale como "Anticipo"; el que liquida la venta, como "Pago". Si el cliente paga todo al dejar la ropa, sale como "Pago". En autoservicio todos salen como "Pago".
+- **Venta cancelada:** su ticket se puede reimprimir y sale marcado como "CANCELADA", con el motivo.
+- El ticket no muestra la máquina asignada a cada carga.
+- El pie ("Comprobante no fiscal · Gracias") es fijo.
 - **Impresión (MVP):** vista React con `@media print` a **80 mm** (~48 caracteres por línea) en la POS-8360 USB, desde el diálogo del navegador (sin márgenes ni encabezados). **Mejora opcional:** impresión directa y apertura de cajón con ESC/POS vía QZ Tray. El backend entrega los datos ya calculados (`/api/sales/{id}/receipt/`), reutilizables para WhatsApp o PDF.
 
 ### Endpoints principales (REST)

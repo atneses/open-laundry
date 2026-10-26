@@ -119,6 +119,29 @@ def test_payment_method_must_be_valid(cashier, sale):
     assert "method" in error.value.message_dict
 
 
+def test_cash_payment_records_the_cash_received(cashier, sale):
+    payment = add_payment(cashier, sale, CASH, "135.00", received="200.00")
+
+    payment.refresh_from_db()
+    assert payment.received == Decimal("200.00")
+
+
+def test_card_payment_cannot_record_cash_received(cashier, sale):
+    with pytest.raises(ValidationError) as error:
+        add_payment(cashier, sale, DEBIT_CARD, "135.00", "VOUCHER-1", received="200.00")
+
+    assert "received" in error.value.message_dict
+    assert not Payment.objects.exists()
+
+
+def test_cash_received_cannot_be_less_than_the_amount(cashier, sale):
+    with pytest.raises(ValidationError) as error:
+        add_payment(cashier, sale, CASH, "135.00", received="100.00")
+
+    assert "received" in error.value.message_dict
+    assert not Payment.objects.exists()
+
+
 def test_a_cancelled_sale_cannot_be_paid(cashier, sale):
     cancel_sale(cashier, sale, "Wrong service")
 

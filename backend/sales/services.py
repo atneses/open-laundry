@@ -312,10 +312,19 @@ def cancel_sale(user, sale: Sale, reason: str) -> Sale:
 
 @requires_perm(CHARGE, message=_("You cannot charge sales."))
 @transaction.atomic
-def add_payment(user, sale: Sale, method: str, amount, reference: str = "") -> Payment:
+def add_payment(  # noqa: PLR0913 - received is keyword-only and cash-only.
+    user,
+    sale: Sale,
+    method: str,
+    amount,
+    reference: str = "",
+    *,
+    received=None,
+) -> Payment:
     """Record a payment of the sale in the open cash session and update its balance.
 
-    A payment cannot be more than the balance; the change for cash is not recorded.
+    A payment cannot be more than the balance. For cash, ``received`` is what the
+    customer handed over, so the receipt can show the change; it is optional.
     """
 
     session = _open_session(user)
@@ -330,12 +339,19 @@ def add_payment(user, sale: Sale, method: str, amount, reference: str = "") -> P
         method=method,
         amount=amount,
         reference=reference.strip(),
+        received=received,
         created_by=user,
     )
     payment.full_clean(exclude=["sale", "cash_session"], validate_constraints=False)
 
     if payment.amount <= 0:
         raise ValidationError({"amount": _("The amount must be greater than zero.")})
+
+    if payment.received is not None and payment.method != Payment.Method.CASH:
+        raise ValidationError({"received": _("Only cash payments record the cash received.")})
+
+    if payment.received is not None and payment.received < payment.amount:
+        raise ValidationError({"received": _("The cash received cannot be less than the amount.")})
 
     if payment.amount > sale.balance:
         message = _("The amount is more than the balance of %(balance)s.")

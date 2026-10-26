@@ -171,7 +171,15 @@ class SaleItemInline(TabularInline):
 class PaymentInline(TabularInline):
     model = Payment
     extra = 0
-    fields = ["created_at", "method", "amount", "reference", "cash_session", "created_by"]
+    fields = [
+        "created_at",
+        "method",
+        "amount",
+        "received",
+        "reference",
+        "cash_session",
+        "created_by",
+    ]
     readonly_fields = fields
     can_delete = False
 
