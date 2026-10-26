@@ -3,96 +3,96 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-26 13:31-0600\n"
+"POT-Creation-Date: 2026-10-26 13:59-0600\n"
 "Language: es_MX\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: config/settings/base.py:134 config/settings/base.py:135
+#: config/settings/base.py:138 config/settings/base.py:139
 msgid "Laundry"
 msgstr "Lavandería"
 
-#: config/settings/base.py:136
+#: config/settings/base.py:140
 msgid "Administration"
 msgstr "Administración"
 
-#: config/settings/base.py:174
+#: config/settings/base.py:178
 msgid "Operation"
 msgstr "Operación"
 
-#: config/settings/base.py:178 customers/apps.py:8
+#: config/settings/base.py:182 customers/apps.py:8
 msgid "Customers"
 msgstr "Clientes"
 
-#: config/settings/base.py:186
+#: config/settings/base.py:190
 msgid "Sales"
 msgstr "Ventas"
 
-#: config/settings/base.py:192 templates/admin/index.html:24
+#: config/settings/base.py:196 templates/admin/index.html:24
 msgid "Drop-off orders"
 msgstr "Encargos"
 
-#: config/settings/base.py:200
+#: config/settings/base.py:204
 msgid "Cash sessions"
 msgstr "Cortes de caja"
 
-#: config/settings/base.py:210
+#: config/settings/base.py:214
 msgid "Catalog"
 msgstr "Catálogo"
 
-#: config/settings/base.py:214
+#: config/settings/base.py:218
 msgid "Services and prices"
 msgstr "Servicios y precios"
 
-#: config/settings/base.py:222
+#: config/settings/base.py:226
 msgid "Discounts"
 msgstr "Descuentos"
 
-#: config/settings/base.py:232 inventory/apps.py:8
+#: config/settings/base.py:236 inventory/apps.py:8
 msgid "Inventory"
 msgstr "Inventario"
 
-#: config/settings/base.py:236
+#: config/settings/base.py:240
 msgid "Products"
 msgstr "Productos"
 
-#: config/settings/base.py:242
+#: config/settings/base.py:246
 msgid "Stock movements"
 msgstr "Movimientos de inventario"
 
-#: config/settings/base.py:248
+#: config/settings/base.py:252
 msgid "Consumption per load"
 msgstr "Consumo por carga"
 
-#: config/settings/base.py:258 config/settings/base.py:262 machines/apps.py:8
+#: config/settings/base.py:262 config/settings/base.py:266 machines/apps.py:8
 msgid "Machines"
 msgstr "Máquinas"
 
-#: config/settings/base.py:270
+#: config/settings/base.py:274
 msgid "Machine cycles"
 msgstr "Ciclos de máquina"
 
-#: config/settings/base.py:280
+#: config/settings/base.py:284
 msgid "Users and permissions"
 msgstr "Usuarios y permisos"
 
-#: config/settings/base.py:284
+#: config/settings/base.py:288
 msgid "Users"
 msgstr "Usuarios"
 
-#: config/settings/base.py:290
+#: config/settings/base.py:294
 msgid "Roles"
 msgstr "Roles"
 
-#: config/settings/base.py:296
+#: config/settings/base.py:300
 msgid "Branches"
 msgstr "Sucursales"
 
-#: config/settings/base.py:304
+#: config/settings/base.py:308
 msgid "Logs"
 msgstr "Bitácoras"
 
-#: config/settings/base.py:308
+#: config/settings/base.py:312
 msgid "Permissions"
 msgstr "Permisos"
 
@@ -111,6 +111,10 @@ msgstr "Fechas importantes"
 #: core/admin.py:60
 msgid "role"
 msgstr "rol"
+
+#: core/api.py:21 core/permissions.py:21
+msgid "You do not have permission to do this."
+msgstr "No tienes permiso para hacer esto."
 
 #: core/apps.py:8
 msgid "General settings"
@@ -279,10 +283,6 @@ msgstr "registro de permisos"
 msgid "permission log"
 msgstr "bitácora de permisos"
 
-#: core/permissions.py:21
-msgid "You do not have permission to do this."
-msgstr "No tienes permiso para hacer esto."
-
 #: core/reports.py:72
 msgid "You cannot view reports."
 msgstr "No puedes ver reportes."
@@ -320,7 +320,7 @@ msgstr "correo electrónico"
 msgid "notes"
 msgstr "notas"
 
-#: customers/models.py:32 sales/admin.py:314 sales/models.py:290
+#: customers/models.py:32 sales/admin.py:316 sales/models.py:290
 msgid "customer"
 msgstr "cliente"
 
@@ -717,7 +717,7 @@ msgstr "La caja se cerró."
 msgid "payment method"
 msgstr "método de pago"
 
-#: sales/admin.py:318 sales/models.py:306
+#: sales/admin.py:320 sales/models.py:306
 msgid "balance"
 msgstr "saldo"
 

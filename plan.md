@@ -609,9 +609,16 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Reportes por la API (12.10):** pospuesto; el dashboard está en el admin y los empleados no tienen `core.view_reports`.
 
 ### 12.1 Clase de permiso para la API
-- [ ] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("sales.operate_cash_session")`, que se pone en cada endpoint.
+- [x] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("sales.operate_cash_session")`, que se pone en cada endpoint.
 - **Para qué:** que la validación ocurra siempre en el servidor, no solo escondiendo botones.
 - **Listo cuando:** una prueba muestra que un usuario sin el permiso recibe error 403, y que con JWT se llena `created_by` (`CurrentUserMiddleware`).
+
+**Diferencias con lo planeado:**
+- `core/api.py` reúne lo común de la API: `HasPermission("app.code", ...)` (se pone en `permission_classes`; para no repetir códigos se puede usar `HasPermission(*servicio.required_perms)`), el manejador de errores (los `ValidationError` de los servicios responden 400 por campo, o en `non_field_errors` si no son de un campo) y la paginación (`API_PAGE_SIZE` y `API_MAX_PAGE_SIZE` en `.env`, con `?page_size=`). El manejador y la paginación se adelantaron aquí porque los usan todos los endpoints.
+- Las pruebas usan vistas propias del archivo de pruebas, porque todavía no hay endpoints de negocio.
+
+**Riesgos y pendientes:**
+- **Pendiente – variables nuevas:** agregar `API_PAGE_SIZE` y `API_MAX_PAGE_SIZE` al `.env` si se quieren valores distintos de 25 y 100 (sin ellas se usan esos).
 
 ### 12.2 API de caja
 - [ ] **Qué se hace:** `/api/cash-sessions/` para abrir y cerrar caja, ver el corte actual y el historial, protegida con `sales.operate_cash_session`. El empleado ve y cierra solo su caja; con `sales.view_all_cash_sessions` se ven todas.

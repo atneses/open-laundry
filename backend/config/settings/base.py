@@ -114,7 +114,11 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "core.api.PageNumberPagination",
+    "EXCEPTION_HANDLER": "core.api.exception_handler",
 }
+API_PAGE_SIZE = env.int("API_PAGE_SIZE", default=25)
+API_MAX_PAGE_SIZE = env.int("API_MAX_PAGE_SIZE", default=100)
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=env.int("JWT_ACCESS_MINUTES", default=30)),
