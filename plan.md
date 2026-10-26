@@ -600,6 +600,14 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **Objetivo:** exponer por la API REST todo lo que usará la caja (React), sobre los servicios ya probados de las Etapas 6 a 11. Las vistas son delgadas: validan datos, llaman al servicio y responden; las reglas y permisos ya los validan los servicios, y la API los repite con su 403. Todo documentado con `drf-spectacular` para que la caja genere sus tipos.
 
+**Decisiones (antes de empezar):**
+- **Errores:** el `ValidationError` de Django que lanzan los servicios se responde como 400 con los mensajes por campo (manejador de excepciones común); `PermissionDenied` es 403.
+- **Paginación:** por número de página en todas las listas; tamaño por defecto y máximo en `.env` (25 y 100 por defecto), y la caja puede pedir otro con `?page_size=` dentro del máximo.
+- **Cobro en una sola petición:** `POST /api/sales/` recibe líneas, descuentos y pagos y guarda todo junto o nada. Los pagos posteriores (saldo de un encargo) van en `POST /api/sales/{id}/payments/`.
+- **Autoservicio con saldo:** se permite cobrar sin pagar completo; las máquinas solo se activan si la venta está pagada (regla de la Etapa 9).
+- **Cierre de caja a ciegas:** mientras la caja está abierta, el empleado no ve el efectivo esperado; lo ve, con la diferencia, después de cerrar. Quien tiene `sales.view_all_cash_sessions` sí lo ve.
+- **Reportes por la API (12.10):** pospuesto; el dashboard está en el admin y los empleados no tienen `core.view_reports`.
+
 ### 12.1 Clase de permiso para la API
 - [ ] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("sales.operate_cash_session")`, que se pone en cada endpoint.
 - **Para qué:** que la validación ocurra siempre en el servidor, no solo escondiendo botones.
@@ -638,7 +646,8 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - [ ] **Qué se hace:** `/api/sales/{id}/receipt/` con los datos del ticket (servicio de la Etapa 10).
 - **Listo cuando:** devuelve lo mismo que el servicio para cada tipo de venta.
 
-### 12.10 API de reportes
+### 12.10 API de reportes (pospuesto)
+- **Pospuesto:** se hará si la caja llega a necesitar indicadores; por ahora están en el dashboard del admin (11.1).
 - [ ] **Qué se hace:** `/api/reports/daily-sales/`, `/machine-usage/` e `/inventory/`, protegidos con `core.view_reports`, y `/api/products/low-stock/` con los productos por debajo del mínimo.
 - **Listo cuando:** devuelven los mismos números que el dashboard.
 

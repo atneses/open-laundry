@@ -447,7 +447,7 @@ erDiagram
 
 **Caja y pagos**
 - **CashSession:** uno por turno, y solo una caja abierta por sucursal (el siguiente turno abre cuando el anterior cierra); no se puede cobrar sin caja abierta. Se guarda quién la cerró (`closed_by`); una caja olvidada la puede cerrar desde el admin quien tenga `sales.view_all_cash_sessions`.
-- **Corte:** `expected_cash = opening_float + cash payments of the session − cash returned by sales cancelled in the session`; `card_total` igual con la tarjeta y se cuadra contra el reporte de Mercado Pago Point. Si lo contado no coincide con lo esperado, la nota es obligatoria.
+- **Corte:** `expected_cash = opening_float + cash payments of the session − cash returned by sales cancelled in the session`; `card_total` igual con la tarjeta y se cuadra contra el reporte de Mercado Pago Point. Si lo contado no coincide con lo esperado, la nota es obligatoria. El cierre es **a ciegas**: en la caja, el empleado captura lo contado sin ver lo esperado, y ve la diferencia al cerrar; quien tiene `sales.view_all_cash_sessions` sí ve lo esperado.
 - **Payment:** cada pago cuenta en el turno en que se recibió (`Payment.cash_session`), aunque la venta sea de otro turno (p. ej. el saldo de un encargo). Un pago no puede ser mayor que el saldo. En efectivo se puede guardar lo que entregó el cliente (`received`, nunca menor que el monto) para que el ticket muestre el cambio; con tarjeta no se guarda.
 - **Cancelar** una venta requiere caja abierta: ese turno devuelve sus pagos (`Sale.cancel_cash_session`), aunque se hayan cobrado en un turno anterior, cuyo corte no cambia. Los productos vendidos regresan al stock.
 - **Pago con tarjeta:** en el MVP se captura a mano la referencia del voucher; en la Fase 2 la integración con la API de Point la llena sola (`mp_payment_intent_id`).
@@ -543,14 +543,15 @@ Entrega estimada: 18/10/2026 18:00
 /api/services/                      catálogo + precios por modalidad
 /api/products/                      solo lectura + /low-stock/ (se crean y editan en el admin)
 /api/inventory/movements/           registrar entradas (receive_stock) + historial
-/api/sales/                         crear (con modalidad), pagar, cancelar
+/api/sales/                         cobrar en una sola petición (líneas, descuentos y pagos), cancelar
+/api/sales/{id}/payments/           pagos posteriores (saldo de un encargo)
 /api/sales/{id}/receipt/            datos del ticket
 /api/drop-off-orders/               listado por estado, cambiar estado, entregar
 /api/discounts/                     catálogo (gestionar / vigentes)
 /api/cash-sessions/                 abrir / cerrar turno, corte actual, historial
 /api/machines/                      listado con estado y ciclos pendientes
 /api/machines/{id}/start/           activa un ciclo (crea o usa el MachineCycle)
-/api/reports/daily-sales/  /machine-usage/  /inventory/
+/api/reports/daily-sales/  /machine-usage/  /inventory/   (pospuesto: los reportes están en el dashboard del admin)
 ```
 
 Usuarios y permisos, catálogo, descuentos y máquinas se administran en el admin, no por la API. En la Fase 2 se agrega el estado de la cajita para la caja (en línea / fuera de línea); el pulso de prueba es una acción del admin.
