@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-26 16:14-0600\n"
+"POT-Creation-Date: 2026-10-27 11:50-0600\n"
 "Language: es_MX\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -287,7 +287,8 @@ msgstr "bitácora de permisos"
 msgid "You cannot view reports."
 msgstr "No puedes ver reportes."
 
-#: core/reports.py:77 sales/services.py:50 sales/services.py:240
+#: core/reports.py:77 customers/views.py:40 sales/services.py:50
+#: sales/services.py:240
 msgid "Your user has no branch assigned."
 msgstr "Tu usuario no tiene sucursal asignada."
 
@@ -331,6 +332,10 @@ msgstr "clientes"
 #: customers/models.py:36
 msgid "Can register customers and manage drop-off orders"
 msgstr "Puede registrar clientes y gestionar encargos"
+
+#: customers/serializers.py:24
+msgid "A customer with this phone already exists."
+msgstr "Ya existe un cliente con este teléfono."
 
 #: inventory/admin.py:28 inventory/models.py:34
 msgid "stock"

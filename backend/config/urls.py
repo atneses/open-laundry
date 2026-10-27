@@ -14,6 +14,7 @@ api_urlpatterns = [
     path("", include("core.urls")),
     path("", include("sales.urls")),
     path("", include("inventory.urls")),
+    path("", include("customers.urls")),
 ]
 
 urlpatterns = [

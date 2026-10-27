@@ -649,6 +649,16 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - [ ] **Qué se hace:** `/api/customers/` con alta, edición y **búsqueda por teléfono o nombre**, protegida con `customers.manage_customers`.
 - **Listo cuando:** buscar los últimos dígitos del teléfono encuentra al cliente; sin el permiso responde 403.
 
+**Diferencias con lo planeado y decisiones:**
+- `/api/customers/` (`customers.views.CustomerViewSet`): crear, consultar, editar (`PUT`/`PATCH`) y listar, todo con `customers.manage_customers`. **No se borran** por la API (sus ventas los protegen): `DELETE` responde 405.
+- La sucursal se toma del usuario; la caja no la manda. Un usuario sin sucursal recibe 400.
+- `?search=` busca nombres o teléfonos que **contengan** el texto, como en el admin (los últimos dígitos encuentran el teléfono); las palabras separadas por espacio deben aparecer todas. Sin búsqueda, devuelve todos los clientes de la sucursal, paginados y por nombre.
+- El teléfono va solo con dígitos (como en el modelo); uno repetido en la sucursal responde 400 en `phone`.
+- La API usa directamente el modelo, sin función de servicio: es un alta y edición simple, sin reglas de negocio más allá de las validaciones del serializer.
+
+**Riesgos y pendientes:**
+- **Riesgo – alta simultánea:** si dos cajas registran el mismo teléfono al mismo tiempo, la restricción de la base de datos rechaza el segundo, pero la API respondería 500 en lugar de 400.
+
 ### 12.5 API de ventas
 - [ ] **Qué se hace:** `/api/sales/` para cobrar (con pagos y descuentos), consultar y cancelar ventas, y `/api/discounts/` con los descuentos vigentes que aplican a una venta (servicios de la Etapa 7).
 - **Listo cuando:** se cobra una venta en efectivo y tarjeta, con descuento, y se cancela por la API; cada acción sin su permiso responde 403 (pruebas).
