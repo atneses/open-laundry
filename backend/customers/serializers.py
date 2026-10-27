@@ -1,7 +1,10 @@
+from django.db import IntegrityError, transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from .models import Customer
+
+PHONE_TAKEN = _("A customer with this phone already exists.")
 
 
 class CustomerSerializer(serializers.ModelSerializer):
@@ -21,6 +24,23 @@ class CustomerSerializer(serializers.ModelSerializer):
             others = others.exclude(pk=self.instance.pk)
 
         if others.exists():
-            raise serializers.ValidationError(_("A customer with this phone already exists."))
+            raise serializers.ValidationError(PHONE_TAKEN)
 
         return phone
+
+    def save(self, **kwargs):
+        """Save; a phone registered at the same moment by another request is a 400 too.
+
+        Two requests can both pass ``validate_phone`` before either saves; the
+        database constraint then rejects the second one.
+        """
+
+        try:
+            # The savepoint keeps the request's transaction usable if the constraint fails.
+            with transaction.atomic():
+                return super().save(**kwargs)
+        except IntegrityError as error:
+            if "unique_phone_per_branch" not in str(error):
+                raise
+
+            raise serializers.ValidationError({"phone": [PHONE_TAKEN]}) from None

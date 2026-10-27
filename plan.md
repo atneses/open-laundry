@@ -646,7 +646,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Pendiente – precios por programa:** solo se devuelve el precio general; los precios por programa (`ServicePrice.program`, reservado para después) no se exponen todavía.
 
 ### 12.4 API de clientes
-- [ ] **Qué se hace:** `/api/customers/` con alta, edición y **búsqueda por teléfono o nombre**, protegida con `customers.manage_customers`.
+- [x] **Qué se hace:** `/api/customers/` con alta, edición y **búsqueda por teléfono o nombre**, protegida con `customers.manage_customers`.
 - **Listo cuando:** buscar los últimos dígitos del teléfono encuentra al cliente; sin el permiso responde 403.
 
 **Diferencias con lo planeado y decisiones:**
@@ -656,8 +656,9 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - El teléfono va solo con dígitos (como en el modelo); uno repetido en la sucursal responde 400 en `phone`.
 - La API usa directamente el modelo, sin función de servicio: es un alta y edición simple, sin reglas de negocio más allá de las validaciones del serializer.
 
-**Riesgos y pendientes:**
-- **Riesgo – alta simultánea:** si dos cajas registran el mismo teléfono al mismo tiempo, la restricción de la base de datos rechaza el segundo, pero la API respondería 500 en lugar de 400.
+- **Alta simultánea:** si dos peticiones registran el mismo teléfono al mismo tiempo (dos cajas o un doble clic), las dos pasan la revisión del serializer; la restricción de la base de datos rechaza la segunda y `CustomerSerializer.save` la convierte en el mismo 400 en `phone`.
+
+**Riesgos y pendientes:** Ninguno identificado.
 
 ### 12.5 API de ventas
 - [ ] **Qué se hace:** `/api/sales/` para cobrar (con pagos y descuentos), consultar y cancelar ventas, y `/api/discounts/` con los descuentos vigentes que aplican a una venta (servicios de la Etapa 7).

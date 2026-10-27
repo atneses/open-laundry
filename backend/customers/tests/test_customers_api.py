@@ -8,6 +8,7 @@ from rest_framework.test import APIClient
 from core.models import Branch
 from core.roles import EMPLOYEE_ROLE
 from customers.models import Customer
+from customers.serializers import CustomerSerializer
 
 pytestmark = pytest.mark.django_db
 
@@ -63,6 +64,18 @@ def test_register_a_repeated_phone_is_rejected(client, branch):
 
     assert response.status_code == 400
     assert "phone" in response.data
+
+
+def test_a_phone_registered_at_the_same_moment_is_rejected(client, branch, monkeypatch):
+    # The other request saved after this one passed its phone check.
+    monkeypatch.setattr(CustomerSerializer, "validate_phone", lambda self, phone: phone)
+    customer(branch)
+
+    response = client.post(URL, {"name": "Otra Ana", "phone": "5512345678"})
+
+    assert response.status_code == 400
+    assert "phone" in response.data
+    assert Customer.objects.count() == 1
 
 
 def test_the_same_phone_is_allowed_in_another_branch(client, other_branch):
