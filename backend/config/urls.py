@@ -13,6 +13,7 @@ api_urlpatterns = [
     path("docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="docs"),
     path("", include("core.urls")),
     path("", include("sales.urls")),
+    path("", include("inventory.urls")),
 ]
 
 urlpatterns = [

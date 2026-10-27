@@ -1,3 +1,4 @@
+from django.db.models import Exists, OuterRef, Prefetch
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status, viewsets
@@ -7,13 +8,19 @@ from rest_framework.response import Response
 
 from core.api import HasPermission
 
-from .models import CashSession
+from .models import CashSession, Service, ServicePrice
 from .serializers import (
     CashSessionSerializer,
     CloseCashSessionSerializer,
     OpenCashSessionSerializer,
+    ServiceSerializer,
 )
-from .services import VIEW_ALL_CASH_SESSIONS, close_cash_session, open_cash_session
+from .services import (
+    VIEW_ALL_CASH_SESSIONS,
+    close_cash_session,
+    create_sale,
+    open_cash_session,
+)
 
 
 class CashSessionViewSet(
@@ -83,3 +90,32 @@ class CashSessionViewSet(
         session = close_cash_session(session, request.user, **data.validated_data)
 
         return Response(self.get_serializer(session).data)
+
+
+class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
+    """Active services with a price in the user's branch, for the POS to build a sale.
+
+    Read only: the catalog is edited in the admin.
+    """
+
+    serializer_class = ServiceSerializer
+    permission_classes = [HasPermission(*create_sale.required_perms)]
+
+    def get_queryset(self):
+        # drf-spectacular builds the schema without a logged-in user.
+        if getattr(self, "swagger_fake_view", False):
+            return Service.objects.none()
+
+        # The general price (no program) of the branch, as charging uses it.
+        current_prices = ServicePrice.objects.filter(
+            branch_id=self.request.user.branch_id,
+            program="",
+            is_active=True,
+        ).order_by("mode")
+
+        return (
+            Service.objects.filter(is_active=True)
+            .filter(Exists(current_prices.filter(service=OuterRef("pk"))))
+            .prefetch_related(Prefetch("prices", current_prices, to_attr="current_prices"))
+            .order_by("name")
+        )

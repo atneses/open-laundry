@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-26 14:59-0600\n"
+"POT-Creation-Date: 2026-10-26 16:14-0600\n"
 "Language: es_MX\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -243,7 +243,7 @@ msgstr "nombre"
 msgid "last name"
 msgstr "apellidos"
 
-#: core/models.py:116 core/models.py:136 sales/models.py:186
+#: core/models.py:116 core/models.py:141 sales/models.py:186
 msgid "user"
 msgstr "usuario"
 
@@ -259,27 +259,27 @@ msgstr "Puede gestionar usuarios, roles y permisos"
 msgid "Can view reports"
 msgstr "Puede ver reportes"
 
-#: core/models.py:131
+#: core/models.py:136
 msgid "Granted"
 msgstr "Otorgado"
 
-#: core/models.py:132
+#: core/models.py:137
 msgid "Revoked"
 msgstr "Revocado"
 
-#: core/models.py:142
+#: core/models.py:147
 msgid "permission"
 msgstr "permiso"
 
-#: core/models.py:146
+#: core/models.py:151
 msgid "action"
 msgstr "acción"
 
-#: core/models.py:149
+#: core/models.py:154
 msgid "permission log entry"
 msgstr "registro de permisos"
 
-#: core/models.py:150
+#: core/models.py:155
 msgid "permission log"
 msgstr "bitácora de permisos"
 
@@ -1126,15 +1126,15 @@ msgstr "Puede entregar un encargo con saldo pendiente"
 msgid "You cannot print receipts."
 msgstr "No puedes imprimir tickets."
 
-#: sales/receipts.py:144
+#: sales/receipts.py:143
 msgid "Detergent and softener (promotion)"
 msgstr "Detergente y suavizante (promoción)"
 
-#: sales/receipts.py:181
+#: sales/receipts.py:180
 msgid "Advance"
 msgstr "Anticipo"
 
-#: sales/receipts.py:181
+#: sales/receipts.py:180
 msgid "Payment"
 msgstr "Pago"
 
@@ -1295,7 +1295,7 @@ msgstr "%(service)s no tiene precio para esta modalidad."
 msgid "%(product)s is not for sale."
 msgstr "%(product)s no está a la venta."
 
-#: sales/views.py:71
+#: sales/views.py:78
 msgid "There is no open cash session."
 msgstr "No hay caja abierta."
 

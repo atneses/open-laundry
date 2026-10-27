@@ -1,7 +1,7 @@
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from .models import CashSession
+from .models import CashSession, Service, ServicePrice
 from .services import VIEW_ALL_CASH_SESSIONS, session_totals
 
 # Totals hidden from the cashier while the session is open (blind close).
@@ -87,3 +87,32 @@ class OpenCashSessionSerializer(serializers.Serializer):
 class CloseCashSessionSerializer(serializers.Serializer):
     counted_cash = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
     notes = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class ServicePriceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServicePrice
+        fields = ["mode", "price"]
+        read_only_fields = fields
+
+
+class ServiceSerializer(serializers.ModelSerializer):
+    """A service with its current price for each mode it is sold in, in the user's branch.
+
+    ``prices`` comes from the view's prefetch (``current_prices``); a mode without a
+    price is not listed.
+    """
+
+    prices = ServicePriceSerializer(source="current_prices", many=True, read_only=True)
+
+    class Meta:
+        model = Service
+        fields = [
+            "id",
+            "name",
+            "kind",
+            "unit",
+            "uses_machine",
+            "prices",
+        ]
+        read_only_fields = fields

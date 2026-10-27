@@ -621,7 +621,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Pendiente – variables nuevas:** agregar `API_PAGE_SIZE` y `API_MAX_PAGE_SIZE` al `.env` si se quieren valores distintos de 25 y 100 (sin ellas se usan esos).
 
 ### 12.2 API de caja
-- [ ] **Qué se hace:** `/api/cash-sessions/` para abrir y cerrar caja, ver el corte actual y el historial, protegida con `sales.operate_cash_session`. El empleado ve y cierra solo su caja; con `sales.view_all_cash_sessions` se ven todas.
+- [x] **Qué se hace:** `/api/cash-sessions/` para abrir y cerrar caja, ver el corte actual y el historial, protegida con `sales.operate_cash_session`. El empleado ve y cierra solo su caja; con `sales.view_all_cash_sessions` se ven todas.
 - **Listo cuando:** sin el permiso responde 403, y un empleado no puede ver ni cerrar cortes de otros (pruebas).
 
 **Diferencias con lo planeado y decisiones:**
@@ -634,8 +634,16 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Riesgo – cobros en caja ajena:** si un empleado cobra en la caja que abrió otro, el faltante o sobrante de esa caja queda a nombre de quien la abrió.
 
 ### 12.3 API del catálogo
-- [ ] **Qué se hace:** `/api/services/` (servicios activos con su precio por modalidad) y `/api/products/` (productos a la venta), de solo lectura. El catálogo se sigue editando en el admin.
+- [x] **Qué se hace:** `/api/services/` (servicios activos con su precio por modalidad) y `/api/products/` (productos a la venta), de solo lectura. El catálogo se sigue editando en el admin.
 - **Listo cuando:** al cambiar un precio en el admin, la API devuelve el nuevo.
+
+**Diferencias con lo planeado y decisiones:**
+- Ambas listas piden `sales.charge` (son para cobrar), van paginadas como el resto de la API y se ordenan por nombre.
+- `/api/services/` (`sales.views.ServiceViewSet`): servicios activos con precio general (sin programa) en al menos una modalidad de la sucursal del usuario; cada uno trae `prices`, una lista de `{mode, price}` con una entrada por modalidad con precio (una modalidad nueva aparece sin cambiar la API). Los precios se cargan con `prefetch_related`.
+- `/api/products/` (`inventory.views.ProductViewSet`): productos a la venta de la sucursal, con su `stock` para que la caja avise antes de cobrar.
+
+**Riesgos y pendientes:**
+- **Pendiente – precios por programa:** solo se devuelve el precio general; los precios por programa (`ServicePrice.program`, reservado para después) no se exponen todavía.
 
 ### 12.4 API de clientes
 - [ ] **Qué se hace:** `/api/customers/` con alta, edición y **búsqueda por teléfono o nombre**, protegida con `customers.manage_customers`.
