@@ -323,6 +323,15 @@ class Sale(BaseModel):
         help_text=_("Session that gave the money back; its cash count subtracts the payments."),
     )
     cancel_reason = models.TextField(_("cancellation reason"), blank=True)
+    idempotency_key = models.UUIDField(
+        _("idempotency key"),
+        null=True,
+        blank=True,
+        unique=True,
+        editable=False,
+        help_text=_("Key the POS sent with the request, so a retry does not repeat it."),
+    )
+    request_hash = models.CharField(_("request hash"), max_length=64, blank=True, editable=False)
 
     class Meta:
         verbose_name = _("sale")
@@ -455,6 +464,15 @@ class Payment(BaseModel):
         blank=True,
         help_text=_("Cash the customer handed over; the change is this minus the amount."),
     )
+    idempotency_key = models.UUIDField(
+        _("idempotency key"),
+        null=True,
+        blank=True,
+        unique=True,
+        editable=False,
+        help_text=_("Key the POS sent with the request, so a retry does not repeat it."),
+    )
+    request_hash = models.CharField(_("request hash"), max_length=64, blank=True, editable=False)
 
     class Meta:
         verbose_name = _("payment")

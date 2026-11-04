@@ -9,6 +9,7 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext
 
 from core.models import Branch
 from core.roles import ADMIN_ROLE, EMPLOYEE_ROLE
@@ -349,3 +350,44 @@ def test_sale_detail_shows_its_discounts_in_admin(admin_client, cashier, sale, b
     response = admin_client.get(reverse("admin:sales_sale_change", args=[sale.pk]))
 
     assert "15 off" in response.content.decode()
+
+
+@pytest.mark.parametrize(
+    ("fields", "message"),
+    [
+        ({"is_active": False}, "The discount %(discount)s is not active."),
+        ({"valid_until": yesterday()}, "The discount %(discount)s expired."),
+        ({"valid_from": tomorrow()}, "The discount %(discount)s is not in force yet."),
+        ({"mode": Mode.DROP_OFF}, "The discount %(discount)s does not apply to this mode."),
+    ],
+    ids=["inactive", "expired", "not-started", "other-mode"],
+)
+def test_a_rejected_discount_says_which_one_and_why(cashier, sale, branch, fields, message):
+    discount = make_discount(branch, **fields)
+
+    with pytest.raises(ValidationError) as error:
+        apply_discount(cashier, sale, discount)
+
+    assert error.value.messages == [gettext(message) % {"discount": "10 off"}]
+
+
+def test_a_discount_for_other_services_says_which_one(cashier, sale, branch):
+    ironing = Service.objects.create(name="Ironing", kind="other")
+    discount = make_discount(branch, services=[ironing])
+
+    with pytest.raises(ValidationError) as error:
+        apply_discount(cashier, sale, discount)
+
+    message = gettext("The discount %(discount)s does not apply to the services of this sale.")
+    assert error.value.messages == [message % {"discount": "10 off"}]
+
+
+def test_a_discount_applied_twice_says_which_one(cashier, sale, branch):
+    discount = make_discount(branch)
+    apply_discount(cashier, sale, discount)
+
+    with pytest.raises(ValidationError) as error:
+        apply_discount(cashier, sale, discount)
+
+    message = gettext("The discount %(discount)s is already applied.")
+    assert error.value.messages == [message % {"discount": "10 off"}]

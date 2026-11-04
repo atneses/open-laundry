@@ -664,6 +664,23 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - [ ] **Qué se hace:** `/api/sales/` para cobrar (con pagos y descuentos), consultar y cancelar ventas, y `/api/discounts/` con los descuentos vigentes que aplican a una venta (servicios de la Etapa 7).
 - **Listo cuando:** se cobra una venta en efectivo y tarjeta, con descuento, y se cancela por la API; cada acción sin su permiso responde 403 (pruebas).
 
+**Diferencias con lo planeado y decisiones:**
+- **Endpoints** (`sales.views.SaleViewSet` y `DiscountViewSet`):
+  - `POST /api/sales/`: cobro en una sola petición (`mode`, `customer`, `items`, `discounts`, `payments`, `drop_off`). Lo hace el servicio nuevo `charge_sale`: crea la venta, aplica los descuentos en el orden enviado y luego los pagos; si algo falla no se guarda nada. Responde 201 con el detalle.
+  - `POST /api/sales/{id}/payments/`: pago posterior de cualquier venta no cancelada con saldo (autoservicio o encargo). Responde 201 con el detalle de la venta.
+  - `POST /api/sales/{id}/cancel/`: cancela con `reason`; pide `sales.cancel_sale` (cualquier venta de la sucursal, con las reglas del servicio).
+  - `GET /api/sales/` (resumen) y `GET /api/sales/{id}/` (detalle con líneas y sus ciclos, descuentos, pagos y encargo). El empleado ve todas las ventas de su sucursal. Filtros: `search` (folio, nombre o teléfono del cliente), `status`, `mode`, `has_balance` y `date_from`/`date_to`. `has_balance=true` da las ventas no canceladas con saldo; `has_balance=false`, las que no deben nada (sin saldo o canceladas).
+  - `GET /api/discounts/?mode=...&services=1&services=2`: descuentos que aplican al carrito antes de cobrar (servicio nuevo `discounts_for_cart`, misma regla que `available_discounts`); pide `sales.apply_discount`.
+- **Permisos:** lista, detalle, cobro y pagos piden `sales.charge`; un cobro con descuentos además `sales.apply_discount` (sin él, 403 y no se guarda nada).
+- **Descuento que ya no aplica:** se rechaza el cobro con un mensaje que nombra el descuento y el motivo (inactivo, vencido, aún no vigente, otra modalidad, otros servicios, ya aplicado, no reduce la venta), para que el cajero sepa cuál quitar. `apply_discount` da ahora esos mensajes.
+- **Idempotencia** (`core.api.run_once`): el cobro y los pagos exigen el encabezado `Idempotency-Key` (un UUID nuevo por cobro o pago; el mismo al reintentar). `Sale` y `Payment` guardan la clave (única) y una huella de los datos. La misma clave con los mismos datos devuelve lo ya creado (201); con otros datos, o usada en otra venta, responde 409. Sin la clave, 400.
+- **Referencia del voucher:** sigue siendo opcional.
+- En el esquema de la API, los campos `status` de venta, encargo y ciclo tienen nombres propios (`ENUM_NAME_OVERRIDES`).
+
+**Riesgos y pendientes:**
+- **Pendiente – la caja debe generar las claves:** la Etapa 13 tiene que crear un UUID por cobro y por pago, y reutilizarlo al reintentar; si genera uno nuevo en cada clic, la protección no sirve.
+- **Riesgo – error en un pago entre varios:** si el cobro trae varios pagos y uno falla, el error dice el campo (`amount`) pero no cuál de los pagos fue.
+
 ### 12.6 API de encargos
 - [ ] **Qué se hace:** `/api/drop-off-orders/` para recibir, cambiar de estado y entregar encargos (servicios de la Etapa 8).
 - **Listo cuando:** un encargo completo funciona por la API; entregar con saldo sin `sales.deliver_with_balance` responde 403.

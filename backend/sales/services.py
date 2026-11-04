@@ -1,11 +1,11 @@
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import Q, Sum
+from django.db.models import Q, QuerySet, Sum
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -31,6 +31,8 @@ from .models import (
 
 if TYPE_CHECKING:
     from datetime import datetime
+
+    from customers.models import Customer
 
 OPERATE_CASH_SESSION = "sales.operate_cash_session"
 VIEW_ALL_CASH_SESSIONS = "sales.view_all_cash_sessions"
@@ -159,7 +161,7 @@ def create_sale(
     user,
     mode: str,
     items: list[ItemRequest],
-    customer=None,
+    customer: Customer | None = None,
     drop_off: DropOffRequest | None = None,
 ) -> Sale:
     """Charge a sale in the open cash session of the user's branch.
@@ -229,6 +231,63 @@ def create_sale(
                     created_by=user,
                 ),
             )
+
+    return sale
+
+
+@dataclass
+class PaymentRequest:
+    """A payment to record: how much, how, and for cash what was handed over."""
+
+    method: str
+    amount: Decimal
+    reference: str = ""
+    received: Decimal | None = None
+
+
+@dataclass
+class ChargeRequest:
+    """Everything the POS sends to charge a sale in one go."""
+
+    mode: str
+    items: list[ItemRequest]
+    customer: Customer | None = None
+    drop_off: DropOffRequest | None = None
+    discounts: list[Discount] = field(default_factory=list)
+    payments: list[PaymentRequest] = field(default_factory=list)
+
+
+@requires_perm(CHARGE, message=_("You cannot charge sales."))
+@transaction.atomic
+def charge_sale(user, charge: ChargeRequest) -> Sale:
+    """Charge a sale with its lines, then its discounts and its payments, in that order.
+
+    Nothing is saved if any step fails, so a rejected discount or payment never
+    leaves a sale half charged. Each step checks its own permission.
+    """
+
+    sale = create_sale(
+        user=user,
+        mode=charge.mode,
+        items=charge.items,
+        customer=charge.customer,
+        drop_off=charge.drop_off,
+    )
+
+    for discount in charge.discounts:
+        apply_discount(user, sale, discount)
+
+    for payment in charge.payments:
+        add_payment(
+            user,
+            sale,
+            payment.method,
+            payment.amount,
+            payment.reference,
+            received=payment.received,
+        )
+
+    sale.refresh_from_db()
 
     return sale
 
@@ -378,18 +437,38 @@ def available_discounts(sale: Sale):
     if sale.status != Sale.Status.PENDING:
         return Discount.objects.none()
 
-    today = timezone.localdate()
     services = sale.items.filter(service__isnull=False).values("service_id")
 
+    return _discounts_for(sale.branch_id, sale.mode, services).exclude(applied__sale=sale)
+
+
+@requires_perm(APPLY_DISCOUNT, message=_("You cannot apply discounts."))
+def discounts_for_cart(user, mode: str, services) -> QuerySet[Discount]:
+    """Discounts that apply to a sale not charged yet, from its mode and services.
+
+    Same rule as ``available_discounts``, so the POS can offer them while it builds
+    the sale; ``charge_sale`` checks them again.
+    """
+
+    return _discounts_for(user.branch_id, mode, services)
+
+
+def _discounts_for(branch_id, mode: str, services) -> QuerySet[Discount]:
+    """Active discounts in force today for the branch and mode that apply to ``services``.
+
+    A discount on services needs at least one of its services among ``services``.
+    """
+
+    today = timezone.localdate()
+
     return (
-        Discount.objects.filter(branch_id=sale.branch_id, is_active=True)
-        .filter(Q(mode="") | Q(mode=sale.mode))
+        Discount.objects.filter(branch_id=branch_id, is_active=True)
+        .filter(Q(mode="") | Q(mode=mode))
         .filter(Q(valid_from__isnull=True) | Q(valid_from__lte=today))
         .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=today))
         .filter(
             Q(scope=Discount.Scope.SALE) | Q(scope=Discount.Scope.SERVICE, services__in=services),
         )
-        .exclude(applied__sale=sale)
         .distinct()
     )
 
@@ -407,15 +486,13 @@ def apply_discount(user, sale: Sale, discount: Discount) -> list[AppliedDiscount
     if sale.status != Sale.Status.PENDING:
         raise ValidationError(_("Discounts are applied before the first payment."))
 
-    discount = available_discounts(sale).filter(pk=discount.pk).first()
-
-    if discount is None:
-        raise ValidationError(_("This discount does not apply to this sale."))
-
+    _check_discount_applies(sale, discount)
     applied = _discount_rows(sale, discount)
 
     if not applied:
-        raise ValidationError(_("This discount does not reduce the sale."))
+        raise ValidationError(
+            _("The discount %(discount)s does not reduce this sale.") % {"discount": discount},
+        )
 
     for row in applied:
         # bulk_create skips BaseModel.save, so set the user here.
@@ -432,6 +509,47 @@ def apply_discount(user, sale: Sale, discount: Discount) -> list[AppliedDiscount
     )
 
     return applied
+
+
+def _check_discount_applies(sale: Sale, discount: Discount) -> None:
+    """Raise why the discount cannot be applied to the sale, naming the discount.
+
+    The cashier sees which discount to remove, e.g. "The discount 10% off expired."
+    """
+
+    today = timezone.localdate()
+    services = sale.items.filter(service__isnull=False).values("service_id")
+    reasons = [
+        (
+            discount.branch_id != sale.branch_id or not discount.is_active,
+            _("The discount %(discount)s is not active."),
+        ),
+        (
+            discount.valid_until is not None and discount.valid_until < today,
+            _("The discount %(discount)s expired."),
+        ),
+        (
+            discount.valid_from is not None and discount.valid_from > today,
+            _("The discount %(discount)s is not in force yet."),
+        ),
+        (
+            discount.mode not in ("", sale.mode),
+            _("The discount %(discount)s does not apply to this mode."),
+        ),
+        (
+            discount.scope == Discount.Scope.SERVICE
+            and not discount.services.filter(pk__in=services).exists(),
+            _("The discount %(discount)s does not apply to the services of this sale."),
+        ),
+        (
+            sale.applied_discounts.filter(discount=discount).exists(),
+            _("The discount %(discount)s is already applied."),
+        ),
+    ]
+
+    for failed, message in reasons:
+        if failed:
+            raise ValidationError(message % {"discount": discount})
 
 
 def _discount_rows(sale: Sale, discount: Discount) -> list[AppliedDiscount]:

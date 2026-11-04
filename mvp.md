@@ -451,6 +451,7 @@ erDiagram
 - **Payment:** cada pago cuenta en el turno en que se recibió (`Payment.cash_session`), aunque la venta sea de otro turno (p. ej. el saldo de un encargo). Un pago no puede ser mayor que el saldo. En efectivo se puede guardar lo que entregó el cliente (`received`, nunca menor que el monto) para que el ticket muestre el cambio; con tarjeta no se guarda.
 - **Cancelar** una venta requiere caja abierta: ese turno devuelve sus pagos (`Sale.cancel_cash_session`), aunque se hayan cobrado en un turno anterior, cuyo corte no cambia. Los productos vendidos regresan al stock.
 - **Pago con tarjeta:** en el MVP se captura a mano la referencia del voucher; en la Fase 2 la integración con la API de Point la llena sola (`mp_payment_intent_id`).
+- **Sin cobros duplicados:** el cobro y los pagos por la API llevan una clave de idempotencia (`Idempotency-Key`); un reintento con la misma clave (doble clic, red lenta) devuelve lo ya registrado en lugar de cobrar otra vez.
 
 **Usuarios y máquinas**
 - **User:** una cuenta por persona; al irse se desactiva (no se borra). `role` = `Group` de Django; `extra_permissions` = `user_permissions`.
@@ -545,9 +546,10 @@ Entrega estimada: 18/10/2026 18:00
 /api/inventory/movements/           registrar entradas (receive_stock) + historial
 /api/sales/                         cobrar en una sola petición (líneas, descuentos y pagos), cancelar
 /api/sales/{id}/payments/           pagos posteriores (saldo de un encargo)
+/api/sales/{id}/cancel/             cancelar con motivo
 /api/sales/{id}/receipt/            datos del ticket
 /api/drop-off-orders/               listado por estado, cambiar estado, entregar
-/api/discounts/                     catálogo (gestionar / vigentes)
+/api/discounts/                     descuentos que aplican al carrito (?mode=&services=)
 /api/cash-sessions/                 abrir / cerrar turno, corte actual, historial
 /api/machines/                      listado con estado y ciclos pendientes
 /api/machines/{id}/start/           activa un ciclo (crea o usa el MachineCycle)
