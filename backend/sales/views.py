@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from django.db.models import Exists, OuterRef, Prefetch, Q, QuerySet
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.types import OpenApiTypes
@@ -13,18 +15,22 @@ from .models import (
     AppliedDiscount,
     CashSession,
     Discount,
+    DropOffOrder,
     Payment,
     Sale,
     Service,
     ServicePrice,
 )
 from .serializers import (
+    AdvanceDropOffOrderSerializer,
     CancelSaleSerializer,
     CartDiscountsQuerySerializer,
     CashSessionSerializer,
     ChargeSerializer,
     CloseCashSessionSerializer,
     DiscountSerializer,
+    DropOffOrderFilterSerializer,
+    DropOffOrderSerializer,
     OpenCashSessionSerializer,
     PaymentRequestSerializer,
     SaleDetailSerializer,
@@ -35,13 +41,18 @@ from .serializers import (
 from .services import (
     VIEW_ALL_CASH_SESSIONS,
     add_payment,
+    advance_drop_off_order,
     cancel_sale,
     charge_sale,
     close_cash_session,
     create_sale,
+    deliver_drop_off_order,
     discounts_for_cart,
     open_cash_session,
 )
+
+if TYPE_CHECKING:
+    from rest_framework.request import Request
 
 IDEMPOTENCY_KEY = OpenApiParameter(
     name=IDEMPOTENCY_HEADER,
@@ -236,7 +247,7 @@ class SaleViewSet(
         responses={201: SaleDetailSerializer},
         parameters=[IDEMPOTENCY_KEY],
     )
-    def create(self, request):
+    def create(self, request: Request) -> Response:
         """Charge a sale in one go: lines, then discounts, then payments; all or nothing."""
 
         data = ChargeSerializer(data=request.data)
@@ -244,10 +255,10 @@ class SaleViewSet(
         sale = run_once(
             request=request,
             previous_results=Sale.objects.filter(branch_id=request.user.branch_id),
-            create=lambda: charge_sale(request.user, data.to_request()),
+            create=lambda: charge_sale(user=request.user, charge=data.to_request()),
         )
 
-        return self._detail(sale, status.HTTP_201_CREATED)
+        return self._detail(sale=sale, status_code=status.HTTP_201_CREATED)
 
     @extend_schema(
         request=PaymentRequestSerializer,
@@ -255,7 +266,7 @@ class SaleViewSet(
         parameters=[IDEMPOTENCY_KEY],
     )
     @action(detail=True, methods=["post"])
-    def payments(self, request, pk=None):
+    def payments(self, request: Request, pk: str | None = None) -> Response:
         """Record a later payment, such as the balance of a drop-off order."""
 
         sale = self.get_object()
@@ -266,16 +277,16 @@ class SaleViewSet(
             request=request,
             previous_results=Payment.objects.filter(sale=sale),
             create=lambda: add_payment(
-                request.user,
-                sale,
-                payment.method,
-                payment.amount,
-                payment.reference,
+                user=request.user,
+                sale=sale,
+                method=payment.method,
+                amount=payment.amount,
+                reference=payment.reference,
                 received=payment.received,
             ),
         )
 
-        return self._detail(sale, status.HTTP_201_CREATED)
+        return self._detail(sale=sale, status_code=status.HTTP_201_CREATED)
 
     @extend_schema(request=CancelSaleSerializer, responses={200: SaleDetailSerializer})
     @action(detail=True, methods=["post"])
@@ -313,3 +324,83 @@ class DiscountViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             query.validated_data["mode"],
             query.validated_data.get("services", []),
         )
+
+
+@extend_schema_view(list=extend_schema(parameters=[DropOffOrderFilterSerializer]))
+class DropOffOrderViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Drop-off orders of the user's branch: list, see one, move forward and deliver.
+
+    Without ``?status=`` or ``?search=`` the list has only the pending orders (not
+    delivered, sale not cancelled). ``?search=`` matches the sale number or the
+    customer's name or phone, in any status.
+    """
+
+    serializer_class = DropOffOrderSerializer
+    permission_classes = [HasPermission(*advance_drop_off_order.required_perms)]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["sale__number", "sale__customer__name", "sale__customer__phone"]
+
+    def get_queryset(self) -> QuerySet[DropOffOrder]:
+        # drf-spectacular builds the schema without a logged-in user.
+        if getattr(self, "swagger_fake_view", False):
+            return DropOffOrder.objects.none()
+
+        orders = (
+            DropOffOrder.objects.filter(sale__branch_id=self.request.user.branch_id)
+            .select_related("sale__customer")
+            .order_by("promised_at", "pk")
+        )
+
+        if self.action == "list":
+            return self._filter(orders)
+
+        return orders
+
+    def _filter(self, orders: QuerySet[DropOffOrder]) -> QuerySet[DropOffOrder]:
+        """Apply ``?status=``; without it or a search, only the pending orders."""
+
+        query = DropOffOrderFilterSerializer(data=self.request.query_params)
+        query.is_valid(raise_exception=True)
+        data = query.validated_data
+
+        if "status" in data:
+            return orders.filter(status=data["status"])
+
+        if filters.SearchFilter().get_search_terms(self.request):
+            return orders
+
+        return orders.exclude(status=DropOffOrder.Status.DELIVERED).exclude(
+            sale__status=Sale.Status.CANCELLED,
+        )
+
+    @extend_schema(
+        request=AdvanceDropOffOrderSerializer,
+        responses={200: DropOffOrderSerializer},
+    )
+    @action(detail=True, methods=["post"])
+    def advance(self, request: Request, pk: str | None = None) -> Response:
+        """Move the order to the next status, sent in ``status``."""
+
+        order = self.get_object()
+        data = AdvanceDropOffOrderSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        order = advance_drop_off_order(
+            user=request.user,
+            order=order,
+            to_status=data.validated_data["status"],
+        )
+
+        return Response(DropOffOrderSerializer(order).data)
+
+    @extend_schema(request=None, responses={200: DropOffOrderSerializer})
+    @action(detail=True, methods=["post"])
+    def deliver(self, request: Request, pk: str | None = None) -> Response:
+        """Deliver a ready order; with a balance it needs sales.deliver_with_balance."""
+
+        order = deliver_drop_off_order(user=request.user, order=self.get_object())
+
+        return Response(DropOffOrderSerializer(order).data)

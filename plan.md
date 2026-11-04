@@ -661,7 +661,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Riesgos y pendientes:** Ninguno identificado.
 
 ### 12.5 API de ventas
-- [ ] **Qué se hace:** `/api/sales/` para cobrar (con pagos y descuentos), consultar y cancelar ventas, y `/api/discounts/` con los descuentos vigentes que aplican a una venta (servicios de la Etapa 7).
+- [x] **Qué se hace:** `/api/sales/` para cobrar (con pagos y descuentos), consultar y cancelar ventas, y `/api/discounts/` con los descuentos vigentes que aplican a una venta (servicios de la Etapa 7).
 - **Listo cuando:** se cobra una venta en efectivo y tarjeta, con descuento, y se cancela por la API; cada acción sin su permiso responde 403 (pruebas).
 
 **Diferencias con lo planeado y decisiones:**
@@ -682,8 +682,28 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Riesgo – error en un pago entre varios:** si el cobro trae varios pagos y uno falla, el error dice el campo (`amount`) pero no cuál de los pagos fue.
 
 ### 12.6 API de encargos
-- [ ] **Qué se hace:** `/api/drop-off-orders/` para recibir, cambiar de estado y entregar encargos (servicios de la Etapa 8).
+- [x] **Qué se hace:** `/api/drop-off-orders/` para recibir, cambiar de estado y entregar encargos (servicios de la Etapa 8).
 - **Listo cuando:** un encargo completo funciona por la API; entregar con saldo sin `sales.deliver_with_balance` responde 403.
+
+**Decisiones (antes de empezar):**
+- **No se reciben encargos aquí:** se crean al cobrar (`POST /api/sales/` con `drop_off`) y el saldo se paga en `POST /api/sales/{id}/payments/`. Entregar con saldo pendiente es: pagar y después entregar (dos peticiones).
+- **Endpoints** (`DropOffOrderViewSet`, todos con `customers.manage_customers`):
+  - `GET /api/drop-off-orders/`: encargos de la sucursal por fecha promesa, con folio, cliente (nombre y teléfono), saldo, estado, estado de la venta (`sale_status`), fecha promesa y notas. Por defecto, solo los pendientes (no entregados y con la venta vigente). Filtros: `?status=` y `?search=` (folio, nombre o teléfono del cliente).
+  - `GET /api/drop-off-orders/{id}/`: el mismo encargo.
+  - `POST /api/drop-off-orders/{id}/advance/` con `{"status": "<siguiente>"}`.
+  - `POST /api/drop-off-orders/{id}/deliver/`; con saldo, sin `sales.deliver_with_balance`, responde 403.
+- **Reintentos sin `Idempotency-Key`:** la caja manda en `advance` el estado al que quiere llegar. Si el encargo ya está en ese estado, responde 200 sin cambiar nada (era un reintento); si no es el siguiente, 400. Así un reintento no avanza dos pasos. En `deliver`, uno ya entregado también responde 200 sin cambiar nada.
+- **Encargos de ventas canceladas:** no salen en la lista por defecto (no se pueden avanzar ni entregar, y se quedarían ahí para siempre), pero sí al buscar o filtrar por estado, con `sale_status` para que la caja los marque como cancelados. Así el empleado sabe que se canceló cuando llega el cliente. `advance` y `deliver` sobre uno de ellos responden 400.
+- **Sin editar** fecha promesa ni notas por la API (no está en el MVP).
+
+**Diferencias con lo planeado:**
+- La regla de reintento está en los servicios de la Etapa 8, no en la vista, para que se revise con la venta bloqueada (dos peticiones simultáneas no avanzan dos pasos): `advance_drop_off_order` recibe `to_status` (opcional; sin él funciona como antes) y `deliver_drop_off_order` devuelve sin cambios un encargo ya entregado (antes era error; se ajustó su prueba).
+- La búsqueda (`?search=`) incluye todos los estados, también los entregados.
+
+**Riesgos y pendientes:**
+- **Pendiente – la caja debe mandar el estado destino** en `advance` (el que muestra el botón) y no calcularlo después de recargar; si no, un reintento sí podría avanzar dos pasos.
+- **Riesgo – entregar con saldo en dos pasos:** si el pago se guarda y la entrega falla (p. ej. se cae la red), el encargo queda pagado y sin entregar; se reintenta la entrega sin cobrar de nuevo.
+- **Pendiente – prueba de concurrencia:** que dos `advance` simultáneos con el mismo destino no avancen dos pasos lo garantiza el bloqueo de la venta (`_lock_drop_off_order`), pero no hay prueba: requiere dos hilos con conexiones distintas y pruebas con transacciones reales (`transaction=True`), más lentas y propensas a fallar al azar.
 
 ### 12.7 API de máquinas
 - [ ] **Qué se hace:** `/api/machines/` con el estado de cada máquina y los ciclos pendientes, y la acción de activar un ciclo (servicios de la Etapa 9, requiere `machines.start_machine`).

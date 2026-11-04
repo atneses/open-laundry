@@ -363,3 +363,49 @@ class SaleDetailSerializer(SaleListSerializer):
             entry["amount"] += row.amount
 
         return SaleDiscountSerializer(totals.values(), many=True).data
+
+
+class DropOffOrderSerializer(serializers.ModelSerializer):
+    """A drop-off order with its sale's number, customer, balance and status."""
+
+    number = serializers.CharField(source="sale.number", read_only=True)
+    customer = SaleCustomerSerializer(source="sale.customer", read_only=True)
+    balance = serializers.DecimalField(
+        source="sale.balance",
+        max_digits=10,
+        decimal_places=2,
+        read_only=True,
+    )
+    sale_status = serializers.ChoiceField(
+        source="sale.status",
+        choices=Sale.Status.choices,
+        read_only=True,
+    )
+
+    class Meta:
+        model = DropOffOrder
+        fields = [
+            "id",
+            "sale",
+            "number",
+            "customer",
+            "balance",
+            "sale_status",
+            "status",
+            "promised_at",
+            "notes",
+            "delivered_at",
+        ]
+        read_only_fields = fields
+
+
+class DropOffOrderFilterSerializer(serializers.Serializer):
+    """Query filters of the drop-off orders list; ``search`` is handled by SearchFilter."""
+
+    status = serializers.ChoiceField(choices=DropOffOrder.Status.choices, required=False)
+
+
+class AdvanceDropOffOrderSerializer(serializers.Serializer):
+    """The status the order should reach; a retry with the same one changes nothing."""
+
+    status = serializers.ChoiceField(choices=DropOffOrder.Status.choices)

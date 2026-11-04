@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-27 12:57-0600\n"
+"POT-Creation-Date: 2026-11-04 15:27-0600\n"
 "Language: es_MX\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -112,15 +112,15 @@ msgstr "Fechas importantes"
 msgid "role"
 msgstr "rol"
 
-#: core/api.py:26 core/permissions.py:21
+#: core/api.py:33 core/permissions.py:21
 msgid "You do not have permission to do this."
 msgstr "No tienes permiso para hacer esto."
 
-#: core/api.py:67
+#: core/api.py:74
 msgid "This Idempotency-Key was already used for a different request."
 msgstr "Esta Idempotency-Key ya se usó para otra petición."
 
-#: core/api.py:117
+#: core/api.py:128
 msgid "Send a new UUID in the Idempotency-Key header."
 msgstr "Envía un UUID nuevo en el encabezado Idempotency-Key."
 
@@ -959,7 +959,8 @@ msgstr "clave de idempotencia"
 
 #: sales/models.py:332 sales/models.py:473
 msgid "Key the POS sent with the request, so a retry does not repeat it."
-msgstr "Clave que mandó la caja con la petición, para que un reintento no la repita."
+msgstr ""
+"Clave que mandó la caja con la petición, para que un reintento no la repita."
 
 #: sales/models.py:334 sales/models.py:475
 msgid "request hash"
@@ -1295,59 +1296,63 @@ msgstr "El descuento %(discount)s no aplica a los servicios de esta venta."
 msgid "The discount %(discount)s is already applied."
 msgstr "El descuento %(discount)s ya está aplicado."
 
-#: sales/services.py:591 sales/services.py:615
+#: sales/services.py:591 sales/services.py:629
 msgid "You cannot manage drop-off orders."
 msgstr "No puedes gestionar encargos."
 
-#: sales/services.py:606
+#: sales/services.py:617
+msgid "This order cannot move to that status."
+msgstr "Este encargo no puede pasar a ese estado."
+
+#: sales/services.py:620
 msgid "This order cannot move forward; deliver it instead."
 msgstr "Este encargo ya no avanza; entrégalo."
 
-#: sales/services.py:623
+#: sales/services.py:643
 msgid "Only a ready order can be delivered."
 msgstr "Solo se puede entregar un encargo listo."
 
-#: sales/services.py:626
+#: sales/services.py:646
 msgid "You cannot deliver an order with a pending balance."
 msgstr "No puedes entregar un encargo con saldo pendiente."
 
-#: sales/services.py:644
+#: sales/services.py:664
 msgid "The sale of this order is cancelled."
 msgstr "La venta de este encargo está cancelada."
 
-#: sales/services.py:670
+#: sales/services.py:690
 #, python-format
 msgid "Not enough %(product)s in stock: %(stock)s left."
 msgstr "No hay suficiente %(product)s: quedan %(stock)s."
 
-#: sales/services.py:710
+#: sales/services.py:730
 msgid "The quantity must be greater than zero."
 msgstr "La cantidad debe ser mayor que cero."
 
-#: sales/services.py:713
+#: sales/services.py:733
 msgid "Each line is either a service or a product."
 msgstr "Cada línea es un servicio o un producto."
 
-#: sales/services.py:717
+#: sales/services.py:737
 #, python-format
 msgid "%(service)s is not active."
 msgstr "%(service)s no está activo."
 
-#: sales/services.py:721
+#: sales/services.py:741
 msgid "Services are sold in whole units."
 msgstr "Los servicios se venden en unidades completas."
 
-#: sales/services.py:727
+#: sales/services.py:747
 #, python-format
 msgid "%(service)s has no price for this mode."
 msgstr "%(service)s no tiene precio para esta modalidad."
 
-#: sales/services.py:733
+#: sales/services.py:753
 #, python-format
 msgid "%(product)s is not for sale."
 msgstr "%(product)s no está a la venta."
 
-#: sales/views.py:107
+#: sales/views.py:113
 msgid "There is no open cash session."
 msgstr "No hay caja abierta."
 
