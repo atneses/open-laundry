@@ -47,8 +47,8 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 - Docstrings en las clases y funciones públicas, en inglés.
 - El formato lo pone `ruff format`; no discutir estilo a mano.
 - **Coma final:** si una llamada, definición, lista o diccionario no cabe en una línea, va **un elemento por línea** con coma al final (nunca varios argumentos en una sola línea partida). Lo exige la regla `COM812` de `ruff` y `ruff check --fix` la agrega; `ruff format` avisa de un posible conflicto con esa regla, pero se puede ignorar.
-- **Argumentos con nombre:** en toda llamada (función o clase) con más de un argumento, cada argumento se pasa con su nombre (`router.register(prefix="sales", viewset=views.SaleViewSet, basename="sale")`), no por posición, quepa o no en una línea. Excepción: los parámetros que solo aceptan posición (p. ej. `isinstance(obj, cls)`). Aplica al código nuevo; el existente se cambia solo si se pide.
-- **Tipos:** las funciones y métodos llevan anotaciones de tipo en parámetros y retorno cuando sea posible (`def _filter(self, sales: QuerySet[Sale]) -> QuerySet[Sale]:`). Aplica al código nuevo; el existente se cambia solo si se pide.
+- **Argumentos con nombre:** en toda llamada (función o clase) con más de un argumento, cada argumento se pasa con su nombre (`router.register(prefix="sales", viewset=views.SaleViewSet, basename="sale")`), no por posición, quepa o no en una línea. Excepción: los parámetros que solo aceptan posición (p. ej. `isinstance(obj, cls)`). Aplica al código nuevo y a cada función existente que se modifique; el resto se deja como está.
+- **Tipos:** las funciones y métodos llevan anotaciones de tipo en parámetros y retorno cuando sea posible (`def _filter(self, sales: QuerySet[Sale]) -> QuerySet[Sale]:`). Aplica al código nuevo y a cada función existente que se modifique; el resto se deja como está.
 - **Líneas en blanco** (`ruff format` las conserva pero no las agrega; se escriben a mano):
   - después del docstring de funciones y métodos;
   - antes y después de cada bloque (`if`, `for`, `while`, `with`, `try`, `match`), salvo al inicio o al final del bloque que lo contiene;
@@ -58,7 +58,7 @@ Todo el código Python sigue **[PEP 8](https://peps.python.org/pep-0008/)** y la
 
 **Prácticas de Django:**
 - **Modelos:** orden de miembros como indica Django (campos → managers → `class Meta` → `__str__` → `save` → `get_absolute_url` → métodos propios). Todo modelo tiene `__str__`. Usar `TextChoices` / `IntegerChoices` para valores fijos (estados, tipos). `related_name` explícito en las relaciones. Restricciones e índices en `Meta.constraints` / `Meta.indexes` cuando una regla deba cumplirse siempre (p. ej. teléfono único por sucursal).
-- **Usuario:** referirse a él con `settings.AUTH_USER_MODEL` en relaciones y `get_user_model()` en código; nunca importar `core.User` directamente desde otras apps.
+- **Usuario:** referirse a él con `settings.AUTH_USER_MODEL` en relaciones y `get_user_model()` en código; nunca importar `core.User` directamente desde otras apps. Excepción: para anotar tipos, `from core.models import User` dentro de `if TYPE_CHECKING:` (no se importa al ejecutar).
 - **Consultas:** evitar consultas en bucle (usar `select_related` / `prefetch_related`); operaciones que cambian varios registros juntos (cobrar, cerrar caja, generar ciclos) dentro de `transaction.atomic()`. Usar `F()` para actualizar contadores o stock sin condiciones de carrera.
 - **Vistas y API:** vistas delgadas; validación en serializers / formularios; lógica de negocio en servicios o métodos del modelo. Preferir las vistas genéricas y `ViewSet` de DRF.
 - **Fechas y horas:** siempre con zona horaria (`django.utils.timezone.now()`, nunca `datetime.now()`).
