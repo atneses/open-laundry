@@ -198,7 +198,7 @@ def _by_employee(rows, user_field: str) -> list[EmployeeTotal]:
     users = get_user_model().objects.in_bulk([row[user_field] for row in rows])
     totals = [
         EmployeeTotal(
-            employee=_name(users[row[user_field]]),
+            employee=users[row[user_field]].get_display_name(),
             count=row["count"],
             amount=row["amount"],
         )
@@ -206,7 +206,3 @@ def _by_employee(rows, user_field: str) -> list[EmployeeTotal]:
     ]
 
     return sorted(totals, key=lambda total: (-total.amount, total.employee))
-
-
-def _name(user) -> str:
-    return user.get_full_name() or user.get_username()

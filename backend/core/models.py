@@ -123,6 +123,11 @@ class User(AbstractUser, BaseModel):
     def __str__(self):
         return self.get_username()
 
+    def get_display_name(self):
+        """Full name, or the username when the user has no name."""
+
+        return self.get_full_name() or self.get_username()
+
 
 class PermissionLog(BaseModel):
     """Audit trail of extra permissions granted to or revoked from a user."""

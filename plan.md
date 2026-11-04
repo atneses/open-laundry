@@ -600,26 +600,86 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 **Objetivo:** exponer por la API REST todo lo que usará la caja (React), sobre los servicios ya probados de las Etapas 6 a 11. Las vistas son delgadas: validan datos, llaman al servicio y responden; las reglas y permisos ya los validan los servicios, y la API los repite con su 403. Todo documentado con `drf-spectacular` para que la caja genere sus tipos.
 
+**Decisiones (antes de empezar):**
+- **Errores:** el `ValidationError` de Django que lanzan los servicios se responde como 400 con los mensajes por campo (manejador de excepciones común); `PermissionDenied` es 403.
+- **Paginación:** por número de página en todas las listas; tamaño por defecto y máximo en `.env` (25 y 100 por defecto), y la caja puede pedir otro con `?page_size=` dentro del máximo.
+- **Cobro en una sola petición:** `POST /api/sales/` recibe líneas, descuentos y pagos y guarda todo junto o nada. Los pagos posteriores (saldo de un encargo) van en `POST /api/sales/{id}/payments/`.
+- **Autoservicio con saldo:** se permite cobrar sin pagar completo; las máquinas solo se activan si la venta está pagada (regla de la Etapa 9).
+- **Cierre de caja a ciegas:** mientras la caja está abierta, el empleado no ve el efectivo esperado; lo ve, con la diferencia, después de cerrar. Quien tiene `sales.view_all_cash_sessions` sí lo ve.
+- **Reportes por la API (12.10):** pospuesto; el dashboard está en el admin y los empleados no tienen `core.view_reports`.
+
 ### 12.1 Clase de permiso para la API
-- [ ] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("sales.operate_cash_session")`, que se pone en cada endpoint.
+- [x] **Qué se hace:** crear una clase de permiso de DRF, por ejemplo `HasPermission("sales.operate_cash_session")`, que se pone en cada endpoint.
 - **Para qué:** que la validación ocurra siempre en el servidor, no solo escondiendo botones.
 - **Listo cuando:** una prueba muestra que un usuario sin el permiso recibe error 403, y que con JWT se llena `created_by` (`CurrentUserMiddleware`).
 
+**Diferencias con lo planeado:**
+- `core/api.py` reúne lo común de la API: `HasPermission("app.code", ...)` (se pone en `permission_classes`; para no repetir códigos se puede usar `HasPermission(*servicio.required_perms)`), el manejador de errores (los `ValidationError` de los servicios responden 400 por campo, o en `non_field_errors` si no son de un campo) y la paginación (`API_PAGE_SIZE` y `API_MAX_PAGE_SIZE` en `.env`, con `?page_size=`). El manejador y la paginación se adelantaron aquí porque los usan todos los endpoints.
+- Las pruebas usan vistas propias del archivo de pruebas, porque todavía no hay endpoints de negocio.
+
+**Riesgos y pendientes:**
+- **Pendiente – variables nuevas:** agregar `API_PAGE_SIZE` y `API_MAX_PAGE_SIZE` al `.env` si se quieren valores distintos de 25 y 100 (sin ellas se usan esos).
+
 ### 12.2 API de caja
-- [ ] **Qué se hace:** `/api/cash-sessions/` para abrir y cerrar caja, ver el corte actual y el historial, protegida con `sales.operate_cash_session`. El empleado ve y cierra solo su caja; con `sales.view_all_cash_sessions` se ven todas.
+- [x] **Qué se hace:** `/api/cash-sessions/` para abrir y cerrar caja, ver el corte actual y el historial, protegida con `sales.operate_cash_session`. El empleado ve y cierra solo su caja; con `sales.view_all_cash_sessions` se ven todas.
 - **Listo cuando:** sin el permiso responde 403, y un empleado no puede ver ni cerrar cortes de otros (pruebas).
 
+**Diferencias con lo planeado y decisiones:**
+- Endpoints (`sales/views.py`, `CashSessionViewSet`): `GET /api/cash-sessions/` (historial, del más reciente al más antiguo), `GET /api/cash-sessions/{id}/`, `POST /api/cash-sessions/` (abrir con `opening_float`), `GET /api/cash-sessions/current/` (la caja abierta de la sucursal; 404 si no hay) y `POST /api/cash-sessions/{id}/close/` (`counted_cash` y `notes`).
+- **Cierre a ciegas:** mientras la caja está abierta, el empleado recibe en `null` el efectivo esperado, el total de tarjeta y los conteos; quien tiene `sales.view_all_cash_sessions` los ve calculados al momento. Al cerrar, todos ven el corte completo.
+- **Caja abierta por otro empleado:** `current/` la muestra (quién y desde cuándo, sin montos) y los demás empleados cobran en ella, como ya hacían los servicios; solo quien la abrió, o quien tiene `view_all_cash_sessions`, la cierra.
+- Un corte de otro empleado responde 404 (no 403), para no revelar que existe.
+
+**Riesgos y pendientes:**
+- **Riesgo – cobros en caja ajena:** si un empleado cobra en la caja que abrió otro, el faltante o sobrante de esa caja queda a nombre de quien la abrió.
+
 ### 12.3 API del catálogo
-- [ ] **Qué se hace:** `/api/services/` (servicios activos con su precio por modalidad) y `/api/products/` (productos a la venta), de solo lectura. El catálogo se sigue editando en el admin.
+- [x] **Qué se hace:** `/api/services/` (servicios activos con su precio por modalidad) y `/api/products/` (productos a la venta), de solo lectura. El catálogo se sigue editando en el admin.
 - **Listo cuando:** al cambiar un precio en el admin, la API devuelve el nuevo.
 
+**Diferencias con lo planeado y decisiones:**
+- Ambas listas piden `sales.charge` (son para cobrar), van paginadas como el resto de la API y se ordenan por nombre.
+- `/api/services/` (`sales.views.ServiceViewSet`): servicios activos con precio general (sin programa) en al menos una modalidad de la sucursal del usuario; cada uno trae `prices`, una lista de `{mode, price}` con una entrada por modalidad con precio (una modalidad nueva aparece sin cambiar la API). Los precios se cargan con `prefetch_related`.
+- `/api/products/` (`inventory.views.ProductViewSet`): productos a la venta de la sucursal, con su `stock` para que la caja avise antes de cobrar.
+
+**Riesgos y pendientes:**
+- **Pendiente – precios por programa:** solo se devuelve el precio general; los precios por programa (`ServicePrice.program`, reservado para después) no se exponen todavía.
+
 ### 12.4 API de clientes
-- [ ] **Qué se hace:** `/api/customers/` con alta, edición y **búsqueda por teléfono o nombre**, protegida con `customers.manage_customers`.
+- [x] **Qué se hace:** `/api/customers/` con alta, edición y **búsqueda por teléfono o nombre**, protegida con `customers.manage_customers`.
 - **Listo cuando:** buscar los últimos dígitos del teléfono encuentra al cliente; sin el permiso responde 403.
+
+**Diferencias con lo planeado y decisiones:**
+- `/api/customers/` (`customers.views.CustomerViewSet`): crear, consultar, editar (`PUT`/`PATCH`) y listar, todo con `customers.manage_customers`. **No se borran** por la API (sus ventas los protegen): `DELETE` responde 405.
+- La sucursal se toma del usuario; la caja no la manda. Un usuario sin sucursal recibe 400.
+- `?search=` busca nombres o teléfonos que **contengan** el texto, como en el admin (los últimos dígitos encuentran el teléfono); las palabras separadas por espacio deben aparecer todas. Sin búsqueda, devuelve todos los clientes de la sucursal, paginados y por nombre.
+- El teléfono va solo con dígitos (como en el modelo); uno repetido en la sucursal responde 400 en `phone`.
+- La API usa directamente el modelo, sin función de servicio: es un alta y edición simple, sin reglas de negocio más allá de las validaciones del serializer.
+
+- **Alta simultánea:** si dos peticiones registran el mismo teléfono al mismo tiempo (dos cajas o un doble clic), las dos pasan la revisión del serializer; la restricción de la base de datos rechaza la segunda y `CustomerSerializer.save` la convierte en el mismo 400 en `phone`.
+
+**Riesgos y pendientes:** Ninguno identificado.
 
 ### 12.5 API de ventas
 - [ ] **Qué se hace:** `/api/sales/` para cobrar (con pagos y descuentos), consultar y cancelar ventas, y `/api/discounts/` con los descuentos vigentes que aplican a una venta (servicios de la Etapa 7).
 - **Listo cuando:** se cobra una venta en efectivo y tarjeta, con descuento, y se cancela por la API; cada acción sin su permiso responde 403 (pruebas).
+
+**Diferencias con lo planeado y decisiones:**
+- **Endpoints** (`sales.views.SaleViewSet` y `DiscountViewSet`):
+  - `POST /api/sales/`: cobro en una sola petición (`mode`, `customer`, `items`, `discounts`, `payments`, `drop_off`). Lo hace el servicio nuevo `charge_sale`: crea la venta, aplica los descuentos en el orden enviado y luego los pagos; si algo falla no se guarda nada. Responde 201 con el detalle.
+  - `POST /api/sales/{id}/payments/`: pago posterior de cualquier venta no cancelada con saldo (autoservicio o encargo). Responde 201 con el detalle de la venta.
+  - `POST /api/sales/{id}/cancel/`: cancela con `reason`; pide `sales.cancel_sale` (cualquier venta de la sucursal, con las reglas del servicio).
+  - `GET /api/sales/` (resumen) y `GET /api/sales/{id}/` (detalle con líneas y sus ciclos, descuentos, pagos y encargo). El empleado ve todas las ventas de su sucursal. Filtros: `search` (folio, nombre o teléfono del cliente), `status`, `mode`, `has_balance` y `date_from`/`date_to`. `has_balance=true` da las ventas no canceladas con saldo; `has_balance=false`, las que no deben nada (sin saldo o canceladas).
+  - `GET /api/discounts/?mode=...&services=1&services=2`: descuentos que aplican al carrito antes de cobrar (servicio nuevo `discounts_for_cart`, misma regla que `available_discounts`); pide `sales.apply_discount`.
+- **Permisos:** lista, detalle, cobro y pagos piden `sales.charge`; un cobro con descuentos además `sales.apply_discount` (sin él, 403 y no se guarda nada).
+- **Descuento que ya no aplica:** se rechaza el cobro con un mensaje que nombra el descuento y el motivo (inactivo, vencido, aún no vigente, otra modalidad, otros servicios, ya aplicado, no reduce la venta), para que el cajero sepa cuál quitar. `apply_discount` da ahora esos mensajes.
+- **Idempotencia** (`core.api.run_once`): el cobro y los pagos exigen el encabezado `Idempotency-Key` (un UUID nuevo por cobro o pago; el mismo al reintentar). `Sale` y `Payment` guardan la clave (única) y una huella de los datos. La misma clave con los mismos datos devuelve lo ya creado (201); con otros datos, o usada en otra venta, responde 409. Sin la clave, 400.
+- **Referencia del voucher:** sigue siendo opcional.
+- En el esquema de la API, los campos `status` de venta, encargo y ciclo tienen nombres propios (`ENUM_NAME_OVERRIDES`).
+
+**Riesgos y pendientes:**
+- **Pendiente – la caja debe generar las claves:** la Etapa 13 tiene que crear un UUID por cobro y por pago, y reutilizarlo al reintentar; si genera uno nuevo en cada clic, la protección no sirve.
+- **Riesgo – error en un pago entre varios:** si el cobro trae varios pagos y uno falla, el error dice el campo (`amount`) pero no cuál de los pagos fue.
 
 ### 12.6 API de encargos
 - [ ] **Qué se hace:** `/api/drop-off-orders/` para recibir, cambiar de estado y entregar encargos (servicios de la Etapa 8).
@@ -638,7 +698,8 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - [ ] **Qué se hace:** `/api/sales/{id}/receipt/` con los datos del ticket (servicio de la Etapa 10).
 - **Listo cuando:** devuelve lo mismo que el servicio para cada tipo de venta.
 
-### 12.10 API de reportes
+### 12.10 API de reportes (pospuesto)
+- **Pospuesto:** se hará si la caja llega a necesitar indicadores; por ahora están en el dashboard del admin (11.1).
 - [ ] **Qué se hace:** `/api/reports/daily-sales/`, `/machine-usage/` e `/inventory/`, protegidos con `core.view_reports`, y `/api/products/low-stock/` con los productos por debajo del mínimo.
 - **Listo cuando:** devuelven los mismos números que el dashboard.
 

@@ -114,7 +114,11 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "core.api.PageNumberPagination",
+    "EXCEPTION_HANDLER": "core.api.exception_handler",
 }
+API_PAGE_SIZE = env.int("API_PAGE_SIZE", default=25)
+API_MAX_PAGE_SIZE = env.int("API_MAX_PAGE_SIZE", default=100)
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=env.int("JWT_ACCESS_MINUTES", default=30)),
@@ -127,6 +131,12 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
+    # Several models have a "status" field; name each choice set for the POS types.
+    "ENUM_NAME_OVERRIDES": {
+        "SaleStatusEnum": "sales.models.Sale.Status",
+        "DropOffOrderStatusEnum": "sales.models.DropOffOrder.Status",
+        "MachineCycleStatusEnum": "machines.models.MachineCycle.Status",
+    },
 }
 
 # --- Django Admin con Unfold ---
