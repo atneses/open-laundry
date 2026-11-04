@@ -91,7 +91,7 @@ def run_once[M: Model](
 
     key = _idempotency_key(request)
     request_hash = hashlib.sha256(
-        json.dumps(request.data, sort_keys=True, default=str).encode(),
+        json.dumps(obj=request.data, sort_keys=True, default=str).encode(),
     ).hexdigest()
     previous = previous_results.filter(idempotency_key=key).first()
 

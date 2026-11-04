@@ -153,6 +153,36 @@ def test_a_ready_or_delivered_order_does_not_move_forward(cashier, order, status
         advance_drop_off_order(cashier, order)
 
 
+def test_advancing_to_the_next_status(cashier, order):
+    advanced = advance_drop_off_order(user=cashier, order=order, to_status=IN_PROGRESS)
+
+    assert advanced.status == IN_PROGRESS
+
+
+def test_advancing_to_the_current_status_changes_nothing(cashier, order):
+    set_status(order, IN_PROGRESS)
+    updated_at = order.updated_at
+
+    advance_drop_off_order(user=cashier, order=order, to_status=IN_PROGRESS)
+
+    order.refresh_from_db()
+    assert (order.status, order.updated_at) == (IN_PROGRESS, updated_at)
+
+
+@pytest.mark.parametrize(
+    ("current", "to_status"),
+    [(RECEIVED, READY), (IN_PROGRESS, RECEIVED), (READY, DELIVERED)],
+)
+def test_advancing_to_a_status_that_is_not_next_is_rejected(cashier, order, current, to_status):
+    set_status(order, current)
+
+    with pytest.raises(ValidationError):
+        advance_drop_off_order(user=cashier, order=order, to_status=to_status)
+
+    order.refresh_from_db()
+    assert order.status == current
+
+
 def test_moving_an_order_requires_manage_customers(order, branch):
     user = get_user_model().objects.create_user("noperm", branch=branch)
 
@@ -180,6 +210,17 @@ def test_the_order_of_a_cancelled_sale_does_not_change(cashier, sale, order):
     assert order.status == RECEIVED
 
 
+def test_the_order_of_a_cancelled_sale_is_not_delivered(cashier, sale, order):
+    set_status(order, READY)
+    cancel_sale(cashier, sale, "Customer changed their mind")
+
+    with pytest.raises(ValidationError):
+        deliver_drop_off_order(user=cashier, order=order)
+
+    order.refresh_from_db()
+    assert order.status == READY
+
+
 def test_a_paid_ready_order_is_delivered(cashier, sale, order):
     add_payment(cashier, sale, Payment.Method.CASH, "120.00")
     set_status(order, READY)
@@ -191,13 +232,23 @@ def test_a_paid_ready_order_is_delivered(cashier, sale, order):
     assert delivered.delivered_at is not None
 
 
-@pytest.mark.parametrize("status", [RECEIVED, IN_PROGRESS, DELIVERED])
+@pytest.mark.parametrize("status", [RECEIVED, IN_PROGRESS])
 def test_only_a_ready_order_is_delivered(cashier, sale, order, status):
     add_payment(cashier, sale, Payment.Method.CASH, "120.00")
     set_status(order, status)
 
     with pytest.raises(ValidationError):
         deliver_drop_off_order(cashier, order)
+
+
+def test_delivering_a_delivered_order_changes_nothing(cashier, order):
+    set_status(order, DELIVERED)
+    delivered = (order.delivered_at, order.delivered_by)
+
+    deliver_drop_off_order(user=cashier, order=order)
+
+    order.refresh_from_db()
+    assert (order.delivered_at, order.delivered_by) == delivered
 
 
 def test_an_order_with_balance_needs_deliver_with_balance(cashier, sale, order):

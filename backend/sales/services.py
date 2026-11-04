@@ -32,6 +32,7 @@ from .models import (
 if TYPE_CHECKING:
     from datetime import datetime
 
+    from core.models import User
     from customers.models import Customer
 
 OPERATE_CASH_SESSION = "sales.operate_cash_session"
@@ -158,7 +159,7 @@ class DropOffRequest:
 @requires_perm(CHARGE, message=_("You cannot charge sales."))
 @transaction.atomic
 def create_sale(
-    user,
+    user: User,
     mode: str,
     items: list[ItemRequest],
     customer: Customer | None = None,
@@ -189,7 +190,7 @@ def create_sale(
     if not items:
         raise ValidationError(_("Add at least one service or product."))
 
-    lines = [_sale_item(item, mode, user.branch_id) for item in items]
+    lines = [_sale_item(item=item, mode=mode, branch_id=user.branch_id) for item in items]
     _check_stock(lines)
     subtotal = sum((line.amount for line in lines), Decimal(0))
     sale = Sale.objects.create(
@@ -210,7 +211,7 @@ def create_sale(
         line.created_by = line.updated_by = user
 
     SaleItem.objects.bulk_create(lines)
-    create_cycles(user, lines)
+    create_cycles(user=user, lines=lines)
 
     if mode == Mode.DROP_OFF:
         DropOffOrder.objects.create(
@@ -259,7 +260,7 @@ class ChargeRequest:
 
 @requires_perm(CHARGE, message=_("You cannot charge sales."))
 @transaction.atomic
-def charge_sale(user, charge: ChargeRequest) -> Sale:
+def charge_sale(user: User, charge: ChargeRequest) -> Sale:
     """Charge a sale with its lines, then its discounts and its payments, in that order.
 
     Nothing is saved if any step fails, so a rejected discount or payment never
@@ -275,15 +276,15 @@ def charge_sale(user, charge: ChargeRequest) -> Sale:
     )
 
     for discount in charge.discounts:
-        apply_discount(user, sale, discount)
+        apply_discount(user=user, sale=sale, discount=discount)
 
     for payment in charge.payments:
         add_payment(
-            user,
-            sale,
-            payment.method,
-            payment.amount,
-            payment.reference,
+            user=user,
+            sale=sale,
+            method=payment.method,
+            amount=payment.amount,
+            reference=payment.reference,
             received=payment.received,
         )
 
@@ -590,17 +591,31 @@ def _discount_amount(discount: Discount, base: Decimal) -> Decimal:
 
 @requires_perm(MANAGE_CUSTOMERS, message=_("You cannot manage drop-off orders."))
 @transaction.atomic
-def advance_drop_off_order(user, order: DropOffOrder) -> DropOffOrder:
+def advance_drop_off_order(
+    user: User,
+    order: DropOffOrder,
+    to_status: str | None = None,
+) -> DropOffOrder:
     """Move the order to its next status: received → in progress → ready.
 
-    Delivering is done with ``deliver_drop_off_order``, which checks the balance.
+    ``to_status`` is the status the caller expects to reach, so a retried request
+    does not move the order twice: if the order is already there nothing changes,
+    and if it is not the next status the request is rejected. Delivering is done
+    with ``deliver_drop_off_order``, which checks the balance.
     """
 
-    order = _lock_drop_off_order(user, order)
+    order = _lock_drop_off_order(user=user, order=order)
+
+    if to_status is not None and order.status == to_status:
+        return order
+
     next_status = {
         DropOffOrder.Status.RECEIVED: DropOffOrder.Status.IN_PROGRESS,
         DropOffOrder.Status.IN_PROGRESS: DropOffOrder.Status.READY,
     }.get(order.status)
+
+    if to_status is not None and next_status != to_status:
+        raise ValidationError(_("This order cannot move to that status."))
 
     if next_status is None:
         raise ValidationError(_("This order cannot move forward; deliver it instead."))
@@ -614,10 +629,16 @@ def advance_drop_off_order(user, order: DropOffOrder) -> DropOffOrder:
 
 @requires_perm(MANAGE_CUSTOMERS, message=_("You cannot manage drop-off orders."))
 @transaction.atomic
-def deliver_drop_off_order(user, order: DropOffOrder) -> DropOffOrder:
-    """Deliver a ready order. With a pending balance it needs sales.deliver_with_balance."""
+def deliver_drop_off_order(user: User, order: DropOffOrder) -> DropOffOrder:
+    """Deliver a ready order. With a pending balance it needs sales.deliver_with_balance.
 
-    order = _lock_drop_off_order(user, order)
+    An order already delivered is returned unchanged, so a retried request is not an error.
+    """
+
+    order = _lock_drop_off_order(user=user, order=order)
+
+    if order.status == DropOffOrder.Status.DELIVERED:
+        return order
 
     if order.status != DropOffOrder.Status.READY:
         raise ValidationError(_("Only a ready order can be delivered."))

@@ -8,5 +8,10 @@ router.register(prefix="cash-sessions", viewset=views.CashSessionViewSet, basena
 router.register(prefix="services", viewset=views.ServiceViewSet, basename="service")
 router.register(prefix="sales", viewset=views.SaleViewSet, basename="sale")
 router.register(prefix="discounts", viewset=views.DiscountViewSet, basename="discount")
+router.register(
+    prefix="drop-off-orders",
+    viewset=views.DropOffOrderViewSet,
+    basename="drop-off-order",
+)
 
 urlpatterns = router.urls
