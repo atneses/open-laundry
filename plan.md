@@ -1,6 +1,6 @@
 # Plan de implementación: Sistema de Gestión de Lavandería
 
-> Basado en `mvp.md` · Última actualización: 2026-10-22
+> Basado en `mvp.md` · Última actualización: 2026-11-05
 
 Este plan divide la construcción del sistema en **etapas** y cada etapa en **pasos pequeños**. Cada paso dice:
 
@@ -189,7 +189,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 ### 1.8 Pruebas y revisión de estilo
 - [x] **Qué se hace:** configurar `pytest` y `ruff` (PEP 8).
 - **Para qué:** revisar la calidad en cada cambio.
-- **Listo cuando:** un *pull request* de prueba muestra la revisión en verde.
+- **Listo cuando:** `ruff check .` y `pytest` pasan. La revisión automática en cada *pull request* se configura en el 14.5.
 
 **Notas de la implementación:**
 - El modelo `Branch` (sucursal) se creó en el paso 1.4 (y no en el 3.1) porque el usuario necesita apuntar a una sucursal desde la primera migración.
@@ -274,7 +274,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 
 ## Etapa 4 – Catálogo e inventario
 
-**Objetivo:** dar de alta qué se vende, a qué precio, y qué insumos se gastan. Se crean las apps `sales` (servicios y precios) e `inventory` (productos, consumo y movimientos). Esta etapa es **solo modelos, reglas y admin**: la API del catálogo y la de stock bajo se hacen en la Etapa 12 (12.3 y 12.10).
+**Objetivo:** dar de alta qué se vende, a qué precio, y qué insumos se gastan. Se crean las apps `sales` (servicios y precios) e `inventory` (productos, consumo y movimientos). Esta etapa es **solo modelos, reglas y admin**: la API del catálogo se hace en la Etapa 12 (12.3); la de stock bajo quedó pospuesta (12.10).
 
 ### 4.1 Servicios y precios
 - [x] **Qué se hace:** crear los modelos `Service` y `ServicePrice` (precio por modalidad: autoservicio / encargo; campo `program` opcional para el futuro).
@@ -321,7 +321,6 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Riesgo – precios editados por código:** `update()` y `bulk_update` se saltan la regla de que los precios no se editan.
 - **Riesgo – borrar un servicio:** si nunca se ha vendido, borra también sus precios (con su historial) y su consumo por carga (`CASCADE`); uno vendido no se puede borrar. Para retirarlo se usa `is_active`.
 - **Riesgo – sucursal del precio:** cada precio pide su sucursal a mano. Con una sola sucursal no importa; con varias, un precio con la sucursal equivocada no se encontraría al cobrar.
-- **Pendiente – enlace al ciclo:** `StockMovement.machine_cycle` se agrega con `MachineCycle` (Etapa 9).
 - **Pendiente – tipo de movimiento con botones de opción:** en el admin, al crear un movimiento de inventario, el tipo (compra o ajuste) se elige en una lista desplegable; cambiarla por botones de opción (*radio*) para que solo se marque "Compra" o "Ajuste".
 
 **✅ Etapa 4 terminada cuando:** el catálogo y el inventario se administran desde el admin.
@@ -385,7 +384,6 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Caja olvidada:** quien tiene `sales.view_all_cash_sessions` puede cerrar desde el admin una caja que quedó abierta (acción *Cerrar caja* en el detalle del corte), capturando el efectivo contado y, si hay diferencia, la nota. Cada corte guarda quién lo cerró (`closed_by`).
 
 **Riesgos y pendientes:**
-- **Pendiente – API de caja:** abrir, cerrar y consultar desde la caja (Etapa 12, 12.2). Hasta entonces solo se abre y cierra desde código o pruebas.
 - **Riesgo – acción del admin no probada en el navegador:** el diálogo de *Cerrar caja* se probó con pruebas automáticas, no a mano.
 
 **Cambio general – `BaseModel` (hecho durante la Etapa 6):**
@@ -393,7 +391,6 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - Se reemplazaron campos repetidos: `StockMovement.user` y `PermissionLog.performed_by` pasaron a ser `created_by` (migraciones con `RenameField`); los `created_at` propios se heredan. `CashSession.user` y `opened_at` se quedan porque son del negocio.
 - **Riesgo – registros sin usuario:** fuera de una petición (consola, `seed_demo`, migraciones y, más adelante, Celery o MQTT) `created_by` queda vacío salvo que se pase a mano. Por eso `StockMovement.created_by` ahora es opcional (antes era obligatorio).
 - **Riesgo – escrituras masivas:** `bulk_create` y `QuerySet.update` no pasan por `save`; deben llenar estos campos a mano (como `log_permission_changes`).
-- **Riesgo – API con JWT sin probar:** el middleware lee el usuario cuando se guarda, después de que DRF lo autentica, pero no hay endpoints todavía; se prueba en la Etapa 12.
 
 **✅ Etapa 6 terminada cuando:** las reglas de abrir y cerrar caja y el cálculo del corte pasan sus pruebas.
 
@@ -434,19 +431,16 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Descuentos:** tienen `branch`, y su nombre admite `%` (no usa `validate_name`). Si los descuentos dejan el total en $0, la venta pasa a `paid`.
 - **Admin:** ventas en *Operación*, de solo lectura, con sus líneas, descuentos aplicados y pagos. Descuentos en *Catálogo*, con `sales.manage_discounts`, sin borrar.
 - **Migraciones de roles:** `sales/0007` (`charge`), `0009` (pagos, Admin), `0011` (descuentos; Empleado `apply_discount`) y `0013` (`cancel_sale`).
-- **7.3** se movió al 9.3.
 
 **Riesgos y pendientes:**
 - **Pendiente – precio por programa (función futura):** `active_price` ya busca por programa de lavado con respaldo al precio general, pero el cobro siempre usa el general porque no hay precios por programa.
 - **Riesgo – cambiar el prefijo:** el consecutivo es por sucursal; si una sucursal cambia su `sale_prefix`, su numeración sigue (p. ej. de `A-000010` a `B-000011`).
-- **Pendiente – cambio en efectivo:** resuelto en la Etapa 10: `Payment.received` guarda el efectivo recibido y el ticket calcula el cambio; falta que la caja (Etapa 13) lo capture.
-- **Pendiente – pagos en el admin:** solo se ven dentro de la venta; no hay lista de pagos con filtro por método (el MVP lo menciona para el dashboard y reportes, Etapa 11).
+- **Pendiente – pagos en el admin:** solo se ven dentro de la venta; la lista de ventas ya filtra por método de pago (11.2), pero no hay una lista de pagos.
 - **Riesgo – tarjeta sin referencia:** la referencia es opcional, así que un pago con tarjeta puede no tener cómo cuadrarse contra el reporte de Mercado Pago Point.
 - **Pendiente – descuentos por día de la semana:** el MVP pone de ejemplo "10% martes", pero la vigencia es solo por fechas; falta un campo de días si el negocio lo necesita.
 - **Pendiente – quitar un descuento aplicado:** no se puede deshacer; habría que cancelar la venta (7.5) y cobrarla de nuevo.
 - **Riesgo – redondeo:** el porcentaje se redondea a centavos por renglón (redondeo bancario de `Decimal`), así que la suma por renglones puede diferir un centavo del porcentaje del total.
 - **Pendiente – bitácora de cancelaciones:** el MVP pide registrarlas en bitácora; por ahora quedan en la propia venta (quién, cuándo, por qué), visibles en el admin.
-- **Pendiente – ciclos y encargos:** cancelar no toca ciclos de máquina ni encargos, que llegan en las Etapas 8 y 9.
 - **Riesgo – devolución con tarjeta:** el sistema resta la tarjeta del corte, pero la devolución real se hace a mano en la terminal de Mercado Pago Point; si no se hace, el corte no cuadra con el reporte de Point.
 - **Riesgo – caja sin efectivo suficiente:** cancelar una venta de un turno anterior puede dejar el esperado del turno abierto por debajo de lo que hay en caja (incluso negativo); no se valida.
 
@@ -477,7 +471,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Pendiente – "en proceso" automático:** se cambia a mano; se decidió que activar los ciclos (Etapa 9) no lo avanza. Se puede revisar después del arranque.
 - **Pendiente – bitácora de entregas con saldo:** quedan en el encargo (`delivered_by`, saldo de la venta), pero no hay bitácora aparte (mvp §6).
 - **Riesgo – sin regresar de estado:** si hay que relavar algo ya marcado como listo, no se puede regresar a en proceso.
-- **Riesgo – fecha promesa vencida:** no hay aviso de encargos con la fecha promesa ya pasada; se verá en el dashboard (Etapa 11).
+- **Riesgo – fecha promesa vencida:** no hay aviso de encargos con la fecha promesa ya pasada; el dashboard (11.1) cuenta pendientes y listos, no vencidos.
 
 **✅ Etapa 8 terminada cuando:** un encargo completo (recibir → lavar → listo → cobrar saldo → entregar) funciona de principio a fin con los servicios (prueba).
 
@@ -543,7 +537,6 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Riesgos y pendientes:**
 - **Pendiente – pie configurable:** el pie del ticket es fijo; si el negocio quiere horario, políticas o redes sociales, agregar un campo de texto a `Branch`.
 - **Pendiente – capturar el efectivo recibido:** es opcional; la caja (Etapa 13) debe pedirlo en los pagos en efectivo, o el ticket saldrá sin cambio. Los datos de demostración (`demo_history`) no lo llenan.
-- **Pendiente – endpoint:** `/api/sales/{id}/receipt/` se hace en la Etapa 12.
 - **Riesgo – formato sin probar:** no se ha impreso en la POS-8360; el ancho de 48 caracteres con nombres de servicio largos se revisará en la vista de impresión.
 
 **✅ Etapa 10 terminada cuando:** el servicio del ticket devuelve los datos correctos para cada tipo de venta (prueba).
@@ -572,7 +565,6 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 **Riesgos y pendientes:**
 - **Riesgo – rendimiento:** cada carga del inicio hace unas 17 consultas sobre todo el mes; con el volumen de una sucursal está bien, pero no se ha medido con datos de meses reales.
 - **Pendiente – descuentos de ventas canceladas:** se cuentan igual; si el negocio quiere excluirlos, filtrar por estado de la venta.
-- **Pendiente – permiso en la API:** el dashboard solo existe en el admin; si la caja necesita indicadores, se hará un endpoint aparte.
 - **Pendiente – admin sin sucursal:** validar con el negocio si un admin debe tener siempre una sucursal asignada. Hoy, sin sucursal, el dashboard muestra un aviso en lugar de los indicadores.
 - **Pendiente – selector de sucursal:** agregar al dashboard un selector para ver los indicadores de todas las sucursales juntas o solo los de una sucursal elegida.
 
@@ -617,8 +609,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - `core/api.py` reúne lo común de la API: `HasPermission("app.code", ...)` (se pone en `permission_classes`; para no repetir códigos se puede usar `HasPermission(*servicio.required_perms)`), el manejador de errores (los `ValidationError` de los servicios responden 400 por campo, o en `non_field_errors` si no son de un campo) y la paginación (`API_PAGE_SIZE` y `API_MAX_PAGE_SIZE` en `.env`, con `?page_size=`). El manejador y la paginación se adelantaron aquí porque los usan todos los endpoints.
 - Las pruebas usan vistas propias del archivo de pruebas, porque todavía no hay endpoints de negocio.
 
-**Riesgos y pendientes:**
-- **Pendiente – variables nuevas:** agregar `API_PAGE_SIZE` y `API_MAX_PAGE_SIZE` al `.env` si se quieren valores distintos de 25 y 100 (sin ellas se usan esos).
+**Riesgos y pendientes:** Ninguno identificado (`API_PAGE_SIZE` y `API_MAX_PAGE_SIZE` están en `.env.example`; sin ellas se usan 25 y 100).
 
 ### 12.2 API de caja
 - [x] **Qué se hace:** `/api/cash-sessions/` para abrir y cerrar caja, ver el corte actual y el historial, protegida con `sales.operate_cash_session`. El empleado ve y cierra solo su caja; con `sales.view_all_cash_sessions` se ven todas.
@@ -682,7 +673,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Riesgo – error en un pago entre varios:** si el cobro trae varios pagos y uno falla, el error dice el campo (`amount`) pero no cuál de los pagos fue.
 
 ### 12.6 API de encargos
-- [x] **Qué se hace:** `/api/drop-off-orders/` para recibir, cambiar de estado y entregar encargos (servicios de la Etapa 8).
+- [x] **Qué se hace:** `/api/drop-off-orders/` para listar y buscar encargos, avanzarlos de estado y entregarlos (servicios de la Etapa 8).
 - **Listo cuando:** un encargo completo funciona por la API; entregar con saldo sin `sales.deliver_with_balance` responde 403.
 
 **Decisiones (antes de empezar):**
@@ -748,8 +739,8 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Para qué:** que el frontend sepa exactamente qué datos manda y recibe cada endpoint, y avise si algo cambia.
 - **Listo cuando:** el script genera los tipos sin errores.
 
-### 13.3 Pruebas y CI del frontend
-- [ ] **Qué se hace:** configurar `vitest`, Testing Library y `oxlint` (lint, tipos, pruebas y compilación).
+### 13.3 Pruebas y lint del frontend
+- [ ] **Qué se hace:** configurar `vitest`, Testing Library y `oxlint` (lint, tipos, pruebas y compilación). La revisión automática en cada *pull request* es del 14.5.
 - **Listo cuando:** `npm run lint`, `npm run typecheck`, `npm test` y `npm run build` pasan.
 
 ### 13.4 Login en la caja
@@ -829,7 +820,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** un *pull request* muestra la revisión en verde y un cambio pequeño llega a producción sin entrar al servidor a mano.
 
 ### 14.6 Datos iniciales
-- [ ] **Qué se hace:** cargar en producción la sucursal, las 6 máquinas (driver manual), servicios y precios reales, insumos con su stock, descuentos vigentes y las cuentas de cada empleado.
+- [ ] **Qué se hace:** cargar en producción la sucursal, las 6 máquinas, servicios y precios reales, insumos con su stock, descuentos vigentes y las cuentas de cada empleado.
 - **Listo cuando:** el admin revisó y aprobó el catálogo y los precios.
 
 ### 14.7 Capacitación

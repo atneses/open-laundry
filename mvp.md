@@ -540,15 +540,15 @@ Entrega estimada: 18/10/2026 18:00
 ```
 /api/auth/token/  /api/auth/refresh/
 /api/auth/me/                       usuario actual + permisos efectivos
-/api/customers/                     CRUD + búsqueda por teléfono/nombre
+/api/customers/                     alta, consulta, edición y búsqueda por teléfono/nombre (no se borran)
 /api/services/                      catálogo + precios por modalidad
-/api/products/                      solo lectura + /low-stock/ (se crean y editan en el admin)
+/api/products/                      solo lectura (se crean y editan en el admin); /low-stock/ pospuesto con los reportes
 /api/inventory/movements/           registrar entradas (receive_stock) + historial
 /api/sales/                         cobrar en una sola petición (líneas, descuentos y pagos), cancelar
 /api/sales/{id}/payments/           pagos posteriores (saldo de un encargo)
 /api/sales/{id}/cancel/             cancelar con motivo
 /api/sales/{id}/receipt/            datos del ticket
-/api/drop-off-orders/               listado por estado, cambiar estado, entregar
+/api/drop-off-orders/               pendientes, filtro por estado, búsqueda (folio, nombre, teléfono), avanzar, entregar
 /api/discounts/                     descuentos que aplican al carrito (?mode=&services=)
 /api/cash-sessions/                 abrir / cerrar turno, corte actual, historial
 /api/machines/                      listado con estado y ciclos pendientes
