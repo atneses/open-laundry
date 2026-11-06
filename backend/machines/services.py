@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
@@ -9,6 +11,9 @@ from inventory.services import record_stock_movement
 from sales.models import Mode, Sale
 
 from .models import Machine, MachineCycle
+
+if TYPE_CHECKING:
+    from core.models import User
 
 START_MACHINE = "machines.start_machine"
 PENDING = MachineCycle.Status.PENDING
@@ -57,17 +62,19 @@ def cancel_cycles(user, sale) -> None:
 @requires_perm(START_MACHINE, message=_("You cannot start machines."))
 @transaction.atomic
 def start_cycle(
-    user,
+    user: User,
     cycle: MachineCycle,
     machine: Machine,
     *,
-    customer_supplies=False,
+    customer_supplies: bool = False,
 ) -> MachineCycle:
     """Start a pending cycle on a machine in manual mode (the employee presses Start).
 
     A self-service sale must be fully paid first; a drop-off order can have a balance.
     ``customer_supplies`` means the customer brought their own products; otherwise
-    the laundry's are taken from stock as set in ``LoadConsumption``.
+    the laundry's are taken from stock as set in ``LoadConsumption``. A cycle already
+    running on the same machine is returned unchanged, so a retried request is not an
+    error.
     """
 
     # Lock the sale before its cycle, in the same order as a cancellation.
@@ -79,11 +86,14 @@ def start_cycle(
     cycle = MachineCycle.objects.select_for_update().get(pk=cycle.pk)
     machine = Machine.objects.select_for_update().get(pk=machine.pk)
 
-    if cycle.status != PENDING:
-        raise ValidationError(_("This cycle was already started or cancelled."))
-
     if machine.branch_id != user.branch_id:
         raise PermissionDenied(_("The machine belongs to another branch."))
+
+    if cycle.status == RUNNING and cycle.machine_id == machine.pk:
+        return cycle
+
+    if cycle.status != PENDING:
+        raise ValidationError(_("This cycle was already started or cancelled."))
 
     if machine.kind != cycle.sale_item.service.machine_kind:
         raise ValidationError({"machine": _("This service needs another kind of machine.")})
@@ -94,7 +104,7 @@ def start_cycle(
     if machine.cycles.filter(status=RUNNING).exists():
         raise ValidationError({"machine": _("This machine is already running a cycle.")})
 
-    if sale.mode == Mode.SELF_SERVICE and sale.balance > 0:
+    if not sale_can_start_machines(sale):
         raise ValidationError(
             _("Charge the whole self-service sale before starting its machines."),
         )
@@ -108,9 +118,15 @@ def start_cycle(
     cycle.save()
 
     if not customer_supplies:
-        _consume_supplies(user, cycle)
+        _consume_supplies(user=user, cycle=cycle)
 
     return cycle
+
+
+def sale_can_start_machines(sale: Sale) -> bool:
+    """Whether the sale's cycles can be started: a self-service sale must be paid in full."""
+
+    return not (sale.mode == Mode.SELF_SERVICE and sale.balance > 0)
 
 
 def _consume_supplies(user, cycle: MachineCycle) -> None:
@@ -139,21 +155,27 @@ def _consume_supplies(user, cycle: MachineCycle) -> None:
 
 @requires_perm(START_MACHINE, message=_("You cannot finish machine cycles."))
 @transaction.atomic
-def finish_cycle(user, cycle: MachineCycle) -> MachineCycle:
-    """Mark a running cycle as finished by hand, which frees its machine."""
+def finish_cycle(user: User, cycle: MachineCycle) -> MachineCycle:
+    """Mark a running cycle as finished by hand, which frees its machine.
 
-    # Lock only the cycle: Postgres cannot lock the optional machine of an outer join.
+    A cycle already finished is returned unchanged, so a retried request is not an error.
+    """
+
+    # Lock only the cycle; its sale tells the branch, even before it has a machine.
     cycle = (
         MachineCycle.objects.select_for_update(of=("self",))
-        .select_related("machine")
+        .select_related("sale_item__sale")
         .get(pk=cycle.pk)
     )
 
+    if cycle.sale_item.sale.branch_id != user.branch_id:
+        raise PermissionDenied(_("The sale belongs to another branch."))
+
+    if cycle.status == FINISHED:
+        return cycle
+
     if cycle.status != RUNNING:
         raise ValidationError(_("Only a running cycle can be finished."))
-
-    if cycle.machine.branch_id != user.branch_id:
-        raise PermissionDenied(_("The machine belongs to another branch."))
 
     cycle.status = FINISHED
     cycle.finished_at = timezone.now()

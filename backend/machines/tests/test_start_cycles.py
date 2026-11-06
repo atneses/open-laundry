@@ -11,8 +11,9 @@ from django.utils import timezone
 from core.models import Branch
 from core.roles import EMPLOYEE_ROLE
 from customers.models import Customer
+from inventory.models import LoadConsumption, Product, StockMovement
 from machines.models import Machine, MachineCycle
-from machines.services import finish_cycle, start_cycle
+from machines.services import finish_cycle, sale_can_start_machines, start_cycle
 from sales.models import Mode, Payment, Service, ServicePrice
 from sales.services import (
     DropOffRequest,
@@ -183,6 +184,29 @@ def test_a_started_cycle_cannot_be_started_again(cashier, running, branch):
         start_cycle(cashier, running, make_machine(branch, "Lavadora 2"))
 
 
+def test_starting_again_on_the_same_machine_changes_nothing(cashier, running, washer):
+    started_at = running.started_at
+
+    again = start_cycle(user=cashier, cycle=running, machine=washer)
+
+    assert (again.status, again.started_at) == (RUNNING, started_at)
+
+
+def test_starting_again_does_not_take_supplies_twice(cashier, wash, cycle, washer):
+    detergent = Product.objects.create(
+        branch=cashier.branch,
+        name="Detergent",
+        unit="ml",
+        stock=1000,
+    )
+    LoadConsumption.objects.create(service=wash, product=detergent, quantity=180)
+    start_cycle(user=cashier, cycle=cycle, machine=washer)
+
+    start_cycle(user=cashier, cycle=cycle, machine=washer)
+
+    assert StockMovement.objects.filter(machine_cycle=cycle).count() == 1
+
+
 def test_a_cycle_of_a_cancelled_sale_cannot_be_started(cashier, sale, cycle, washer):
     cancel_sale(cashier, sale, "Charged the wrong service")
 
@@ -229,6 +253,39 @@ def test_a_finished_cycle_frees_its_machine(cashier, sale, running, washer):
     assert started.status == RUNNING
 
 
+def test_finishing_a_finished_cycle_changes_nothing(cashier, running):
+    finished_at = finish_cycle(user=cashier, cycle=running).finished_at
+
+    again = finish_cycle(user=cashier, cycle=running)
+
+    assert (again.status, again.finished_at) == (FINISHED, finished_at)
+
+
+@pytest.mark.parametrize(
+    ("mode", "paid", "expected"),
+    [
+        (Mode.SELF_SERVICE, "50.00", True),
+        (Mode.SELF_SERVICE, "20.00", False),
+        (Mode.DROP_OFF, "20.00", True),
+    ],
+    ids=["self-service-paid", "self-service-with-balance", "drop-off-with-balance"],
+)
+def test_sale_can_start_machines(cashier, wash, mode, paid, expected):
+    customer = Customer.objects.create(branch=cashier.branch, name="Ana", phone="5512345678")
+    drop_off = DropOffRequest(timezone.now() + timedelta(days=1))
+    sale = create_sale(
+        user=cashier,
+        mode=mode,
+        items=[ItemRequest(1, service=wash)],
+        customer=customer,
+        drop_off=drop_off if mode == Mode.DROP_OFF else None,
+    )
+    add_payment(user=cashier, sale=sale, method=Payment.Method.CASH, amount=paid)
+    sale.refresh_from_db()
+
+    assert sale_can_start_machines(sale) is expected
+
+
 def test_only_a_running_cycle_can_be_finished(cashier, cycle):
     with pytest.raises(ValidationError):
         finish_cycle(cashier, cycle)
@@ -242,6 +299,13 @@ def test_finishing_requires_the_start_machine_permission(running, branch):
 
     running.refresh_from_db()
     assert running.status == RUNNING
+
+
+def test_a_pending_cycle_of_another_branch_cannot_be_finished(cycle):
+    other = employee("other", Branch.objects.create(name="Norte", sale_prefix="N"))
+
+    with pytest.raises(PermissionDenied):
+        finish_cycle(user=other, cycle=cycle)
 
 
 def test_a_cycle_of_another_branch_cannot_be_finished(running):

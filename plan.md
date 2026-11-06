@@ -697,8 +697,29 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Pendiente – prueba de concurrencia:** que dos `advance` simultáneos con el mismo destino no avancen dos pasos lo garantiza el bloqueo de la venta (`_lock_drop_off_order`), pero no hay prueba: requiere dos hilos con conexiones distintas y pruebas con transacciones reales (`transaction=True`), más lentas y propensas a fallar al azar.
 
 ### 12.7 API de máquinas
-- [ ] **Qué se hace:** `/api/machines/` con el estado de cada máquina y los ciclos pendientes, y la acción de activar un ciclo (servicios de la Etapa 9, requiere `machines.start_machine`).
+- [x] **Qué se hace:** `/api/machines/` con el estado de cada máquina y los ciclos pendientes, y la acción de activar un ciclo (servicios de la Etapa 9, requiere `machines.start_machine`).
 - **Listo cuando:** activar un ciclo por la API lo deja en curso; sin el permiso responde 403.
+
+**Decisiones (antes de empezar):**
+- **Los ciclos pendientes no tienen máquina** (se crean al cobrar, 9.2), así que van en una lista aparte de la de máquinas. Las acciones son sobre el ciclo, como los servicios `start_cycle` y `finish_cycle`.
+- **Endpoints** (todos con `machines.start_machine`; los registros de otra sucursal responden 404):
+  - `GET /api/machines/`: tablero. Máquinas de la sucursal (lavadoras primero, luego por nombre) con `label`, `kind`, `status` (`available` / `out_of_service`) y `current_cycle`: el ciclo en curso (id, folio, servicio, inicio y fin esperado según `Service.expected_minutes`, o vacío si el servicio no tiene minutos), o vacío si está libre.
+  - `GET /api/machine-cycles/`: todos los ciclos pendientes de la sucursal, del más antiguo al más nuevo, con folio, modalidad, cliente, servicio, tipo de máquina que necesita y `can_start` (falso en autoservicio con saldo: hay que cobrar primero).
+  - `POST /api/machine-cycles/{id}/start/` con `{"machine": <id>, "customer_supplies": false}`. Una máquina de otra sucursal responde 400 (no está entre las opciones).
+  - `POST /api/machine-cycles/{id}/finish/`.
+  - Ambas acciones responden 200 con el ciclo.
+- **Reintentos** (mismo criterio que el 12.6, revisado con el ciclo bloqueado en el servicio): `start` sobre un ciclo que ya está en curso **en esa misma máquina** responde 200 sin cambiar nada; en otra máquina, o ya terminado, 400. `finish` sobre un ciclo ya terminado responde 200 sin cambiar nada.
+- `mvp.md` se actualiza con estos endpoints (decía `/api/machines/{id}/start/` y que `start` "crea o usa" el ciclo).
+
+**Diferencias con lo planeado:**
+- Los reintentos se revisan en los servicios de la Etapa 9, con el ciclo bloqueado: `start_cycle` devuelve sin cambios un ciclo que ya está en curso en esa máquina (esa revisión va antes de "máquina ocupada", que si no rechazaría el reintento) y `finish_cycle`, uno ya terminado.
+- La regla de autoservicio pagado está en `sale_can_start_machines(sale)` (`machines/services.py`); la usan `start_cycle` y el `can_start` de la lista.
+- La app `machines` tiene ahora `serializers.py`, `views.py` y `urls.py`. En el esquema, `kind` y `status` de `Machine` tienen nombres propios (`ENUM_NAME_OVERRIDES`).
+
+**Riesgos y pendientes:**
+- **Pendiente – cierre automático:** sigue en el 14.3; mientras, la máquina se libera con "Terminar".
+- **Pendiente – la caja debe paginar:** la lista de pendientes va paginada como todas (decisión de la Etapa 12: 25 por página, hasta 100 con `?page_size=`); si hay más, la caja debe pedir las páginas siguientes.
+- **Riesgo – lista de pendientes larga:** muestra todos los ciclos pendientes de la sucursal, sin filtros ni búsqueda; los de encargos pueden quedarse ahí días. Si estorba, agregar filtro por tipo de máquina o búsqueda por folio.
 
 ### 12.8 API de entradas de inventario
 - [ ] **Qué se hace:** `/api/inventory/movements/`: `POST` para registrar una entrada de insumo (requiere `inventory.receive_stock`) y `GET` para el historial. Los ajustes se siguen haciendo en el admin.
@@ -766,7 +787,7 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Listo cuando:** se recibe un encargo con anticipo, se marca listo y se entrega cobrando el resto.
 
 ### 13.9 Tablero de máquinas en la caja
-- [ ] **Qué se hace:** pantalla con las 6 máquinas (libre, en uso, fuera de servicio), el botón **"Activar"** junto a cada ciclo pendiente y los avisos ("Crédito enviado: presiona Start", "Sin respuesta: usa modo manual").
+- [ ] **Qué se hace:** pantalla con las 6 máquinas (libre, en uso, fuera de servicio), el botón **"Activar"** junto a cada ciclo pendiente, el botón **"Terminar"** en cada máquina en uso (12.7) y los avisos ("Crédito enviado: presiona Start", "Sin respuesta: usa modo manual").
 - **Listo cuando:** se cobra, se activa una máquina y el tablero la muestra en uso.
 
 ### 13.10 Vista de impresión

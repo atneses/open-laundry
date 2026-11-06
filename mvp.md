@@ -551,8 +551,10 @@ Entrega estimada: 18/10/2026 18:00
 /api/drop-off-orders/               pendientes, filtro por estado, búsqueda (folio, nombre, teléfono), avanzar, entregar
 /api/discounts/                     descuentos que aplican al carrito (?mode=&services=)
 /api/cash-sessions/                 abrir / cerrar turno, corte actual, historial
-/api/machines/                      listado con estado y ciclos pendientes
-/api/machines/{id}/start/           activa un ciclo (crea o usa el MachineCycle)
+/api/machines/                      tablero: cada máquina con su estado y su ciclo en curso
+/api/machine-cycles/                ciclos pendientes (los crea el cobro), con si ya se pueden activar
+/api/machine-cycles/{id}/start/     activa el ciclo en una máquina (modo manual)
+/api/machine-cycles/{id}/finish/    marca el ciclo terminado y libera la máquina
 /api/reports/daily-sales/  /machine-usage/  /inventory/   (pospuesto: los reportes están en el dashboard del admin)
 ```
 

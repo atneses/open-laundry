@@ -131,11 +131,13 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
-    # Several models have a "status" field; name each choice set for the POS types.
+    # Several models have "status" or "kind" fields; name each choice set for the POS types.
     "ENUM_NAME_OVERRIDES": {
         "SaleStatusEnum": "sales.models.Sale.Status",
         "DropOffOrderStatusEnum": "sales.models.DropOffOrder.Status",
         "MachineCycleStatusEnum": "machines.models.MachineCycle.Status",
+        "MachineKindEnum": "machines.models.Machine.Kind",
+        "MachineStatusEnum": "machines.models.Machine.Status",
     },
 }
 
