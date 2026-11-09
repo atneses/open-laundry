@@ -2,14 +2,13 @@ from typing import TYPE_CHECKING
 
 from django.db.models import Exists, OuterRef, Prefetch, Q, QuerySet
 from django.utils.translation import gettext_lazy as _
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 
-from core.api import IDEMPOTENCY_HEADER, HasPermission, run_once
+from core.api import IDEMPOTENCY_KEY, HasPermission, run_once
 
 from .models import (
     AppliedDiscount,
@@ -32,7 +31,7 @@ from .serializers import (
     DropOffOrderFilterSerializer,
     DropOffOrderSerializer,
     OpenCashSessionSerializer,
-    PaymentRequestSerializer,
+    PaymentCreateSerializer,
     SaleDetailSerializer,
     SaleFilterSerializer,
     SaleListSerializer,
@@ -53,14 +52,6 @@ from .services import (
 
 if TYPE_CHECKING:
     from rest_framework.request import Request
-
-IDEMPOTENCY_KEY = OpenApiParameter(
-    name=IDEMPOTENCY_HEADER,
-    type=OpenApiTypes.UUID,
-    location=OpenApiParameter.HEADER,
-    required=True,
-    description="A new UUID for each charge or payment; the same one when retrying it.",
-)
 
 
 class CashSessionViewSet(
@@ -261,7 +252,7 @@ class SaleViewSet(
         return self._detail(sale=sale, status_code=status.HTTP_201_CREATED)
 
     @extend_schema(
-        request=PaymentRequestSerializer,
+        request=PaymentCreateSerializer,
         responses={201: SaleDetailSerializer},
         parameters=[IDEMPOTENCY_KEY],
     )
@@ -270,7 +261,7 @@ class SaleViewSet(
         """Record a later payment, such as the balance of a drop-off order."""
 
         sale = self.get_object()
-        data = PaymentRequestSerializer(data=request.data)
+        data = PaymentCreateSerializer(data=request.data)
         data.is_valid(raise_exception=True)
         payment = data.to_request()
         run_once(

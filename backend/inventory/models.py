@@ -199,6 +199,15 @@ class StockMovement(BaseModel):
         blank=True,
         help_text=_("Required for adjustments: why the stock changed (spill, count, error)."),
     )
+    idempotency_key = models.UUIDField(
+        _("idempotency key"),
+        null=True,
+        blank=True,
+        unique=True,
+        editable=False,
+        help_text=_("Key the POS sent with the request, so a retry does not repeat it."),
+    )
+    request_hash = models.CharField(_("request hash"), max_length=64, blank=True, editable=False)
 
     class Meta:
         verbose_name = _("stock movement")
