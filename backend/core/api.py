@@ -9,6 +9,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
 from django.utils.translation import gettext_lazy as _
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter
 from rest_framework import pagination, status
 from rest_framework.exceptions import APIException, ValidationError
 from rest_framework.permissions import BasePermission
@@ -67,6 +69,15 @@ class PageNumberPagination(pagination.PageNumberPagination):
 
 
 IDEMPOTENCY_HEADER = "Idempotency-Key"
+
+# Documents the header on the endpoints that use ``run_once``.
+IDEMPOTENCY_KEY = OpenApiParameter(
+    name=IDEMPOTENCY_HEADER,
+    type=OpenApiTypes.UUID,
+    location=OpenApiParameter.HEADER,
+    required=True,
+    description="A new UUID for each charge, payment or stock entry; the same one on a retry.",
+)
 
 
 class IdempotencyConflict(APIException):

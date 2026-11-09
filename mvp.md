@@ -543,7 +543,8 @@ Entrega estimada: 18/10/2026 18:00
 /api/customers/                     alta, consulta, edición y búsqueda por teléfono/nombre (no se borran)
 /api/services/                      catálogo + precios por modalidad
 /api/products/                      solo lectura (se crean y editan en el admin); /low-stock/ pospuesto con los reportes
-/api/inventory/movements/           registrar entradas (receive_stock) + historial
+/api/inventory/products/            todos los productos de la sucursal, para elegir el que llegó
+/api/inventory/movements/           registrar entradas (receive_stock, con Idempotency-Key) + historial de entradas
 /api/sales/                         cobrar en una sola petición (líneas, descuentos y pagos), cancelar
 /api/sales/{id}/payments/           pagos posteriores (saldo de un encargo)
 /api/sales/{id}/cancel/             cancelar con motivo

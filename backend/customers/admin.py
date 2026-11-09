@@ -1,10 +1,10 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
 
+from sales.services import MANAGE_CUSTOMERS
+
 from .forms import CustomerForm
 from .models import Customer
-
-MANAGE_CUSTOMERS = "customers.manage_customers"
 
 
 @admin.register(Customer)

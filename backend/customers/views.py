@@ -3,11 +3,10 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import filters, mixins, viewsets
 
 from core.api import HasPermission
+from sales.services import MANAGE_CUSTOMERS
 
 from .models import Customer
 from .serializers import CustomerSerializer
-
-MANAGE_CUSTOMERS = "customers.manage_customers"
 
 
 class CustomerViewSet(
