@@ -3,96 +3,96 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-05 12:39-0600\n"
+"POT-Creation-Date: 2026-11-06 11:38-0600\n"
 "Language: es_MX\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: config/settings/base.py:146 config/settings/base.py:147
+#: config/settings/base.py:147 config/settings/base.py:148
 msgid "Laundry"
 msgstr "Lavandería"
 
-#: config/settings/base.py:148
+#: config/settings/base.py:149
 msgid "Administration"
 msgstr "Administración"
 
-#: config/settings/base.py:186
+#: config/settings/base.py:187
 msgid "Operation"
 msgstr "Operación"
 
-#: config/settings/base.py:190 customers/apps.py:8
+#: config/settings/base.py:191 customers/apps.py:8
 msgid "Customers"
 msgstr "Clientes"
 
-#: config/settings/base.py:198
+#: config/settings/base.py:199
 msgid "Sales"
 msgstr "Ventas"
 
-#: config/settings/base.py:204 templates/admin/index.html:24
+#: config/settings/base.py:205 templates/admin/index.html:24
 msgid "Drop-off orders"
 msgstr "Encargos"
 
-#: config/settings/base.py:212
+#: config/settings/base.py:213
 msgid "Cash sessions"
 msgstr "Cortes de caja"
 
-#: config/settings/base.py:222
+#: config/settings/base.py:223
 msgid "Catalog"
 msgstr "Catálogo"
 
-#: config/settings/base.py:226
+#: config/settings/base.py:227
 msgid "Services and prices"
 msgstr "Servicios y precios"
 
-#: config/settings/base.py:234
+#: config/settings/base.py:235
 msgid "Discounts"
 msgstr "Descuentos"
 
-#: config/settings/base.py:244 inventory/apps.py:8
+#: config/settings/base.py:245 inventory/apps.py:8
 msgid "Inventory"
 msgstr "Inventario"
 
-#: config/settings/base.py:248
+#: config/settings/base.py:249
 msgid "Products"
 msgstr "Productos"
 
-#: config/settings/base.py:254
+#: config/settings/base.py:255
 msgid "Stock movements"
 msgstr "Movimientos de inventario"
 
-#: config/settings/base.py:260
+#: config/settings/base.py:261
 msgid "Consumption per load"
 msgstr "Consumo por carga"
 
-#: config/settings/base.py:270 config/settings/base.py:274 machines/apps.py:8
+#: config/settings/base.py:271 config/settings/base.py:275 machines/apps.py:8
 msgid "Machines"
 msgstr "Máquinas"
 
-#: config/settings/base.py:282
+#: config/settings/base.py:283
 msgid "Machine cycles"
 msgstr "Ciclos de máquina"
 
-#: config/settings/base.py:292
+#: config/settings/base.py:293
 msgid "Users and permissions"
 msgstr "Usuarios y permisos"
 
-#: config/settings/base.py:296
+#: config/settings/base.py:297
 msgid "Users"
 msgstr "Usuarios"
 
-#: config/settings/base.py:302
+#: config/settings/base.py:303
 msgid "Roles"
 msgstr "Roles"
 
-#: config/settings/base.py:308
+#: config/settings/base.py:309
 msgid "Branches"
 msgstr "Sucursales"
 
-#: config/settings/base.py:316
+#: config/settings/base.py:317
 msgid "Logs"
 msgstr "Bitácoras"
 
-#: config/settings/base.py:320
+#: config/settings/base.py:321
 msgid "Permissions"
 msgstr "Permisos"
 
@@ -112,15 +112,15 @@ msgstr "Fechas importantes"
 msgid "role"
 msgstr "rol"
 
-#: core/api.py:33 core/permissions.py:21
+#: core/api.py:35 core/permissions.py:21
 msgid "You do not have permission to do this."
 msgstr "No tienes permiso para hacer esto."
 
-#: core/api.py:74
+#: core/api.py:85
 msgid "This Idempotency-Key was already used for a different request."
 msgstr "Esta Idempotency-Key ya se usó para otra petición."
 
-#: core/api.py:128
+#: core/api.py:139
 msgid "Send a new UUID in the Idempotency-Key header."
 msgstr "Envía un UUID nuevo en el encabezado Idempotency-Key."
 
@@ -507,41 +507,62 @@ msgid "Required for adjustments: why the stock changed (spill, count, error)."
 msgstr ""
 "Obligatorio en los ajustes: por qué cambió el stock (derrame, conteo, error)."
 
-#: inventory/models.py:204
+#: inventory/models.py:203 sales/models.py:327 sales/models.py:468
+msgid "idempotency key"
+msgstr "clave de idempotencia"
+
+#: inventory/models.py:208 sales/models.py:332 sales/models.py:473
+msgid "Key the POS sent with the request, so a retry does not repeat it."
+msgstr "Clave que envió la caja con la petición, para que un reintento no la repita."
+"Clave que mandó la caja con la petición, para que un reintento no la repita."
+
+#: inventory/models.py:210 sales/models.py:334 sales/models.py:475
+msgid "request hash"
+msgstr "huella de la petición"
+
+#: inventory/models.py:213
 msgid "stock movement"
 msgstr "movimiento de inventario"
 
-#: inventory/models.py:205
+#: inventory/models.py:214
 msgid "stock movements"
 msgstr "movimientos de inventario"
 
-#: inventory/models.py:208
+#: inventory/models.py:217
 msgid "Can record stock entries"
 msgstr "Puede registrar entradas de inventario"
 
-#: inventory/models.py:209
+#: inventory/models.py:218
 msgid "Can adjust stock (losses, corrections)"
 msgstr "Puede ajustar el inventario (mermas, correcciones)"
 
-#: inventory/models.py:239
+#: inventory/models.py:248
 msgid "A purchase must add stock (positive)."
 msgstr "Una compra debe sumar stock (positivo)."
 
-#: inventory/models.py:242
+#: inventory/models.py:251
 msgid "A cancelled sale must add stock back."
 msgstr "Una venta cancelada debe regresar el stock."
 
-#: inventory/models.py:245
+#: inventory/models.py:254
 msgid "This kind of movement removes stock."
 msgstr "Este tipo de movimiento resta stock."
 
-#: inventory/models.py:248
+#: inventory/models.py:257
 msgid "An adjustment cannot be zero."
 msgstr "Un ajuste no puede ser cero."
 
-#: inventory/models.py:251
+#: inventory/models.py:260
 msgid "An adjustment needs a reason."
 msgstr "Un ajuste necesita un motivo."
+
+#: inventory/services.py:33
+msgid "You cannot record stock entries."
+msgstr "No puedes registrar entradas de inventario."
+
+#: inventory/services.py:48
+msgid "The product belongs to another branch."
+msgstr "El producto pertenece a otra sucursal."
 
 #: machines/models.py:14 sales/models.py:35
 msgid "Washer"
@@ -673,11 +694,12 @@ msgstr "No se puede cancelar una venta con un ciclo de máquina ya activado."
 msgid "You cannot start machines."
 msgstr "No puedes activar máquinas."
 
-#: machines/services.py:84 sales/receipts.py:96 sales/services.py:320
+#: machines/services.py:84 machines/services.py:172 sales/receipts.py:96
+#: sales/services.py:320
 msgid "The sale belongs to another branch."
 msgstr "La venta es de otra sucursal."
 
-#: machines/services.py:90 machines/services.py:172
+#: machines/services.py:90
 msgid "The machine belongs to another branch."
 msgstr "La máquina es de otra sucursal."
 
@@ -952,19 +974,6 @@ msgstr "Turno que devolvió el dinero; su corte resta los pagos."
 #: sales/models.py:325
 msgid "cancellation reason"
 msgstr "motivo de cancelación"
-
-#: sales/models.py:327 sales/models.py:468
-msgid "idempotency key"
-msgstr "clave de idempotencia"
-
-#: sales/models.py:332 sales/models.py:473
-msgid "Key the POS sent with the request, so a retry does not repeat it."
-msgstr ""
-"Clave que mandó la caja con la petición, para que un reintento no la repita."
-
-#: sales/models.py:334 sales/models.py:475
-msgid "request hash"
-msgstr "huella de la petición"
 
 #: sales/models.py:341
 msgid "Can charge sales and print receipts"
@@ -1352,7 +1361,7 @@ msgstr "%(service)s no tiene precio para esta modalidad."
 msgid "%(product)s is not for sale."
 msgstr "%(product)s no está a la venta."
 
-#: sales/views.py:118
+#: sales/views.py:109
 msgid "There is no open cash session."
 msgstr "No hay caja abierta."
 

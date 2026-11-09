@@ -726,6 +726,26 @@ La Etapa 0 se hace **en paralelo** con las Etapas 1 a 13: son tareas en el local
 - **Para qué:** que un empleado sin acceso al admin registre desde la caja los insumos que llegan.
 - **Listo cuando:** registrar una entrada por la API sube el stock; sin `inventory.receive_stock` responde 403 (pruebas).
 
+**Decisiones (antes de empezar):**
+- **Servicio nuevo** `receive_stock(user, product, quantity, unit_cost=None)` en `inventory/services.py`, con `@requires_perm("inventory.receive_stock")` y revisión de sucursal; registra un `StockMovement` de tipo `purchase` con `record_stock_movement`. La cantidad va en la unidad del producto (sin conversión, como en el admin).
+- **Endpoints** (todos con `inventory.receive_stock`):
+  - `GET /api/inventory/products/`: todos los productos de la sucursal (también los que no se venden, como detergente y suavizante), por nombre, con unidad, stock y stock mínimo. `/api/products/` solo trae los de venta y pide `sales.charge`.
+  - `POST /api/inventory/movements/` con `product`, `quantity` (mayor que 0) y `unit_cost` (opcional). Un producto de otra sucursal responde 400. Responde 201.
+  - `GET /api/inventory/movements/`: historial de entradas (`purchase`) de la sucursal, de la más reciente a la más antigua, con producto, cantidad, costo, fecha y quién la registró. Consumos, ventas y ajustes se siguen viendo en el admin.
+- **Idempotencia:** el `POST` exige `Idempotency-Key` (`run_once`, como cobros y pagos), para que un reintento no registre la entrada dos veces. `StockMovement` gana `idempotency_key` (única) y `request_hash` (migración).
+- **Costo opcional:** quien recibe el producto muchas veces no sabe el precio.
+
+**Diferencias con lo planeado:**
+- `IDEMPOTENCY_KEY` (la documentación del encabezado) pasó de `sales/views.py` a `core/api.py`, porque ya lo usan ventas e inventario.
+- En el esquema, `unit` de `Product` tiene nombre propio (`ENUM_NAME_OVERRIDES`).
+- Se tradujo el texto de ayuda de `idempotency_key`, que estaba vacío desde el 12.5.
+
+**Riesgos y pendientes:**
+- **Pendiente – unificar el admin con los servicios:** el admin registra entradas y ajustes con `record_stock_movement` directo, sin pasar por `receive_stock`; el permiso lo revisa el propio admin. Unificar: entradas con `receive_stock`, ajustes con un servicio nuevo `adjust_stock` (motivo obligatorio), y limitar los productos del formulario a la sucursal del usuario.
+- **Riesgo – reglas duplicadas:** mientras no se unifique, una regla nueva de las entradas (p. ej. una validación) hay que ponerla en el servicio y en el admin.
+- **Pendiente – costo de las entradas:** es opcional; si el negocio quiere reportes de gasto en insumos, decidir cómo capturarlo (que el admin lo complete o tomar el `cost` del producto).
+- **Riesgo – clave reutilizada entre endpoints:** cada tabla (`Sale`, `Payment`, `StockMovement`) solo revisa sus propias claves; si la caja usara en una entrada el UUID de un cobro o pago anterior, se aceptaría (201) en vez de dar 409. Solo pasa si la caja reutiliza UUID, y no cobra ni suma stock dos veces. Si hiciera falta: una tabla común de claves (UUID, tipo de acción, `request_hash`, registro creado) consultada por `run_once`.
+
 ### 12.9 API del ticket
 - [ ] **Qué se hace:** `/api/sales/{id}/receipt/` con los datos del ticket (servicio de la Etapa 10).
 - **Listo cuando:** devuelve lo mismo que el servicio para cada tipo de venta.

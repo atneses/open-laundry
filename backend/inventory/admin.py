@@ -7,9 +7,8 @@ from sales.admin import MANAGE_CATALOG, CatalogPermissionMixin
 
 from .forms import LoadConsumptionForm, ProductForm, StockMovementForm
 from .models import LoadConsumption, Product, StockMovement
-from .services import record_stock_movement
+from .services import RECEIVE_STOCK, record_stock_movement
 
-RECEIVE_STOCK = "inventory.receive_stock"
 ADJUST_STOCK = "inventory.adjust_stock"
 INVENTORY_PERMISSIONS = (MANAGE_CATALOG, RECEIVE_STOCK, ADJUST_STOCK)
 

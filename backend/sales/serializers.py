@@ -169,7 +169,7 @@ class ChargeItemSerializer(serializers.Serializer):
     quantity = serializers.DecimalField(max_digits=10, decimal_places=3)
 
 
-class PaymentRequestSerializer(serializers.Serializer):
+class PaymentCreateSerializer(serializers.Serializer):
     """A payment; ``received`` is the cash handed over, to show the change."""
 
     method = serializers.ChoiceField(choices=Payment.Method.choices)
@@ -187,7 +187,7 @@ class PaymentRequestSerializer(serializers.Serializer):
         return PaymentRequest(**self.validated_data)
 
 
-class DropOffRequestSerializer(serializers.Serializer):
+class DropOffCreateSerializer(serializers.Serializer):
     promised_at = serializers.DateTimeField()
     notes = serializers.CharField(required=False, allow_blank=True, default="")
 
@@ -209,8 +209,8 @@ class ChargeSerializer(serializers.Serializer):
         required=False,
         default=list,
     )
-    payments = PaymentRequestSerializer(many=True, required=False, default=list)
-    drop_off = DropOffRequestSerializer(required=False, allow_null=True, default=None)
+    payments = PaymentCreateSerializer(many=True, required=False, default=list)
+    drop_off = DropOffCreateSerializer(required=False, allow_null=True, default=None)
 
     def to_request(self) -> ChargeRequest:
         data = self.validated_data
